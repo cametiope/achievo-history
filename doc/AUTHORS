@@ -9,9 +9,7 @@ Sandy Pleyte       <sandy@achievo.org>
 Peter Verhage      <peter@achievo.org>
 Rene Bakx          <rene@ibuildings.nl>
 Wim Kosten         <wim@ibuildings.nl>
-Paul Verhoeff      <paul@ibuildings.nl>
 Maurice Maas       <maurice@ibuildings.nl>
-Marc van Agteren   <marc@ibuildings.nl>
 
 
 Marketing and Support
@@ -34,6 +32,7 @@ development of new features.
   - CSV export function
   - employee contracts
   - timereg_check cron script
+  - hoursurvey improvements
 
 * S&W Consultancy BV, Netherlands (http://www.s-w.nl) sponsored the following
   enhancements:
@@ -105,6 +104,7 @@ T. Luyben                             <tycho@e-lab.nl>
 Martin Pruijssers                       
 Wayne T. Ethier                       <wte@websynergyinternet.com>
 Michel Marti                          <michel.marti@ubs.com>
+Paul Verhoeff                         <paul@ibuildings.nl>
 Lucas Smith                           <smith@dybnet.de>
 Daniel Frame                          <dframe@tampabay.rr.com>
 Jakub Kahovec                         <jakub.kahovec@newton.cz>
