@@ -1,4 +1,4 @@
-<?
+<?php
   class achievoCalendar 
   { 
    var $displayDay     = 0;          // displayed day

@@ -1,4 +1,4 @@
-<?
+<?php
   class monthView
   {
    var $days        = 0;
