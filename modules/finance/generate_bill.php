@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
 * This file get all the bill line information and then get all the billed hours, costs and discounts out of the database 

@@ -1,4 +1,4 @@
-<?
+<?php
 global $g_layout, $g_db, $config_currency_symbol;
 
 $g_layout->register_script("javascript/check.js");

@@ -1,4 +1,4 @@
-<?
+<?php
   class weekView
   {
    var $day         = 0;
