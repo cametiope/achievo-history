@@ -2,6 +2,12 @@
 - : deprecated feature
 * : bugfix or changed code
 
+Changes in Achievo 0.8.RC2
+--------------------------
+* Workaround for bug in some Internet Explorer 5.5SP1 versions that have
+  security patch q299618.exe installed (which causes some urls to be
+  processed incorrectly)
+
 Changes in Achievo 0.8.RC1
 --------------------------
 + Added supervisor to employees.
