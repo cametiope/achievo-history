@@ -39,8 +39,8 @@ the terms might be different.
       "Warning: Call-time pass-by-reference has been deprecated - argument 
        passed by value; If you would like to pass it by reference, modify the 
        declaration of [runtime function name](). If you would like to enable 
-       call-time pass-by-reference, you can set allow_call_time_pass_reference 
-       to true in your INI file. However, future versions may not support this 
+       call-time pass-by-reference, you can set allow_call_time_pass_reference
+       to true in your INI file. However, future versions may not support this
        any longer. in /var/www/html/achievo-0.8/atk/class.atknode.inc on line 
        490"
       (or something very similar)
@@ -69,7 +69,7 @@ the terms might be different.
  2.2. I just installed Achievo for the first time and I try to login. 
       What's the username and password?   
    
-        The username is 'administrator', the default password is 'demo'.      
+        The username is 'administrator', the default password is 'demo'.
    
  2.3. How can I change the administrator password?
  
@@ -89,16 +89,16 @@ the terms might be different.
            if you set another password in the database.
         b) In php.ini, register_globals should be set to On. This used to be 
            default in older PHP versions, but as of PHP 4.2, the default value
-           is Off. Currently, Achievo will only work if you put this value to            
+           is Off. Currently, Achievo will only work if you put this value to
            On. (don't forget to restart your webserver after changing php.ini)
         c) If you run PHP as a cgi-module, you can't use the login protocol
            we use. We will fix this in the future. For now, you will have to
            use the Apache module version (or the ISAPI version in case you are
            running Microsoft Internet Information Server).
         d) There could be a .htaccess file in the way. Don't put an .htaccess 
-           file in Achievo's directory, or above it. If you do this, the login 
-           box you will see is the one from the .htaccess file, not the one from 
-           Achievo.
+           file in Achievo's directory, or above it. If you do this, the login
+           box you will see is the one from the .htaccess file, not the one 
+           from Achievo.
         
         
   
