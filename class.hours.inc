@@ -464,6 +464,22 @@ class hours extends atkNode
     atkNode::validate($record, $mode);
   }
   
+  /**
+   * This method is called by the hoursurvey to get custom search fields.
+   * Derived classes (for example in overloaders) can override this method and
+   * Add their own custom search fields.
+   */
+   
+  function getSelectionItems()
+  {
+    return array();
+  }
+  
+  function getHourSurveyColumns()
+  {
+    return array("activitydate","userid","phaseid","activityid","remark","time");
+  }
+  
 }
 
 ?>

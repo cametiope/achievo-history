@@ -75,8 +75,8 @@
   }
 
   
-  // Determine collumn suppresslist:
-  $arr_col = array("activitydate","userid","phaseid","activityid","remark","time");
+  // Determine collumn suppresslist:  
+  $arr_col = $this->getHourSurveyColumns();
  
   $suppress = array(); 
   if (!is_array($col)||count($col)==0)
@@ -203,7 +203,26 @@
                     
     $g_layout->output('</tr><tr>');  
     $g_layout->td('<hr>','colspan="2"');
-    $g_layout->output('</tr><tr>');
+    $g_layout->output('</tr>');
+    
+    // Get default selection items.
+    $selitems = $this->getSelectionItems();
+    
+    if (is_array($selitems))
+    {
+      foreach ($selitems as $label=>$html)
+      {
+        $g_layout->output('<tr>');      
+        $g_layout->td(text($label, $this->m_type).":");
+        $g_layout->td($html);
+        $g_layout->output('</tr><tr>');  
+        $g_layout->td('<hr>','colspan="2"');
+        $g_layout->output('</tr>');
+      }
+    }
+    
+    
+    $g_layout->output('<tr>');
               
     $g_layout->td('<b>'.text("report_output_options").'</b>','colspan="2"');
     
