@@ -132,7 +132,7 @@
   // Specify the module name as first parameter, and the path where
   // it can be found as the second parameter.
   //
-  // module("somemodule","../achievo_modules/somemodule");
+  // module("somemodule","../achievo_modules/somemodule/");
 
   // -------------------------------------------
   //            END OF CONFIGURATION
