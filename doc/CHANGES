@@ -13,6 +13,7 @@ Changes in Achievo 0.8.1
 * Time survey no longer forgets selected project (bugs #12 and #16)
 * Improved upgrade instructions (bug #7).
 * Fixed typo in languagefile keys (bug #10).
+* When userid is changed, relevant tables are updated (bug #37)
 * Fixed minor layout issue in project planning (bug #8)
 
 Changes in Achievo 0.8.0
