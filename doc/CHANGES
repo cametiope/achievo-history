@@ -3,6 +3,11 @@
 * : bugfix or changed code
 Bug numbers are references to bugs in http://www.achievo.org/bugzilla
 
+Changes in Achievo 0.8.5
+------------------------
+* Fixed bug in project todo view, where a sql error occurred when
+  pressing the save button. (bug #105 and #59)
+
 Changes in Achievo 0.8.4
 ------------------------
 * Fixed bug in javascript include which caused date input to malfunction
