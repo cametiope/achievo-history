@@ -25,7 +25,7 @@ class atkProjectAttribute extends atkAttribute
     
     // The current phase (in case of edit of an existing record)
     
-    $currentproject = $record[$this->fieldName()]['projectid'];
+    $currentproject = $record[$this->fieldName()];
      
     // The current value might be overriden by use of the 'search all phases' button
     if (isset($selectedprojectid)&&$selectedprojectid!="")
