@@ -5,6 +5,8 @@
 Changes in Achievo 0.8.RC2
 --------------------------
 * Updated Czech language file.
+* Updated Hungarian language file.
+* Updated Dutch language file.
 * Updated Spanish language file (now contains correct accents)
   (not yet up to date with 0.8 strings though).
 * Fixed a bug where empty dates would not get stored correctly.
