@@ -55,9 +55,18 @@ class atkProjectPhaseAttribute extends atkAttribute
     
     // if not already added (by the recent list), we have to load it manually.
     if (!$alreadyadded&&$currentphase!="")
-    {
+    {    
       $phase = $this->getPhase($currentphase);      
-      $phases[] = $phase;
+      if (is_array($phase)) // Phase might have been deleted.
+      {
+        $phases[] = $phase;
+      }
+      else
+      {
+        // Apparently currentphase is set to something that no longer exists.
+        // We must reset the value.
+        $currentphase = "";
+      }
     }    
     
     // Load Activities for each project
@@ -108,7 +117,7 @@ class atkProjectPhaseAttribute extends atkAttribute
     $result .= href(dispatch_url("project", "select", array("atktarget" => atkurlencode($targeturl_phase))), text("houradmin_searchallprojectsphases"), SESSION_NESTED,$saveform);
 
     // dirty trick: the dummy attribute which starts the javascript for the 
-    // correct activities must be notified of the currentphase.
+    // correct activities must be notified of the currentphase.    
     $GLOBALS["currentphase"]=$currentphase;    
     $GLOBALS["currentactivity"]=$currentactivity;
     
