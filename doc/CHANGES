@@ -8,6 +8,7 @@ Changes in Achievo 0.8.1
 + Added contrib/ directory for (unsupported) user contributed scripts and
   utilities.
 + Added phase_convert.pl to contribs. (bug #19)
+* Updated the FAQ.
 * Updated Dutch, Finnish, German and Hungarian language files.
 * Time survey no longer forgets selected project (bugs #12 and #16)
 * Improved upgrade instructions (bug #7).
