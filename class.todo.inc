@@ -17,7 +17,7 @@ class todo extends atkNode
     $this->addAttribute(new atkManyToOneRelation("projectid"    , "project",AF_READONLY|AF_OBLIGATORY|AF_SEARCHABLE));
     $this->addAttribute(new atkAttribute("title"                , AF_OBLIGATORY));
     $this->addAttribute(new atkManyToOneRelation("assigned_to"  , "employee", AF_SEARCHABLE));    
-    $this->addAttribute(new atkDateAttribute("entrydate"        , AF_READONLY_EDIT|AF_HIDE_ADD));
+    $this->addAttribute(new atkDateAttribute("entrydate"        , "F d Y", "d F Y", 0, 0, AF_READONLY_EDIT|AF_HIDE_ADD));
     $this->addAttribute(new atkDateAttribute("duedate"          , "F d Y","d F Y", date("Ymd"), 0, AF_OBLIGATORY));
     $this->addAttribute(new atkListAttribute("priority"         , $this->prioName, $this->prioId, AF_OBLIGATORY));
     $this->addAttribute(new atkTextAttribute("description"      , AF_OBLIGATORY|AF_HIDE_LIST));
@@ -33,9 +33,12 @@ class todo extends atkNode
     global $g_user;
     return array("owner"=>$g_user["name"],
                  //"assigned_to"=>array("userid"=>$g_user["name"]),
-                 "entrydate"=>array("year"=>date("Y"),
+                 "duedate"=>array("year"=>date("Y"),
                                     "month"=>date("m"),
                                     "day"=>date("d")),
+                 "entrydate"=>array("year"=>date("Y"),
+                                    "month"=>date("m"),
+                                    "day"=>date("d")),                                    
                  "priority"=>3);
   }
 
