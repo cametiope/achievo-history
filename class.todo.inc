@@ -148,7 +148,7 @@ class todo extends atkNode
 
    // send mail   
    $header = $this->prioHeader($rec["priority"]); 
-   usermail(implode(",",$to), $subj, $body, $header);  
+   usermail($to, $subj, $body, $header);  
   }
   
   function todoChanged($new, $old)
@@ -209,7 +209,7 @@ class todo extends atkNode
  
      // send mail     
      $header = $this->prioHeader($rec["priority"]);
-     usermail(implode(",",$to),text("todochanged"), $body, $header);    
+     usermail($to,text("todochanged"), $body, $header);    
    }
   }
 
