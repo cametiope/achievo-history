@@ -9,7 +9,7 @@ Changes in Achievo 0.8.4
   on PHP versions older than 4.1.0. (bug #62 and #63)
 * Fixed bug: downloading fileversion of hoursurvey from an https server 
   with IE6 should now work again. (bug #57)
-* Fixed sql error when editing hour entry that used a phase that was
+* Fixed sql error when editing hour entry that used a phase which was
   deleted. (bug #15)
 * Fixed bug in INSTALL file, which talked about an old config.inc.php3.
   (bug #80)
