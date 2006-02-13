@@ -39,11 +39,13 @@
 
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY));
-
-      $tmp = new phaseManyBoolRelation("phase_activity", "project.phase_activity", "project.activity", AF_HIDE_LIST|AF_OBLIGATORY|AF_MANYBOOL_AUTOLINK);
-      $tmp->m_localKey = "phaseid";
-      $tmp->m_remoteKey = "activityid";
-      $this->add($tmp);
+      
+//      $tmp = new phaseManyBoolRelation("phase_activity", "project.phase_activity", "project.activity", AF_HIDE_LIST|AF_OBLIGATORY|AF_MANYBOOL_AUTOLINK);
+//      $tmp->m_localKey = "phaseid";
+//      $tmp->m_remoteKey = "activityid";
+//      $this->add($tmp);
+      //@todo: Vlaggen controleren, zijn deze vlaggen nodig ?
+      $this->add(new atkOneToManyRelation("activities","project.activity","phaseid",AF_HIDE_LIST|AF_OBLIGATORY));
 
       // template *must* come after phase_activity, because phase_activity does a delete of all
       // records on store, so template must be stored after phase_activity.
@@ -136,7 +138,7 @@
     {
       // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)
       $hoursNode = getNode("timereg.hours");
-      $earliesttimeregforphase = $hoursNode->selectDb("phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
+      $earliesttimeregforphase = $hoursNode->selectDb("hours.phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
       atkimport("module.utils.dateutil");
       $earliesttimeregdate = empty($earliesttimeregforphase) ? null : dateutil::arr2stamp($earliesttimeregforphase["0"]["activitydate"]);
 

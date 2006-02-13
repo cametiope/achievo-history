@@ -22,131 +22,59 @@ class atkProjectPhaseAttribute extends atkAttribute
   {
     return Array("phaseid"=>$rec["phaseid"]);
   }
-
+   
   /**
    * Returns a piece of html code that can be used in a form to edit this
    * attribute's value.
    * @param $record array with fields
    * @return piece of html code with a textarea
-   */
+   */  
   function edit($record="")
   {
     global $ATK_VARS;
-
-    $selectedphaseid = $_REQUEST["selectedphaseid"];
-    $atkaction = $_REQUEST["atkaction"];
-
+    
+    $selectedphaseid  = $_REQUEST["selectedphaseid"];
+    $atkaction        = $_REQUEST["atkaction"];
+    
     // The current phase (in case of edit of an existing record)
-    $currentphase = $record[$this->fieldName()]["phaseid"];
-    $currentactivity = $record["activityid"];
-
+    $currentphaseid   = $record[$this->fieldName()]["phaseid"];
+    $currentactivity  = $record["activityid"];
+    
     // The current value might be overriden by use of the 'search all phases' button
     if (isset($selectedphaseid)&&$selectedphaseid!="")
     {
-      $currentphase = $selectedphaseid;
-      $currentactivity = 0;
-    }
-
-    $phases = $this->getRecentPhases();
-    $phasearray = Array();
-
-    $alreadyadded = false;
-
-    // Check if the currently selected phase is already in the recent list.
-    for ($i=0;$i<count($phases);$i++)
-    {
-      if ($phases[$i]['id']==$currentphase)
-      {
-        $alreadyadded = true;
-      }
-    }
-
-    // if not already added (by the recent list), we have to load it manually.
-    if (!$alreadyadded&&$currentphase!="")
-    {
-      $phase = $this->getPhase($currentphase);
-      if (is_array($phase)) // Phase might have been deleted.
-      {
-        $phases[] = $phase;
-      }
-      else
-      {
-        // Apparently currentphase is set to something that no longer exists.
-        // We must reset the value.
-        $currentphase = "";
-      }
-    }
-
-    // Load Activities for each project
-    for ($i=0, $_i=count($phases);$i<$_i;$i++)
-    {
-      $phaseid_arr[] = $phases[$i]["id"];
-    }
-    if (count($phaseid_arr)>0)
-    {
-      $activities = $this->getActivities($phaseid_arr);
-
-      //create an empty element
-      $emptyelement = array (
-                          'phaseid' => 0,
-                          'id' => '0',
-                          'name' => atktext("no_activity_selected","project","projects"),
-                          'description' => '',
-                          'remarkrequired' => '0',
-                      );
-
-      //add an empty action option for each phase
-      foreach($phases as $phase)
-      {
-        //Link this empty option to a phase
-        $emptyelement["phaseid"] = $phase["id"];
-        array_unshift($activities,$emptyelement);
-      }
-
-      for ($i=0, $_i=count($activities);$i<$_i;$i++)
-      {
-        $phasearray[$activities[$i]["phaseid"]][] = $activities[$i];
-      }
-    }
-
+      $currentphaseid     = $selectedphaseid;
+      $currentactivity    = 0;
+    }      
+    
+    //get phases and activities
+    $phases = $this->getPhasesAndActivities($currentphaseid);
+    
+    $result = "";
+    
     if(!$this->hasFlag(AF_JS_UPDATEACTIVITY))
     {
       $result.= '<select name="phaseid">';
     }
     else
     {
-      $result .= $this->javascript($phasearray);
+      $result .= $this->javascript($phases);
       $result.= '<select name="phaseid" onChange="set_activities(this.options[this.selectedIndex].value,0)">';
     }
     $result.= '<option value="">' . atktext("select", "atk");
 
-    for ($i=0;$i<count($phases);$i++)
+    for ($i=0,$_i=count($phases);$i<$_i;$i++)
     {
       $result .= '<option value="'.$phases[$i]["id"].'" ';
 
       // de juiste default selecteren
-      if ($phases[$i]["id"]==$currentphase) $result.="selected";
+      if ($phases[$i]["id"]==$currentphaseid) $result.="selected";
 
       $result .= '>'.$phases[$i]["projectname"]." - ".$phases[$i]["name"];
     }
 
     $result .= '</select>&nbsp';
 
-    /*
-    if ($atkaction=="edit")
-    {
-      $targeturl_houradmin = dispatch_url("timereg.hours", "edit", array("atkselector" => 'hours.id='.$record['id'], "selectedphaseid" => "[id]", "atklevel"=>atkLevel()));
-    }
-    elseif($atkaction=="report")
-    {
-      $targeturl_houradmin = dispatch_url("reports.hoursurvey", "report", array("selectedphaseid" => "[id]", "atklevel"=>atkLevel()));
-      $saveform = false; // hoursurvey doesn't support session save..
-    }
-    else
-    {
-      $targeturl_houradmin = dispatch_url("timereg.hours", "admin", array("selectedphaseid" => "[id]", "atklevel"=>atkLevel()));
-    }
-    */
     $return_url = dispatch_url($ATK_VARS["atknodetype"], $ATK_VARS["atkaction"], array("selectedphaseid"=>"[id]", "atklevel"=>atkLevel()));
 
     $targeturl_phase = dispatch_url("project.phase", "select", array("atkfilter" => "projectid=[id]", "atktarget" => atkurlencode($return_url)));
@@ -154,12 +82,13 @@ class atkProjectPhaseAttribute extends atkAttribute
 
     // dirty trick: the dummy attribute which starts the javascript for the
     // correct activities must be notified of the currentphase.
-    $GLOBALS["currentphase"]=$currentphase;
-    $GLOBALS["currentactivity"]=$currentactivity;
-
-    return $result;
+    $GLOBALS["currentphase"]=$currentphaseid;
+    $GLOBALS["currentactivity"]=$currentactivity;    
+    
+    return $result;    
   }
-
+  
+  
   function display($rec)
   {
     return $rec[$this->fieldName()]["projname"]." - ".$rec[$this->fieldName()]["phasename"];
@@ -213,11 +142,98 @@ class atkProjectPhaseAttribute extends atkAttribute
     return "B.name, A.name";
   }
 
+  
+  /****** Data retrieving functions ******/
+  
+  /**
+   * get phases and activities
+   *
+   * get phases and activities that need to be used in the hour registration.
+   * currentphaseid is added if we do not already have it.
+   *
+   * @param int currentphaseid the id of the selected phase
+   * @return array an array with phases and activities
+   */
+  function getPhasesAndActivities($currentphaseid)
+  {        
+    //first get the recent phases
+    $phases = $this->getRecentPhases();
+            
+    //check currentphaseid
+    $validcurrentphaseid = (isset($currentphaseid) && $currentphaseid != "")?true:false;      
+    
+    //if we have a legimate currentphaseid check if we already have it in our recentphases.        
+    $alreadyadded = false;    //we start by assuming we don't have it
+    
+    if($validcurrentphaseid)
+    {
+      foreach($phases as $recentphase)
+      {      
+        if ($recentphase[$i]['id']==$currentphaseid)
+        {
+          $alreadyadded = true;
+          break;
+        }
+      }      
+    }
+        
+    //if the currentphase is not yet in the recentlist, we load the fase.
+    if(!$alreadyadded && $validcurrentphaseid)
+      $currentphase = $this->getPhase($currentphaseid);
+    
+    //if we got an empty array back, the phase must be deleted, in which case, we do not need it
+    if(is_array($currentphase) && $currentphase!=array())    
+      $phases[] = $currentphase;    
+    else     
+      $currentphaseid = "";
+    
+    //get all the phaseids
+    foreach ($phases as $phase)
+      $phaseid_arr[] = $phase["id"];
+        
+    //if we have any phases:
+    //create an empty activity. 
+    //get the activities for each phase
+    if(count($phaseid_arr) > 0)
+    {
+      $emptyactivity = $this->createEmptyActivity();
+      $allactivities = $this->getActivities($phaseid_arr);      
+    
+      for($i=0,$_i=count($phases);$i<$_i;$i++)
+      {
+        $emptyactivity["phaseid"]["id"]=$phases[$i]["id"];
+        
+        //Combine the activities and the emptyactivity and add them to the phases
+        $phases[$i]["activities"] = array();        
+        $phases[$i]["activities"][] = $emptyactivity;
+                
+        foreach($allactivities as $activity)
+        {
+          
+          if($activity["phaseid"]["id"] == $phases[$i]["id"])
+            $phases[$i]["activities"][] = $activity;
+        }
+      }      
+    }
+    
+    return $phases;    
+  }
+  
+  
+  /**   
+   * Retrieve the most recently registered phases for the current user. 
+   *
+   * The function retrieves a number of recent phases the currently logged
+   * in user has registered time on.
+   *
+   * @param none
+   * @return array array with records of most recent phases
+   */
   function getRecentPhases()
   {
     global $g_securityManager, $ATK_VARS, $g_sessionManager;
 
-    $user = getUser();
+    $user = &getUser();
 
     $reportnodetype = $g_sessionManager->stackVar("reportnodetype");
 
@@ -242,7 +258,7 @@ class atkProjectPhaseAttribute extends atkAttribute
     $j=0;
     $alreadyhad = Array();
     $newarr = Array();
-    for ($i=0;$i<count($arr)&&$j<$GLOBALS["config_numberofrecentprojects"];$i++)
+    for ($i=0,$_i=count($arr);$i<$_i&&$j<$GLOBALS["config_numberofrecentprojects"];$i++)
     {
       if (!in_array($arr[$i]['id'],$alreadyhad))
       {
@@ -256,67 +272,94 @@ class atkProjectPhaseAttribute extends atkAttribute
     return $newarr;
   }
 
+  /**
+   * Retrieve a phase record by its phaseid
+   *
+   * Retrieve a phase record by its phaseid
+   *
+   * @param int phaseid a phase id
+   * @return array record of the phase
+   */
   function getPhase($phaseid)
   {
     $db = &atkGetDb();
-
     $query = "SELECT phase.id, phase.name, project.name as projectname FROM project,phase ";
     $query.= "WHERE phase.projectid=project.id AND phase.id = $phaseid";
-
-    $arr = $db->getrows($query);
-
-    $phase = $arr[0];
-
-    return $phase;
+    $phase = $db->getrows($query);
+    return $phase[0];
   }
 
+  /**
+   * Retrieve activities by an array of phase ids
+   *
+   * Retrieve all activities that belong to one of the phases in the array 
+   * phaseid_arr.
+   *
+   * @param array phaseid_arr an array with phase ids
+   * @return array records with activities
+   */
   function getActivities($phaseid_arr)
   {
-    $db = &atkGetDb();
-
-    $query = "SELECT phase_activity.phaseid, id, name, description, remarkrequired FROM activity, phase_activity ";
-    $query.= "WHERE phase_activity.phaseid IN (".implode(",",$phaseid_arr).") AND activity.id = phase_activity.activityid ";
-    $query.= "ORDER BY name";
-
-    return $db->getrows($query);
+    $activitynode = &atkGetNode("project.activity");
+    return $activitynode->selectDb("activity.phaseid IN (".implode(",",$phaseid_arr).")","activity.name");
   }
-
+  
+  /**
+   * create an empty activity element
+   *
+   * Create an empty activity element.
+   *
+   * @param type name description
+   * @return type description
+   */
+  function createEmptyActivity()
+  {
+    return array (           
+           "id"         => "0",
+           "name"       => atktext("no_activity_selected","project","projects"),
+           "phaseid"    => array("name"=>"","id"=>0),
+           "activitytype" => array("name"=>"","id"=>0,"description"=>"","remarkrequired"=>false)
+           );    
+  }
+ 
+  
   function javascript($phasearray)
   {
+    
     $result = '<script type="text/javascript" language="javascript">';
+    
     $result.= 'if (parseInt(navigator.appVersion)>=3) version="n3"; else version="n2";
 
                function entry(activityid,activityname) { this.actid=activityid; this.actname=activityname; }
                activityarray = new Array();
-               Array.prototype.count=0;
+               Array.prototype.count=0;               
                Array.prototype.id=0;';
 
+    reset($phasearray);    
 
-    reset($phasearray);
-
-    $i=0;
-
-    while (list($phaseid, $phaseinfoarray) = each($phasearray))
-    {
+    for($i=0,$_i=count($phasearray);$i<$_i;$i++)
+    { 
+      $phaseid = $phasearray[$i]["id"];
+      $activities = $phasearray[$i]["activities"];
+      
       $result.='activityarray['.$i."] = new Array();\n";
       $result.='activityarray['.$i.'].id ='.$phaseid.";\n";
 
-      for ( $j=0; $j<count($phaseinfoarray); $j++)
+      for ( $j=0; $j<count($activities); $j++)
       {
-        $descrip = $phaseinfoarray[$j]['name'];
-        if ($phaseinfoarray[$j]['description']!="")
+        $descrip = $activities[$j]['name'];
+        if ($activities[$j]['description']!="")
         {
-          $descrip.=" (".$phaseinfoarray[$j]['description'].")";
+          $descrip.=" (".$activities[$j]['description'].")";
         }
-        $result.= 'activityarray['.$i.']['.$j.'] = new entry('.$phaseinfoarray[$j]['id'];
+        $result.= 'activityarray['.$i.']['.$j.'] = new entry('.$activities[$j]['id'];
         $result.= ',"'.addslashes($descrip)."\");\n";
       }
-      $result.= 'activityarray['.$i.'].count = ' .count($phaseinfoarray).";\n";
-      $i++;
+      $result.= 'activityarray['.$i.'].count = ' .count($activities).";\n";      
     }
 
     $result.='function set_activities(projectid, selectedactivityid)
-              {
+              {                 
                 if(version=="n3")
                 {
                   // Find project.
@@ -327,14 +370,13 @@ class atkProjectPhaseAttribute extends atkAttribute
                   }
 
                   with (document.entryform.activityid)
-                  {
+                  {                    
                     for (var i = options.length; i >= 0; i--) options[i] = null;
-
+                    
                     var somethingselected=false;
 
                     if (projectid!=0)
                     {
-
                       for(var i=0;i<activityarray[projectindex].count;i++)
                       {
                         options[i] = new Option(activityarray[projectindex][i].actname,activityarray[projectindex][i].actid);
@@ -353,12 +395,12 @@ class atkProjectPhaseAttribute extends atkAttribute
                     if (!somethingselected) options[0].selected=true;
                   }
                 }
-              }
-
+              }              
               </script>';
-    return $result;
+    
+    return $result; 
   }
-
+  
   function dbFieldType()
   {
     return "number";

@@ -13,7 +13,12 @@
       registerNode("project.project", array("admin", "add", "edit", "delete", "stats","planning", "initialplanning", "any_project"));
       registerNode("project.phase", array("add", "edit", "delete"));
       registerNode("project.deliverable", array("add", "edit", "delete"));
+      //@todo: is stats voor activity nog nodig?
       registerNode("project.activity", array("admin", "add", "edit", "delete", "stats"));
+      //@todo: stats van activity moet verwerkt worden in activitytype
+      registerNode("project.activitytype", array("admin", "add", "edit", "delete", "stats"));
+      //@todo: werkt tpl_activity goed?
+      registerNode("project.tpl_activity", array("admin", "add", "edit", "delete"));
       registerNode("project.tpl_phase", array("admin", "add", "edit", "delete"));
       registerNode("project.tpl_project", array("admin", "add", "edit", "delete"));
       registerNode("project.role", array("admin", "add", "edit", "delete"));
@@ -42,7 +47,12 @@
         $this->menuitem("project_stats", dispatch_url("project.projectstats", "stats", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "stats"));
       }
       $this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement");
-      $this->menuitem("activity_admin", dispatch_url("project.activity", "admin"), "setup", array("project.activity", "admin"));
+      //@todo: is activity_admin nog nodig?
+      //$this->menuitem("activity_admin", dispatch_url("project.activity", "admin"), "setup", array("project.activity", "admin"));
+      //@todo: controleren of admin voor activitytype werkt
+      $this->menuitem("activitytype_admin", dispatch_url("project.activitytype", "admin"), "setup", array("project.activitytype", "admin"));
+      //@todo: werkt tpl_activity
+      $this->menuitem("tpl_activity", dispatch_url("project.tpl_activity", "admin"), "setup", array("project.tpl_activity", "admin"));
       $this->menuitem("tpl_phase_admin", dispatch_url("project.tpl_phase", "admin"), "setup", array("project.tpl_phase", "admin"));
       $this->menuitem("tpl_project_admin", dispatch_url("project.tpl_project", "admin"), "setup", array("project.tpl_project", "admin"));
       $this->menuitem("role_admin", dispatch_url("project.role", "admin"), "setup", array("project.role", "admin"));
@@ -66,7 +76,7 @@
      * @param hours $atknode hours node instance
      */
     function timereg_hours_modifier(&$node)
-    {
+    {      
       atkimport("module.project.hourslistener");
       $node->addListener(new hoursListener(array("save", "update")));
     }

@@ -230,12 +230,27 @@ class hours extends atkNode
   }
 
   /**
-   * Determine the number of available activities
+   * Determine the number of available activities   
    */
-  function getActivityCount()
+//  function getActivityCount()
+//  {
+//    $db = &atkGetDb();
+//    $result = $db->getrows("SELECT count(*) as activitycount FROM activity");
+//    return $result[0]['activitycount'];
+//  }  
+
+  function getActivityCountByPhase($phaseid)
   {
     $db = &atkGetDb();
-    $result = $db->getrows("SELECT count(*) as activitycount FROM activity");
+    $result = $db->getrows("SELECT count(*) as activitycount FROM activity WHERE phaseid=$phaseid");
+    return $result[0]['activitycount'];
+  }  
+
+  // @todo: we hebben nu activitytype. Moeten die nu geteld worden?
+  function getActivitytypeCount()
+  {
+    $db = &atkGetDb();
+    $result = $db->getrows("SELECT count(*) as activitycount FROM activitytype");
     return $result[0]['activitycount'];
   }
 
@@ -245,11 +260,15 @@ class hours extends atkNode
   function addPhaseAndActivity()
   {
     // Determine wheter the activity attribute should be displayed or not.
-    $displayactivityattribute = $this->getActivityCount() != 1;
+    //$displayactivityattribute = $this->getActivityCount() != 1;
+    // todo: we hebben nu activitytype. Moeten die nu geteld worden?
+    $displayactivityattribute = $this->getActivitytypeCount() != 1;
 
     $this->add(new atkProjectPhaseAttribute("phaseid",AF_OBLIGATORY|($displayactivityattribute ? AF_JS_UPDATEACTIVITY : 0)));
     $this->add(new atkListAttribute("activityid",array("dummy","dummy","dummy","dummy","dummy"),array(0,0,0,0,0),AF_OBLIGATORY|($displayactivityattribute ? 0 : AF_HIDE), 10));
   }
+  
+  
 
   function setLock()
   {
@@ -291,12 +310,14 @@ class hours extends atkNode
                     "todate"=>$this->getInitialDate()
                    );
 
+    // todo: initial activity setten kan niet meer gedaan worden op deze 
+    // manier.
     // Set an initial activityid if there's exactly one activity
-    if ($this->getActivityCount() == 1) {
-      $db = &atkGetDb();
-      $result = $db->getrows("SELECT id FROM activity");
-      $values["activityid"] = $result[0]["id"];
-    }
+//    if ($this->getActivityCount() == 1) {    
+//      $db = &atkGetDb();
+//      $result = $db->getrows("SELECT id FROM activity");
+//      $values["activityid"] = $result[0]["id"];
+//    }
 
     // Return the initial values
     return $values;
@@ -898,16 +919,24 @@ class hours extends atkNode
    */
   function validate(&$record, $mode)
   {
-    // If no activities available, trigger an error:
-    if ($this->getActivityCount() == 0) {
+    atk_var_dump($record,"<h1>record</h1>");
+    
+    $phaseid = $record["phaseid"]["phaseid"];    
+    if(!isset($phaseid) || $phaseid==0) $phaseid = "";
+    
+    // If no activities available, trigger an error:    
+    if($this->getActivityCountByPhase($phaseid) == 0) {
       triggerError($record, "activityid", "Please add one or more activities first");
     }
-    else {
-      $obj = getNode("project.activity");
-      $act = $obj->selectDb("id=".$record["activityid"]);
+    else {      
+      $obj_activity     = &atkGetNode("project.activity");
+      $obj_activitytype = &atkGetNode("project.activitytype");
+      $act  = $obj_activity->selectDb("activity.id=".$record["activityid"]);
+      $type = $obj_activitytype->selectDb("activitytype.id=".$act[0]["activitytype"]["id"]);
+      atk_var_dump($act);
       if (count($act)==1)
       {
-        if ($act[0]["remarkrequired"]==1)
+        if ($type[0]["remarkrequired"]==1)
         {
           // Specification is required. So we set the obligatory flag.
           // The validation of this flag is done later on by the default

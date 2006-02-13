@@ -13,11 +13,13 @@ class tpl_phase extends atkNode
     $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE, 50));
     $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_ADD));
 
-    $tmp = new atkManyBoolRelation("tpl_phase_activity", "project.tpl_phase_activity", "project.activity",AF_HIDE_LIST|AF_HIDE_ADD);
+    //@todo: kan de manybool relation nog gebruikt worden als activity uniek is per fase?
+    $tmp = new atkManyBoolRelation("tpl_phase_activity", "project.tpl_phase_activity", "project.tpl_activity",AF_HIDE_LIST|AF_HIDE_ADD);
     $tmp->m_localKey = "phaseid";
     $tmp->m_remoteKey = "activityid";
     $this->add($tmp);
-
+    
+    
     $this->setOrder("name");
     $this->setTable("tpl_phase","tpl_phase");
   }
