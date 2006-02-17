@@ -59,61 +59,9 @@
       $this->atkNode("hoursurvey");
     }
 
-    function action_report(&$handler)
+    function &initializeColumnConfig(&$hoursnode, &$orderby, &$orderdirection, &$subtotal)
     {
-      global $g_user, $g_sessionManager;
-
-      $this->addStyle("style.css");
-
-      // Manual sort config
-      $orderby =            $this->m_postvars["orderby"];
-      $orderdirection =     $this->m_postvars["orderdirection"];
-      $subtotal =           $this->m_postvars["subtotal"];
-
-      $activity_id =        $g_sessionManager->pageVar("activity_id");
-      $projectid =          $g_sessionManager->pageVar("projectid");
-      $selectedprojectid =  $g_sessionManager->pageVar("selectedprojectid");
-      $phaseid =            $g_sessionManager->pageVar("phaseid");
-      $userid =             $g_sessionManager->pageVar("userid");
-      $nameswitch =         $g_sessionManager->pageVar("nameswitch");
-      $roleid =             $g_sessionManager->pageVar("roleid");
-      $remark =             $g_sessionManager->pageVar("remark");
-      $aggregate =          $g_sessionManager->pageVar("aggregate");
-      $startdate =          $g_sessionManager->pageVar("startdate");
-      $enddate =            $g_sessionManager->pageVar("enddate");
-      $col =                $g_sessionManager->pageVar("col");
-      // the selected customer_id is found as "customer.id='3'" in the postvars
-      $organizationarr =    decodeKeyValuePair($this->m_postvars["organizationid"]);
-      $organizationid =     $organizationarr["organization.id"];
-      $department_name =    $g_sessionManager->pageVar("departmentid");
-      $functionlevelswitch =$g_sessionManager->pageVar("functionlevelswitch");
-      $outputType =         $this->m_postvars["outputType"];
-
-      $externalHourSurveyColumns = atkHarvestModules("getHourSurveyColumns", "", true);
-     
-      //The orderby postvar is only filled when clicking on the refresh button.
-      //Atk uses the postvar atkorderby when a user clicks on a column to sort on it. Powers combined
-      if(!isset($orderby) && isset($this->m_postvars["atkorderby"])) $orderby[] = $this->m_postvars["atkorderby"];
-      
-      foreach($externalHourSurveyColumns as $module => $attr)
-      {
-        eval("\$external$attr = '".$g_sessionManager->pageVar($attr)."';");
-      }
-
-      if (empty($outputType))
-      {
-        $outputType=0;   //default=standard
-      }
-
-      $hoursnode = &getNode("timereg.hours");
-      $hoursnode->m_postvars = $this->m_postvars; // Share postvars.
-
-      // Hack: make sure the activities, which are populated by the project/phase column, are properly loaded.
-      $hoursnode->add(new sortableActivity());
-
-
       $columnConfig = &$hoursnode->getColumnConfig();
-
       
       if (is_array($orderby))
       {
@@ -129,62 +77,136 @@
           }
         }
       }
+      return $columnConfig;
+    }
+    
+    function createDropDownList($name,$data,$keyfield="", $valuefield="", $selectedkey="", $emptyoptiontext="", $onchange="")
+    {       
+      //determine options
+      $mode = "";
+      $err = false;
+      if($keyfield=="" && $valuefield=="")      $mode = "simple";
+      elseif ($keyfield!="" && $valuefield!="") $mode = "advanced";      
+      else 
+      {
+        $err = true;
+        atkerror("Illegal arguments in hoursurvey->createdropdownlist. All the fields keyfield, valuefield and selectedkey need to have a value OR none of them should have a value.");
+      }
+      
+      $output = "";
+      
+      if($onchange != "")
+        $output = '<select name="'.$name.'" onchange="'.$onchange.'">';
+      else 
+        $output = '<select name="'.$name.'">';      
+      
+      if($emptyoptiontext != "")              
+        $output.= '<option value="" '.(($selectedkey==-1)?"selected":"").'>'.atktext($emptyoptiontext).'</option>';
+      
+      
+      if(!$err)
+      {
+        if($mode == "simple")
+        {
+          for($i=0,$_i=count($data);$i<$_i;$i++)        
+            $output.= '<option value="'.$i.'" '.(($selectedkey==$i) ? "selected" : "").'>'.$data[$i].'</option>';
+          
+        }
+        else
+        {
+          foreach ($data as $item)                  
+            $output.= '<option value="'.$item[$keyfield].'" '.(($selectedkey==$item[$keyfield]) ? "selected" : "").'>'.$item[$valuefield].'</option>';        
+        }
+        $output.= '</select>';
+        
+      }
+      else 
+        $output = "Cannot create dropdownlist";
+      return $output;
+    }
+    
+    function action_report(&$handler)
+    {
+      atkimport("module.utils.dateutil");
+      
+      $sessionManager = &atkGetSessionManager();
+      $user = &getUser();
+      $this->addStyle("style.css");
+
+      // Manual sort config
+      $orderby =            $this->m_postvars["orderby"];
+      $orderdirection =     $this->m_postvars["orderdirection"];
+      $subtotal =           $this->m_postvars["subtotal"];
+
+      //$activity_id =        $sessionManager->pageVar("activity_id");
+      $activity_name =      $sessionManager->pageVar("activity_name");
+      $activitytype_id =    $sessionManager->pageVar("activitytype_id");
+      $projectid =          $sessionManager->pageVar("projectid");
+      $selectedprojectid =  $sessionManager->pageVar("selectedprojectid");
+      $phaseid =            $sessionManager->pageVar("phaseid");
+      $userid =             $sessionManager->pageVar("userid");
+      $nameswitch =         $sessionManager->pageVar("nameswitch");
+      $roleid =             $sessionManager->pageVar("roleid");
+      $remark =             $sessionManager->pageVar("remark");
+      $aggregate =          $sessionManager->pageVar("aggregate");
+      $startdate =          $sessionManager->pageVar("startdate");
+      $enddate =            $sessionManager->pageVar("enddate");
+      $col =                $sessionManager->pageVar("col");
+      // the selected customer_id is found as "customer.id='3'" in the postvars
+      $organizationarr =    decodeKeyValuePair($this->m_postvars["organizationid"]);
+      $organizationid =     $organizationarr["organization.id"];
+      $department_name =    $sessionManager->pageVar("departmentid");
+      $functionlevelswitch =$sessionManager->pageVar("functionlevelswitch");
+      $outputType =         $this->m_postvars["outputType"];
+
+      $externalHourSurveyColumns = atkHarvestModules("getHourSurveyColumns", "", true);
+     
+      //The orderby postvar is only filled when clicking on the refresh button.
+      //Atk uses the postvar atkorderby when a user clicks on a column to sort on it. Powers combined
+      if(!isset($orderby) && isset($this->m_postvars["atkorderby"])) $orderby[] = $this->m_postvars["atkorderby"];
+      
+      foreach($externalHourSurveyColumns as $module => $attr)      
+        eval("\$external$attr = '".$sessionManager->pageVar($attr)."';");
+            
+      $outputType = (empty($outputType)) ? 0 : $outputType; //default=standard        
+      
+      $hoursnode = &getNode("timereg.hours");
+      $hoursnode->m_postvars = $this->m_postvars; // Share postvars.
+
+      // Hack: make sure the activities, which are populated by the project/phase column, are properly loaded.
+      $hoursnode->add(new sortableActivity());
+
+      $columnConfig = $this->initializeColumnConfig($hoursnode, $orderby, $orderdirection, $subtotal);      
 
       // Determine collumn suppresslist:
       $arr_col = $hoursnode->getHourSurveyColumns();
 
       $suppress = array();
+      
+      // If no columns are selected. Default->select all.
       if (!is_array($col)||count($col)==0)
+        $col = $arr_col;
+      else 
       {
-        // No collumns selected. Default->select all.
-        for($i=0,$_i=count($arr_col);$i<$_i;$i++)
-        {
-          $col[]=$arr_col[$i];
-        }
+        //When col already had column names, check which column names should be suppressed 
+        foreach($arr_col as $c)
+          if (!in_array($c,$col)) $suppress[]= $c;
       }
-      for($i=0,$_i=count($arr_col);$i<$_i;$i++)
-      {
-        if (!in_array($arr_col[$i],$col)) $suppress[]= $arr_col[$i];
-      }
-
-      if (is_array($startdate))
-      {
-        $startdate = $startdate["year"]."-".sprintf("%02d",$startdate["month"])."-".sprintf("%02d",$startdate["day"]);
-      }
-      else
-      {
-        if (!isset($startdate)||$startdate=="")
-        {
-          $startdate =  date("Y-m-d" ,time()-(86400*7));
-        }
-      }
-      if (is_array($enddate))
-      {
-        $enddate = $enddate["year"]."-".sprintf("%02d",$enddate["month"])."-".sprintf("%02d",$enddate["day"]);
-      }
-      else
-      {
-        if (!isset($enddate)||$enddate=="")
-        {
-          $enddate = date('Y-m-d');
-        }
-      }
-
-      if (!isset($userid)||$userid=="")
-      {
-        $userid=$g_user["id"];
-      }
-
-      if (!isset($nameswitch)||$nameswitch=="")
-      {
-        $nameswitch="name";
-      }
-
+      
+      // init startdate
+      if (is_array($startdate))  $startdate = $startdate["year"]."-".sprintf("%02d",$startdate["month"])."-".sprintf("%02d",$startdate["day"]);      
+      else                       $startdate = (!isset($startdate)||$startdate=="") ? date("Y-m-d" ,time()-(86400*7)) : $startdate;
+      
+      
+      if (is_array($enddate))    $enddate = $enddate["year"]."-".sprintf("%02d",$enddate["month"])."-".sprintf("%02d",$enddate["day"]);      
+      else                       $enddate =  (!isset($enddate)||$enddate=="") ? date('Y-m-d') : $enddate;          
+      
+      $userid     = (!isset($userid)||$userid=="") ? $user["id"] : $userid;
+      $nameswitch = (!isset($nameswitch)||$nameswitch=="") ? "name" : $nameswitch;        
+      
       // If we came from 'search all projects', a selectedprojectid var is filled.
-      if (isset($selectedprojectid)&&$selectedprojectid!="")
-      {
-        $projectid=$selectedprojectid;
-      }
+      $projectid  = (isset($selectedprojectid)&&$selectedprojectid!="") ? $selectedprojectid : $projectid;        
+      
 
       $view_all = $this->allowed('view_all');
 
@@ -238,17 +260,19 @@
         $layout->td(atktext('project').':');
 
         // we have to pass a 'dummy' record to the attributes to set their default value.
-        $dummyrec = array("projectid"=>$projectid,
-        "organizationid"=>array("id"=>$organizationid), // manytoonerelation needs subarray
-        "phaseid"=>Array("phaseid"=>$phaseid), // is implemented as an array in projphaseattrib.
-        "startdate"=>array("year"=>substr($startdate,0,4),
-        "month"=>substr($startdate,5,2),
-        "day"=>substr($startdate,8,2)),
-        "enddate"=>array("year"=>substr($enddate,0,4),
-        "month"=>substr($enddate,5,2),
-        "day"=>substr($enddate,8,2)),
-        "aggregate"=>$aggregate,
-        "remark"=>$remark);
+        $dummyrec = array(
+            "projectid"     =>$projectid,
+            "organizationid"=>array("id"      =>$organizationid), // manytoonerelation needs subarray
+            "phaseid"       =>array("phaseid" =>$phaseid), // is implemented as an array in projphaseattrib.
+            "startdate"     =>array("year"    =>substr($startdate,0,4),
+            "month"         =>substr($startdate,5,2),
+            "day"           =>substr($startdate,8,2)),
+            "enddate"       =>array("year"    =>substr($enddate,0,4),
+            "month"         =>substr($enddate,5,2),
+            "day"           =>substr($enddate,8,2)),
+            "aggregate"     =>$aggregate,
+            "remark"        =>$remark
+            );
 
         foreach ($externalHourSurveyColumns as $module => $attr)
         {
@@ -275,7 +299,7 @@
         $phaseatt = $hoursnode->m_attribList["phaseid"];
         $phaseatt->m_flags = $phaseatt->m_flags&~AF_JS_UPDATEACTIVITY;
         $phaseatt->m_nested = false;
-        $g_sessionManager->stackVar("reportnodetype","hoursurvey");
+        $sessionManager->stackVar("reportnodetype","hoursurvey");
         $layout->td($phaseatt->edit($dummyrec));
 
         $layout->output('</tr>');
@@ -301,14 +325,14 @@
         $layout->td(atktext('employee').':');
 
         if($view_all)
-        {
+        {          
           $layout->td('<SELECT name="nameswitch"><OPTION VALUE="name">'.atktext("name").': <OPTION VALUE="supervisor" '.($nameswitch=="supervisor"?"selected":"").'>'.atktext("supervisor").': </SELECT>'.
           ' <SELECT name="userid">'.$this->get_employees($userid).'</SELECT>');
         }
         else
         {
-          $userid = $g_user["id"];
-          $layout->td($g_user["name"].'<input type="hidden" name="userid" value="'.$g_user["id"].'">');
+          $userid = $user["id"];
+          $layout->td($user["name"].'<input type="hidden" name="userid" value="'.$user["id"].'">');
         }
         $layout->output('</tr>');
         $this->_addOr($layout);
@@ -320,15 +344,20 @@
 
         $layout->output('</tr><tr>');
 
-
         $layout->td('<hr>','colspan="2"');
         $layout->output('</tr><tr>');
-        $layout->td(atktext('activity').': ');
-        $layout->td('<SELECT name="activity_id">'.$this->get_activities($activity_id).'</SELECT>');
+        
+//        $layout->td(atktext('activity').': ');
+//        $layout->td('<SELECT name="activity_id">'.$this->get_activities().'</SELECT>');
+//        $layout->output('</tr><tr>');
+
+        $layout->td(atktext("activitytype").": ");                                                
+        $activitytypes = $this->get_activitytypes();        
+        $layout->td($this->createDropDownList("activitytype_id",$activitytypes,"id","name",$activitytype_id,"allactivitytypes"));        
         $layout->output('</tr><tr>');
         $layout->td('<hr>','colspan="2"');
         $layout->output('</tr><tr>');
-
+        
         $layout->td(atktext("timespan").': ');
 
         $startdateatt = new atkDateAttribute("startdate","F d Y","d F Y", 0, date("Ymd"),AF_OBLIGATORY);
@@ -342,30 +371,27 @@
         $layout->register_script(atkconfig("atkroot")."javascript/timereg.js");
         $layout->td(atktext("lookbackperiod").': ');
         $output = '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="33%">';
-        $output .= '<select name="startperiod" onchange="setStartEndDates(\'enddate\', \'startperiod\', '.date("Ymd").'); document.entryform.endperiod.value = 0; setStartEndDates(\'startdate\', \'endperiod\', '.date("Ymd").');">
-                        <option value="0" selected>---</option>
-                        <option value="1">1 '.strtolower(atktext("week")).'</option>
-                        <option value="2">2 '.strtolower(atktext("weeks")).'</option>
-                        <option value="3">3 '.strtolower(atktext("weeks")).'</option>
-                        <option value="4">4 '.strtolower(atktext("weeks")).'</option>
-                        <option value="5">1 '.strtolower(atktext("month")).'</option>
-                        <option value="6">2 '.strtolower(atktext("months")).'</option>
-                        <option value="7">3 '.strtolower(atktext("months")).'</option>
-                        <option value="8">6 '.strtolower(atktext("months")).'</option>
-                       </select></td>';
-
+        
+        //startperiod and endperiod have the same period values, so we use them for both.
+        $periods = array();
+        $periods[] = "---";
+        $periods[] = "1 ".strtolower(atktext("week"));
+        $periods[] = "2 ".strtolower(atktext("weeks"));
+        $periods[] = "3 ".strtolower(atktext("weeks"));
+        $periods[] = "4 ".strtolower(atktext("weeks"));
+        $periods[] = "1 ".strtolower(atktext("month"));
+        $periods[] = "2 ".strtolower(atktext("months"));
+        $periods[] = "3 ".strtolower(atktext("months"));
+        $periods[] = "6 ".strtolower(atktext("months"));
+        
+        $script = "setStartEndDates('enddate', 'startperiod', '".date("Ymd")."'); document.entryform.endperiod.value = 0; setStartEndDates('startdate', 'endperiod', '".date("Ymd")."');";
+        $output.= $this->createDropDownList("startperiod",$periods, "", "", 0, "",$script);
+        $output .= "</td>";        
         $output .= '<td width="34%" align="center">&nbsp;</td>';
-        $output .= '<td width="33%" align="right"><select name="endperiod" onchange="setStartEndDates(\'startdate\', \'endperiod\', '.date("Ymd").'); document.entryform.startperiod.value = 0; setStartEndDates(\'enddate\', \'startperiod\', '.date("Ymd").');">
-                        <option value="0" selected>---</option>
-                        <option value="1">1 '.strtolower(atktext("week")).'</option>
-                        <option value="2">2 '.strtolower(atktext("weeks")).'</option>
-                        <option value="3">3 '.strtolower(atktext("weeks")).'</option>
-                        <option value="4">4 '.strtolower(atktext("weeks")).'</option>
-                        <option value="5">1 '.strtolower(atktext("month")).'</option>
-                        <option value="6">2 '.strtolower(atktext("months")).'</option>
-                        <option value="7">3 '.strtolower(atktext("months")).'</option>
-                        <option value="8">6 '.strtolower(atktext("months")).'</option>
-                       </select></td></tr></table>';
+        $output .= '<td width="33%" align="right">';        
+        $script = "setStartEndDates('startdate', 'endperiod', '".date("Ymd")."'); document.entryform.startperiod.value = 0; setStartEndDates('enddate', 'startperiod','".date("Ymd")."');";        
+        $output .= $this->createDropDownList("endperiod", $periods, "", "", 0, "", $script);        
+        $output.='</td></tr></table>';
 
         $layout->td($output);
         $layout->output('</tr><tr>');
@@ -482,7 +508,8 @@
 
       // Create Filter
       $filter="activitydate>='".$startdate."' AND activitydate<='".$enddate."'";
-      if(!empty($activity_id)&&$activity_id!="") $filter.=" AND hours.activityid=".$activity_id;
+      //if(!empty($activity_id)&&$activity_id!="") $filter.=" AND hours.activityid=".$activity_id;
+      if(!empty($activitytype_id)&&$activitytype_id!="") $filter.= " AND C.activitytype=".$activitytype_id;
       if(!empty($phaseid)&&$phaseid!="") $filter.=" AND hours.phaseid=".$phaseid;
       if(!empty($projectid)&&$projectid!="") $filter.=" AND A.projectid=".$projectid;
       if(!empty($remark)&&$remark!="") $filter.=" AND hours.remark LIKE '%$remark%'";
@@ -500,7 +527,7 @@
       // employee table is not yet added to the query. Force that by adding a manytoonerel,
       // so we display a users name.
       $hoursnode->add(new atkManyToOneRelation("userid", "employee.employee"));
-
+            
       // organization and person_organization tables are not yet added to the query.
       // Since this is a many:many thing between projects and organizations, with the
       // contactpersons als intermediairy, we have to add a special attribute which
@@ -510,7 +537,6 @@
         useattrib("project.filterprojectbyorganizationattrib");
         $hoursnode->add(new filterProjectByOrganizationAttrib($organizationid, $roleid, "B")); // the projectphaseattribute uses 'B' as alias for the project table.
       }
-
 
       if ($nameswitch=="supervisor")
       {
@@ -542,9 +568,37 @@
       //The id field needs to be added too, or else the dispatch url doesn't know which record to edit.
       if(!in_array("id",$col))
         $col[] = "id";
-
+        
+        
+        
+      //Hack on a hack:        
+      //In the hoursnode activityid is a listAttribute instead of a atkmanytoonerelation.       
+      //Because of this, the activitytype is not loaded.
+      //We need to force the hournode to load the activitytype with the activity therefore we need to 
+      //add the activitytype to the descriptorTemplate.
+      //The activity is not shown when using AF_HIDE, but we do need the data of the activity to
+      //determine the activitytype, therefore we use AF_FORCE_LOAD.
+      $hoursnode->remove("activityid");
+      $rel = &new atkManyToOneRelation("activityid","project.activity",AF_HIDE|AF_FORCE_LOAD);
+      if ($rel->createDestination())
+        $rel->m_destInstance->setDescriptorTemplate("[name][activitytype]");      
+      $hoursnode->add($rel);
+            
+      /* @var $activitynode ATKNode */      
       $data = $hoursnode->selectDb($filter,implode(",",$orderbystatement), "", "", $col);
-
+      
+      //We need to force the hoursnode to render the activitytype, so we add the activitytype to the node.
+      //This attribute can only be added AFTER the selectDb, because the database field activitytype
+      //doesn't realy exist in the hoursnode table.
+      $hoursnode->add(new atkManyToOneRelation("activitytype","project.activitytype"),null,500);
+            
+      //The activitytype needs is loaded in the data, but needs to be moved to make the data visible in the
+      //recordlist      
+      for($i=0,$_i=count($data);$i<$_i;$i++)      
+        $data[$i]["activitytype"] = $data[$i]["activityid"]["activitytype"];        
+      
+      $hoursnode->attribSort();      
+      
       if (moduleExists("billing"))
       {
          // todo, add columns with rate and costs (are stored flat in the table, no reason to perform calculations)
@@ -573,7 +627,9 @@
       if ($outputType=="1")
       {
         $rl = &atknew("atk.recordlist.atkcustomrecordlist");
-        $layout->output($rl->render($hoursnode, $data,"<tr>","<td>","</td>","</tr>", "0", "", $suppress));
+        
+        /* @var $rl atkCustomRecordList */
+        $layout->output($rl->render($hoursnode, $data,"<tr>","<td>","</td>","</tr>", "0", "", $suppress));        
       }
       if ($outputType=="2")
       {
@@ -584,23 +640,19 @@
       }
     }
 
-    function get_activities($act_id)
+    function get_activitytypes()
+    {      
+      $activitytypenode = &getNode("project.activitytype");
+      return $activitytypenode->selectDb("","name","","","id, name");
+    }    
+    
+    
+    function get_activities()
     {
-      $db = &atkGetDb();
-      // Get the activities
-      $sql = "SELECT id,name
-              FROM activity
-              ORDER BY name
-             ";
-      $records = $db->getrows($sql);
-      if($act_id==-1) { $sel="SELECTED"; } else { $sel=""; }
-      $activity_code='<OPTION VALUE="" '.$sel.'>'.atktext('allactivities').'</OPTION>';
-      for($i=0,$_i=count($records);$i<$_i;$i++)
-      {
-        if($act_id==$records[$i]["id"]) { $sel="SELECTED"; } else { $sel=""; }
-        $activity_code.='<OPTION VALUE="'.$records[$i]["id"].'" '.$sel.'>'.$records[$i]["name"].'</OPTION>';
-      }
-      return $activity_code;
+      $activitynode = &getNode("project.activity");
+      
+      /* @var $activitynode atkNode       */
+      return $activitynode->selectDb("","activitytype","","",array("id","activitytype"));
     }
 
     function get_departments($depname)
