@@ -26,15 +26,17 @@ class activity extends atkNode
     $this->atkNode("activity", NF_MRA);
 
     $this->add(new atkAttribute("id",AF_AUTOKEY));        
-    $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_UNIQUE|AF_SEARCHABLE, 50));    
+    $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE, 50));    
     
     //@todo: remarkrequired en description is verhuist naar activitytype
     //$this->add(new atkAttribute("description",AF_SEARCHABLE, 50));
     //$this->add(new atkBoolAttribute("remarkrequired"));
     
-    $this->add(new atkManyToOneRelation("phaseid","project.phase"));    
+    $this->add(new atkManyToOneRelation("phaseid","project.phase", AF_HIDE));
+    $this->add(new atkOneToOneRelation("taskid","task.task"));
     //@todo: vlaggen controleren
-    $this->add(new atkManyToOneRelation("activitytype","project.activitytype"));
+    $this->add(new atkManyToOneRelation("activitytype","project.activitytype"));    
+    $this->add(new atkBoolAttribute("overtimecompensation"));
 
     $this->setTable("activity","activity");
     $this->setOrder("name");

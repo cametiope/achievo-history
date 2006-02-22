@@ -45,7 +45,7 @@
 //      $tmp->m_remoteKey = "activityid";
 //      $this->add($tmp);
       //@todo: Vlaggen controleren, zijn deze vlaggen nodig ?
-      $this->add(new atkOneToManyRelation("activities","project.activity","phaseid",AF_HIDE_LIST|AF_OBLIGATORY));
+      $this->add(new atkOneToManyRelation("activities","project.activity","phaseid",AF_HIDE_LIST));
 
       // template *must* come after phase_activity, because phase_activity does a delete of all
       // records on store, so template must be stored after phase_activity.
@@ -136,19 +136,24 @@
      */
     function validate(&$record, $mode, $ignoreList=array())
     {
-      // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)
-      $hoursNode = getNode("timereg.hours");
-      $earliesttimeregforphase = $hoursNode->selectDb("hours.phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
-      atkimport("module.utils.dateutil");
-      $earliesttimeregdate = empty($earliesttimeregforphase) ? null : dateutil::arr2stamp($earliesttimeregforphase["0"]["activitydate"]);
-
-      // Get the start date of this phase record
-      $phasestartdate = dateutil::arr2stamp($record["startdate"]);
-
-      // Trigger an error on the startdate attribute if the earliesttimeregdate is not null and the startdate of this record is higher than de first earliesttimeregdate
-      if ((!is_null($earliesttimeregdate)) && ($phasestartdate > $earliesttimeregdate))
+      // This check can only be done when updating an existing phase, not when adding a new one
+      if ($mode == "update")
       {
-        triggerError($record, "startdate", "error_cannot_set_startdate_later_than_first_timereg");
+        // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)
+        $hoursNode = getNode("timereg.hours");
+        $earliesttimeregforphase = $hoursNode->selectDb("phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
+        atkimport("module.utils.dateutil");
+        $earliesttimeregdate = empty($earliesttimeregforphase) ? null : dateutil::arr2stamp($earliesttimeregforphase["0"]["activitydate"]);
+
+        // Get the start date of this phase record
+        $phasestartdate = dateutil::arr2stamp($record["startdate"]);
+
+        // Trigger an error on the startdate attribute if the earliesttimeregdate is not null and the startdate of this record is higher than de first earliesttimeregdate
+        if ((!is_null($earliesttimeregdate)) && ($phasestartdate > $earliesttimeregdate))
+        {
+          triggerError($record, "startdate", "error_cannot_set_startdate_later_than_first_timereg");
+        }
+
       }
 
       // Call the parents validate function to perform the default validation on the record
