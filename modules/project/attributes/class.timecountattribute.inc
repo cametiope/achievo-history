@@ -17,9 +17,12 @@
     {
       if ($mode!="add"&&$mode!="update")
       {
-        $query->addField("sum(hours.time)");        
+        $query->addField("sum(hours.time)");
         $query->addJoin("phase","phase","phase.projectid = project.id",true);
-        $query->addJoin("hours","hours","hours.phaseid = phase.id",true);
+        $query->addJoin("activity","activity","activity.phaseid=phase.id",true);
+        $query->addJoin("task","task","activitiy.taskid=task.refid",true);
+        $query->addJoin("hours","hours","hours.taskid = task.id",true);
+        $query->addCondition("task.tasktype='activity'");
         
         $query->addGroupBy("project.id");
       }
