@@ -24,8 +24,35 @@ class phasetemplateAttribute extends atkManyToOneRelation
     {
       if ($record['template']['id']!="")
       {
-        $query = "INSERT INTO phase_activity (activityid, phaseid) SELECT activityid, ".$record['id']." FROM tpl_phase_activity WHERE phaseid = ".$record['template']['id'];
-        $db->query($query);
+        //$query = "INSERT INTO phase_activity (activityid, phaseid) SELECT activityid, ".$record['id']." FROM tpl_phase_activity WHERE phaseid = ".$record['template']['id'];
+
+        //@todo: repareer template generatie voor phases
+        //get activityids that belong to this phase
+        $query = "SELECT activityid FROM tpl_phase_activity WHERE phaseid=".$record['template']['id'];
+        $data = $db->getrows($query);
+        $activitytemplateids = array();
+        foreach($data as $a) $activitytemplateids[] = $a["activityid"];
+         
+        //if this phase template has activity templates, we retrieve them from the database.
+        if(count($activitytemplateids) > 0)
+        {            
+         $query = "SELECT * FROM tpl_activity WHERE id IN (".implode(",",$activitytemplateids).")";
+         $activitytemplates = $db->getrows($query);
+        }         
+        
+        //create activities for this phase for each activitytemplate we found
+        foreach ($activitytemplates as $activitytemplate)
+        {
+          $new_actid = $db->nextid('activity');
+          
+          $query = "INSERT INTO 
+                    activity(id,name,phaseid,activitytype) 
+                    VALUES (".$new_actid.",
+                    '".$activitytemplate["name"]."',
+                    ".$new_id.",
+                    ".$activitytemplate["activitytype"].")";
+          $db->query($query);
+        }
       }
     }
     return true;
