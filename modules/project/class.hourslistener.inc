@@ -96,9 +96,18 @@
         return;
       }
 
-      // Get the phase record from the database and throw an error if not found
+      //get the phaseid
+      $tasknode = &getNode("task.task");
+      $activitynode = &getNode("project.activity");
       $phasenode = &getNode("project.phase");
-      $phaserecords = $phasenode->selectDb("phase.id='".$record["phaseid"]["phaseid"]."'");
+      
+      /* @var $activitynode atkNode */
+      $taskrecords      = $tasknode->selectDb("task.id='".$record["taskid"]["id"]."' AND task.tasktype='activity'");
+      $activityrecords  = $activitynode->selectDb("activity.id='".$taskrecords[0]["refid"]["id"]."'");          
+      
+      // Get the phase record from the database and throw an error if not found      
+      $phaserecords = $phasenode->selectDb("phase.id='".$activityrecords[0]["phaseid"]["id"]."'");
+            
       if (count($phaserecords) == 0)
       {
         atkerror("Cannot find phase to which the hours were registered.");
