@@ -30,10 +30,13 @@ class activity extends atkNode
     
     //@todo: remarkrequired en description is verhuist naar activitytype
     //$this->add(new atkAttribute("description",AF_SEARCHABLE, 50));
-    //$this->add(new atkBoolAttribute("remarkrequired"));
+    //$this->add(new atkBoolAttribute("remarkrequired"));        
+    $this->add(new atkManyToOneRelation("phaseid","project.phase", AF_HIDE));    
     
-    $this->add(new atkManyToOneRelation("phaseid","project.phase", AF_HIDE));
-    $this->add(new atkOneToOneRelation("taskid","task.task"));
+    $rel = &new atkOneToManyRelation("taskid","task.task","refid", AF_HIDE);
+    $rel->setDestinationFilter("task.tasktype='activity'");
+    $this->add($rel);
+    
     //@todo: vlaggen controleren
     $this->add(new atkManyToOneRelation("activitytype","project.activitytype"));    
     $this->add(new atkBoolAttribute("overtimecompensation"));
@@ -49,10 +52,10 @@ class activity extends atkNode
     return "[name]";
   }
 
-//  @todo: verplaatsen naar activitytype
-//  function action_stats(&$handler)
-//  {
-//    include_once moduleDir("project")."activitystats.inc";
-//  }
+  
+  function action_stats(&$handler)
+  {
+    include_once moduleDir("project")."activitystats.inc";
+  }
 }
 ?>
