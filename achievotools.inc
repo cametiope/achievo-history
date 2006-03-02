@@ -119,36 +119,45 @@
 
   function getRecentProjects()
   {
-    global $g_user, $g_projectnamesize;
-
+    global $g_projectnamesize;
+    $user = &getUser();
+        
     $db = &atkGetDb();
 
-    $query = "SELECT DISTINCT project.name as projectname, project.id as projectid FROM project,phase,hours ";
-    $query.= "WHERE phase.id=hours.phaseid AND userid='".$g_user["id"]."' AND phase.status='active' AND project.status='active' AND phase.projectid=project.id ";
-    $query.= "ORDER BY projectname";
-
+    $query = "SELECT DISTINCT 
+                project.name as projectname, 
+                project.id as projectid       
+              FROM 
+                project 
+              LEFT JOIN 
+                phase ON phase.projectid=project.id 
+              LEFT JOIN 
+                activity ON activity.phaseid=phase.id 
+              LEFT JOIN 
+                task ON task.refid=activity.id 
+              LEFT JOIN 
+                hours ON hours.taskid=task.id 
+              WHERE                 
+                phase.status='active' 
+                AND project.status='active' 
+                AND task.tasktype='activity'
+                AND hours.userid='".$user["id"]."'
+              ORDER BY 
+                projectname";
+    
     $arr = $db->getrows($query,'0','100');
-
     $newarr = Array();
-
-    // For some reason, the above query returns double results (even though I
-    // do a 'select distinct'!)
-    // I fail to see why, but I'll work around it by checking for doubles.
-    $alreadyhad = array();
+      
     for ($i=0, $_i=count($arr); $i<$_i;$i++)
-    {
-      if (!in_array($arr[$i]['projectid'], $alreadyhad))
+    {    
+      if (strlen($arr[$i]['projectname']) > $g_projectnamesize)
       {
-        $alreadyhad[] = $arr[$i]['projectid'];
-        if (strlen($arr[$i]['projectname']) > $g_projectnamesize)
-        {
-          $arr[$i]['projectname'] = substr($arr[$i]['projectname'],0,$g_projectnamesize-2).".."; //update because of phases
-        }
-        $newarr[] = $arr[$i];
-      }
+        $arr[$i]['projectname'] = substr($arr[$i]['projectname'],0,$g_projectnamesize-2).".."; //update because of phases
+      }      
     }
-    return $newarr;
-  }
+    return $arr;
+  }  
+  
 
   /*
    * given a timestamp, this function calculates the weekstamp, which is a concatenation
