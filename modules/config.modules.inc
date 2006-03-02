@@ -5,7 +5,7 @@
   module("employee");
   module("person");
   module("timereg");
-  module("project");
+  module("project");  
   module("organization");
   module("notes");
   module("calendar");
@@ -14,4 +14,5 @@
   module("pim");
   module("search");  
   module("graph");
+  module("task");
 ?>
