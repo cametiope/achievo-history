@@ -58,17 +58,17 @@ class projectstats extends atkNode
     $layout = &layout::getInstance();
 
     $layout->initGui();
-    $layout->ui_top(text("parameters", "projectstats", "project"));
+    $layout->ui_top(atktext("parameters", "projectstats", "project"));
 
-    $startdate = $this->m_viewstart;
-    $enddate = $this->m_viewend;
-    $projectid = $this->m_projectid;
+    $startdate  = $this->m_viewstart;
+    $enddate    = $this->m_viewend;
+    $projectid  = $this->m_projectid;
 
     $layout->output('<br>'.$this->navigator().'<br>');
 
     $layout->ui_bottom();
 
-    $prjnode = &getNode("project.project");
+    $prjnode = &atkGetNode("project.project");
 
     $descriptor="";
     if ($projectid!="")
@@ -78,13 +78,13 @@ class projectstats extends atkNode
       $descriptor = " - ".$prjnode->descriptor($recs[0]);
     }
 
-    $layout->ui_top(text("stats").$descriptor);
+    $layout->ui_top(atktext("stats","projectstats","project").$descriptor);
 
     $backbtn = "";
     if (atkLevel()>0)
     {
       $backbtn = '<br><form method="get">'.session_form(SESSION_BACK).
-      '<input type="submit" value="&lt;&lt; '.text('back').'"></form>';
+      '<input type="submit" value="&lt;&lt; '.atktext("back","atk").'"></form>';
     }
 
     $output.=$backbtn;
@@ -157,7 +157,7 @@ class projectstats extends atkNode
       $output.= "<br>".$phasestats->showGraph();
 
       // Textual version:
-      $output.= "<br><br>".$this->_tableStats(text("phase"), $prjnode->graph_phasetime($params, true), array("name"), $detailparams, "phaseid");
+      $output.= "<br><br>".$this->_tableStats(atktext("phase","projectstats","project"), $prjnode->graph_phasetime($params, true), array("name"), $detailparams, "phaseid");
 
       // EMPLOYEE STATS
       $empstats = &new dataGraphAttribute("emptimedistribution", "emptime", $params, "auto");
@@ -166,7 +166,7 @@ class projectstats extends atkNode
       $output.= "<br><br>".$empstats->showGraph();
 
       // Textual version:
-      $output.= "<br><br>".$this->_tableStats(text("employee"), $prjnode->graph_emptime($params, true), array("firstname", "lastname"), $detailparams, "userid");
+      $output.= "<br><br>".$this->_tableStats(atktext("employee","projectstats","project"), $prjnode->graph_emptime($params, true), array("firstname", "lastname"), $detailparams, "userid");
 
       // ACTIVITY STATS
       $activitystats = &new dataGraphAttribute("activitytimedistribution", "activitytime", $params, "auto");
@@ -175,7 +175,7 @@ class projectstats extends atkNode
       $output.= "<br><br>".$activitystats->showGraph();
 
       // Textual version:
-      $output.= "<br><br>".$this->_tableStats(text("activity"), $prjnode->graph_activitytime($params, true), array("name"), $detailparams, "activity_id");
+      $output.= "<br><br>".$this->_tableStats(atktext("activity","project","projectstats"), $prjnode->graph_activitytime($params, true), array("name"), $detailparams, "activity_id");
 
       // DOW STATS
       $dowstats = &new dataGraphAttribute("dowtimedistribution", "dowtime", $params, "auto");
