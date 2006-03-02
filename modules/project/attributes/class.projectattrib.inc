@@ -41,7 +41,7 @@ class atkProjectAttribute extends atkAttribute
     $alreadyadded = false;
 
     // Check if the currently selected project is already in the recent list.
-    for ($i=0;$i<count($projects);$i++)
+    for ($i=0,$_i=count($projects);$i<$_i;$i++)
     {
       if ($projects[$i]['id']==$currentproject)
       {
@@ -59,7 +59,7 @@ class atkProjectAttribute extends atkAttribute
     $result.= '<select name="projectid">';
     $result.= '<option value="">'.text('select');
 
-    for ($i=0;$i<count($projects);$i++)
+    for ($i=0,$_i=count($projects);$i<$_i;$i++)
     {
       $result .= '<option value="'.$projects[$i]["id"].'" ';
 
@@ -108,33 +108,42 @@ class atkProjectAttribute extends atkAttribute
       $query->addField($this->fieldName(),$this->value2db($rec),"","",!$this->hasFlag(AF_NO_QUOTES));
   }
 
+  
   function getRecentProjects()
   {
     global $g_user;
-    
+    $user = &getUser();
     $db = &atkGetDb();
 
-    $query = "SELECT project.name as name, project.id as id FROM project,phase,hours ";
-    $query.= "WHERE phase.id=hours.phaseid AND userid='".$g_user["id"]."'
-                AND phase.status='active'
-                AND project.status<>'archived'
-                AND phase.projectid=project.id ";
-    $query.= "ORDER BY hours.entrydate DESC";
+    $query = "SELECT DISTINCT 
+                project.name as name,
+                project.id as id
+              FROM 
+                project 
+              LEFT JOIN 
+                phase ON phase.projectid=project.id 
+              LEFT JOIN 
+                activity ON activity.phaseid=phase.id 
+              LEFT JOIN 
+                task ON task.refid=activity.id 
+              LEFT JOIN 
+                hours ON hours.taskid=task.id 
+              WHERE                 
+                phase.status='active' 
+                AND project.status='active' 
+                AND task.tasktype='activity'
+                AND hours.userid='".$user["id"]."'              
+              ORDER BY 
+                hours.entrydate DESC";
 
     // 100 should be enough to get 5 unique recent projects.
     $arr = $db->getrows($query,'0','100');
-    $j=0;
-    $alreadyhad = Array();
+    $j=0;    
     $newarr = Array();
     for ($i=0;$i<count($arr)&&$j<$GLOBALS["config_numberofrecentprojects"];$i++)
-    {
-      if (!in_array($arr[$i]['id'],$alreadyhad))
-      {
-        $alreadyhad[$j]=$arr[$i]['id'];
-        $newarr[$j]['id'] = $arr[$i]['id'];
-        $newarr[$j]['name'] = $arr[$i]['name'];
-        $j++;
-      }
+    { 
+      $newarr[$j]['id'] = $arr[$i]['id'];
+      $newarr[$j]['name'] = $arr[$i]['name'];      
     }
    return $newarr;
   }
