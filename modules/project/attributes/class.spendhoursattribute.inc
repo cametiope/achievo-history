@@ -36,7 +36,20 @@
     {
       $phaseattrib = $this->m_ownerInstance->m_attribList[$this->m_phaseid_field];
       
-      $sql = "SELECT sum(time) as spend_minutes FROM hours WHERE phaseid=".$phaseattrib->value2db($record);
+      $sql = "SELECT
+                sum(hours.time) as spend_minutes 
+              FROM 
+                hours
+              LEFT JOIN task 
+                ON hours.taskid=task.id
+              LEFT JOIN activity 
+                ON task.refid=activity.id
+              LEFT JOIN phase 
+                ON activity.phaseid=phase.id
+              WHERE 
+                task.tasktype='activity'
+                AND phase.id=".$phaseattrib->value2db($record);
+      
       if(is_array($record["personid"])) $sql.=" AND userid='".$record["personid"]["id"]."'";
       $nrow = $db->getrows($sql);
       return ($nrow[0]["spend_minutes"]/60);
@@ -45,6 +58,8 @@
     /**
      * Display override. If possible, displays a link to the hoursurvey to view details.
      */
+    //@todo: link needs to be changed from referring to hour registrations with a specified phaseid
+    //to hour registrations belonging to one or more specified taskids
     function display($record, $mode)
     {      
       $value = $record[$this->fieldname()];
@@ -52,6 +67,7 @@
       if ($value>0 && $record[$this->m_phaseid_field]!="")
       {
         $phaseattrib = $this->m_ownerInstance->m_attribList[$this->m_phaseid_field];
+        
         $params["phaseid"] = $phaseattrib->value2db($record);
         $params["startdate"] = "2000-01-01";
         $params["enddate"] = date("Y-m-d");
