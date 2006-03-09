@@ -18,15 +18,15 @@
  * $Id$
  */
 class mod_task extends atkModule 
-{
-  function getMenuItems()
-  {    
-    //
-  }
-  
-  function registerNode()
+{  
+  function getNodes()
   {
     registerNode("task.task", array("admin", "add", "edit", "delete"));
+  }
+  
+  function getMenuItems()
+  {
+    //no menuitems for tasks
   }
 }
 ?>
