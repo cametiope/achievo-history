@@ -13,11 +13,8 @@
       registerNode("project.project", array("admin", "add", "edit", "delete", "stats","planning", "initialplanning", "any_project"));
       registerNode("project.phase", array("add", "edit", "delete"));
       registerNode("project.deliverable", array("add", "edit", "delete"));
-      //@todo: is stats voor activity nog nodig?
-      registerNode("project.activity", array("admin", "add", "edit", "delete", "stats"));
-      //@todo: stats van activity moet verwerkt worden in activitytype
-      registerNode("project.activitytype", array("admin", "add", "edit", "delete", "stats"));
-      //@todo: werkt tpl_activity goed?
+      registerNode("project.activity", array("admin", "add", "edit", "delete", "stats"));      
+      registerNode("project.activitytype", array("admin", "add", "edit", "delete"));      
       registerNode("project.tpl_activity", array("admin", "add", "edit", "delete"));
       registerNode("project.tpl_phase", array("admin", "add", "edit", "delete"));
       registerNode("project.tpl_project", array("admin", "add", "edit", "delete"));
