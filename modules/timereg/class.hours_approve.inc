@@ -43,14 +43,7 @@
 	    // Call the base class constructor
 	    $this->hours("hours_approve");
 
-	    // Get a reference to the global sessionmanager
-	  	global $g_sessionManager;
-
-	  	// Make sure the year session variable is available at all times
-  	  $g_sessionManager->pageVar("year");
-  	  $g_sessionManager->pageVar("viewdate");
-  	  $g_sessionManager->pageVar("weekid");
-  	  $g_sessionManager->pageVar("viewuser");
+	    $this->getPageData();  	  
 
 //$hourslocknode = &getNode("timereg.hours_lock");
 //$users=array(367,794);
@@ -72,6 +65,81 @@
 //}
 	  }
 
+  	/**
+     * Get the viewdate in the following order of priority:
+     * postvars, session, current date
+     *      
+     * @return string viewdate
+     */
+    function getViewDate()
+    {
+      /* @var $sessionManager atkSessionManager */
+      $sessionManager = &atkGetSessionManager();
+      
+      //first we try the viewdate in the postvars
+      $viewdate = $this->m_postvars["viewdate"];    
+      
+      //if we do not have a valid viewdate, try the session
+      if($viewdate=="" || !isset($viewdate))    
+        $viewdate = $sessionManager->pageVar("viewdate");
+      
+        //if we do not have a valid viewdate, set it to today.
+      if($viewdate == "" || !isset($viewdate))  
+        $viewdate = date("Y-m-d");    
+      
+      //once we have a date, put it in the session.
+      $sessionManager->pageVar("viewdate",$viewdate);
+      
+      if(is_array($viewdate))    
+      {
+        //make sure the viewdate is in the correct format.
+        return $viewdate["year"]."-".str_pad($viewdate["month"],2,"0",STR_PAD_LEFT)."-".str_pad($viewdate["day"],2,"0",STR_PAD_LEFT);
+      }
+      
+      return $viewdate;
+    }
+    
+    /**
+     * Get the active user in the following order of priority:
+     * postvars, session, currently logged in user
+     *      
+     * @return int userid
+     */
+    function getActiveUser()
+    {
+      /* @var $sessionManager atkSessionManager */
+      $sessionManager = &atkGetSessionManager();
+      
+      $userid = $this->m_postvars["viewuser"];
+      
+      //if we do not have a user in the postvars, try the session.
+      if(!isset($userid) || $userid=="")
+        $userid = $sessionManager->pageVar("viewuser");
+      
+      //if we do not have a valid user by now, select 'me'
+      if($userid=="")
+      {     
+        $user = &getUser();
+        $userid = $user["id"];
+      }
+      
+      return $userid;
+    }
+    
+    /**
+     * Get the page data such as viewdate, user, weekview, errors and sessionData.         
+     */
+    function getPageData()
+    {        
+      /* @var $sessionManager atkSessionManager */
+      $sessionManager = &atkGetSessionManager();
+      
+      $this->m_viewdate     = $this->getViewDate();    
+      $this->m_user         = $this->getActiveUser();  
+      $sessionManager->pageVar("year");
+  	  $sessionManager->pageVar("weekid");
+    }
+	  
     /**
      * Creates a custom titlebar for the weekview
      *
@@ -194,7 +262,7 @@
 	    $this->addStyle("style.css");
 
 	    // If a week is selected for a specific employee, then show the approval screen
-	    if ((!is_null($this->m_postvars["viewuser"])) && (!is_null($this->m_postvars["viewdate"])) && (($this->m_postvars["year"] == null) || ($this->m_postvars["year"] == substr($this->m_postvars["viewdate"], 0, 4))))
+	    if (isset($this->m_user) && isset($this->m_viewdate) && (($this->m_postvars["year"] == null) || ($this->m_postvars["year"] == substr($this->m_viewdate, 0, 4))))
 	    {
 	    	// Try to find the hour_lock in de database
 	    	$hourslocknode = &getNode("timereg.hours_lock");

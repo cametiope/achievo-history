@@ -82,6 +82,8 @@
     {
       $node = &getNode("timereg.overtime_balance");
       $result = $node->selectDb("day <= '$day' AND userid.id = '$userid'", "day DESC", 1);
+      atk_var_dump($day,"<h1>day</h1>");
+      atk_var_dump($result,"<h1>result</h1>");
       if (!count($result)) return $this->getDummyBalance($day, $userid);
       else
       {
@@ -195,7 +197,7 @@
     function getUserHours($begin, $end, $userid)
     {
       $db = &atkGetDb();
-      $sql = "SELECT * FROM hours WHERE userid = '$userid' AND activitydate >= '$begin' AND activitydate <= '$end'";
+      $sql = "SELECT * FROM hours WHERE userid = '$userid' AND taskdate >= '$begin' AND taskdate <= '$end'";
       return $db->getRows($sql);
     }
 
