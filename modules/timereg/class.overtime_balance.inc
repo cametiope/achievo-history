@@ -1,6 +1,7 @@
 <?php
 
   userelation("atkmanytoonerelation");
+  useattrib("atktextattribute");
   useattrib("atknumberattribute");
   useattrib("atkdateattribute");
   useattrib("timereg.manualattribute");
@@ -15,6 +16,7 @@
       $this->add(new atkDateAttribute("day","F j Y","F j Y", 0, date("Y-m-d"), AF_SEARCHABLE|AF_OBLIGATORY));
       $this->add(new atkNumberAttribute("balance", AF_OBLIGATORY, 10,2));
       $this->add(new manualAttribute("manual", AF_HIDE, 1, 0));
+      $this->add(new atkTextAttribute("remark"));
 
       $this->setTable("overtime_balance", "overtime_balance");
       $this->m_securityMap["add"] = "edit";
@@ -24,16 +26,19 @@
     function postUpdate($rec)
     {
       $this->deleteBalance($rec["userid"]["id"], date("Y-m-d", adodb_mktime(0,0,0,$rec["day"]["month"],$rec["day"]["day"],$rec["day"]["year"])));
+      return true;
     }
 
     function postAdd($rec)
     {
       $this->deleteBalance($rec["userid"]["id"], date("Y-m-d", adodb_mktime(0,0,0,$rec["day"]["month"],$rec["day"]["day"],$rec["day"]["year"])));
+      return true;
     }
 
     function postDel($rec)
     {
       $this->deleteBalance($rec["userid"]["id"], date("Y-m-d", adodb_mktime(0,0,0,$rec["day"]["month"],$rec["day"]["day"],$rec["day"]["year"])));
+      return true;
     }
 
     function getOvertimeLink($rec)
@@ -216,23 +221,19 @@
     function getOvertimeCompensationActivities()
     {
       $db = &atkGetDb();
-      $res = $db->getrows("SELECT id FROM activity WHERE overtimecompensation = 1");
-      
-      if($res == array())
-       return array();
-      else 
-        return $res[0];
+      $res = $db->getrows("SELECT id FROM activity WHERE overtimecompensation = 1");            
+      return $res;
     }
     
     function isOvertimeCompensationActivity($id, $overtimeactivities)
     {        
       foreach($overtimeactivities as $item)
       {      
-        if($item==$id) return true;      
+        if($item["id"]==$id) return true;      
       }    
       return false;
-    }
-    
+    }    
+
     function getContractHours($begin, $end, $userid)
     {
       $db = &atkGetDb();
