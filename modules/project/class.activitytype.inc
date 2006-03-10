@@ -28,7 +28,7 @@ class activitytype extends atkNode
     $this->add(new atkAttribute("name",AF_UNIQUE));
     $this->add(new atkAttribute("description",AF_SEARCHABLE, 50));
     $this->add(new atkBoolAttribute("remarkrequired",AF_HIDE_LIST));
-    
+    $this->add(new atkBoolAttribute("overtimecompensation"));    
     $this->setTable("activitytype");
     $this->setOrder("name");
   }
@@ -36,8 +36,6 @@ class activitytype extends atkNode
   function descriptor_def()
   {
     return "[name]";
-  }
-  
-  
+  }  
 }
 ?>
