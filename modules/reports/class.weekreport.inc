@@ -106,26 +106,6 @@ class weekreport extends atkNode
     $node = &getNode("timereg.overtime_balance");
     return $node->getOvertimeLink($rec);
   }
-
-  function isOvertimeCompensationActivity($id, $overtimeactivities)
-  {        
-    foreach($overtimeactivities as $item)
-    {      
-      if($item==$id) return true;      
-    }    
-    return false;
-  }
-  
-  function getOvertimeCompensationActivities()
-  {
-    $db = &atkGetDb();
-    $res = $db->getrows("SELECT id FROM activity WHERE overtimecompensation = 1");
-    
-    if($res == array())
-     return array();
-    else 
-      return $res[0];
-  }
   
   /**
    * One line description of the function
@@ -145,9 +125,11 @@ class weekreport extends atkNode
     $db = &atkGetDb();
     
     $query = "SELECT
-                  hours.time, activityid, activitydate, hours.userid, person.lastname, person.firstname, workperiod
+                  hours.time, activityid, taskdate, hours.userid, person.lastname, person.firstname, workperiod, task.refid AS activityid
                 FROM
                   hours, person
+                LEFT JOIN task
+                  ON task.id = hours.taskid
                 WHERE ";
       if ($nameswitch=="supervisor")
       {
@@ -157,11 +139,12 @@ class weekreport extends atkNode
       {
         if ($userid!="all") $query.= " hours.userid ='$userid' AND ";
       }
-      $query.= "  activitydate >= '$startdate'
-                  AND activitydate <= '$enddate'
+      $query.= "  taskdate >= '$startdate'
+                  AND taskdate <= '$enddate'
                   AND hours.userid = person.id
+                  AND task.tasktype = 'activity'                  
                 ORDER BY
-                  hours.userid, activitydate, person.lastname, person.firstname, workperiod";
+                  hours.userid, taskdate, person.lastname, person.firstname, workperiod";
       
    
       
@@ -200,6 +183,24 @@ class weekreport extends atkNode
     return $db->getrows($query);
   }
   
+
+  function isOvertimeCompensationActivity($id, $overtimeactivities)
+  { 
+    foreach($overtimeactivities as $item)
+    { 
+      if($item["id"]==$id) return true;      
+    }    
+    return false;
+  }
+  
+  function getOvertimeCompensationActivities()
+  {
+    $db = &atkGetDb();
+    $res = $db->getrows("SELECT id FROM activity WHERE overtimecompensation = 1");
+    
+    return $res;
+  }  
+
   function action_report(&$handler)
 	{
     global $g_securityManager, $g_user, $g_sessionManager;
@@ -396,7 +397,7 @@ class weekreport extends atkNode
       $query = "SELECT
                   uc_hours, startdate, enddate, person.id, lastname, firstname
                 FROM
-                   usercontract, person
+                   usercontract, person                
                 WHERE ";
       if ($nameswitch=="supervisor")
       {
@@ -408,7 +409,7 @@ class weekreport extends atkNode
       }
       $query.= "  startdate <= '$enddate'
                   AND (enddate >= '$startdate' OR enddate IS NULL)
-                  AND usercontract.userid = person.id
+                  AND usercontract.userid = person.id                  
                 ORDER BY
                   startdate";
       $db = &atkGetDb();
@@ -445,9 +446,10 @@ class weekreport extends atkNode
         //is this timeregistration a overtimecompensation?
         $isovertimecompensation = $this->isOvertimeCompensationActivity($raw[$i]["activityid"],$overtimeids);
         
-        $stamp = adodb_mktime(12,0,0,substr($raw[$i]["activitydate"],5,2),
-                                      substr($raw[$i]["activitydate"],8,2),
-                                      substr($raw[$i]["activitydate"],0,4));
+        $stamp = adodb_mktime(12,0,0,substr($raw[$i]["taskdate"],5,2),
+                                      substr($raw[$i]["taskdate"],8,2),
+                                      substr($raw[$i]["taskdate"],0,4));
+
         $dow = strftime("%w",$stamp);
         $key = weekstamp($stamp);
         $weekdata[$key]["week"] = $key;
