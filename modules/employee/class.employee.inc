@@ -159,6 +159,7 @@ class employee extends person
     $this->redirect();
   }
 
+  //@todo: moet tijdregistratie doen op activiteit
   function graph_prjtime($params, $raw=false)
   {
     $db = &atkGetDb();
@@ -192,6 +193,7 @@ class employee extends person
     return array("registeredtimeperproj"=>$dataset);
   }
 
+  //@todo: moet tijdregistratie doen op activiteit
   function graph_activitytime($params, $raw=false)
   {
     $db = &atkGetDb();
@@ -222,6 +224,7 @@ class employee extends person
     return array("registeredtimeperactivity"=>$dataset);
   }
 
+  //@todo: moet tijdregistratie gedaan worden op ALLEEN een activiteit, of nog steeds op phase en activiteit?
   function graph_dowtime($params, $raw=false)
   {
     $db = &atkGetDb();
@@ -263,20 +266,26 @@ class employee extends person
 
   function rowColor($record)
   {
-    $contractnode = &getNode("employee.usercontracts");
-    $contract = $contractnode->getMostRecentContract($record["id"]);
-
     if ($record["status"]=="active")
     {
-      $enddate = dateutil::arr2str($contract["enddate"]);
+      $contractnode = &getNode("employee.usercontracts");
 
-      if (!count($contract)||($enddate!=""&&$enddate<date("Ymd")))
+      $endlesscontracts = $contractnode->countDb("usercontract.enddate IS NULL AND usercontract.userid='{$record["id"]}'");
+
+      if ($endlesscontracts == 0)
       {
-        return COLOR_ERROR;
-      }
-      else if ($enddate!=""&&dateutil::date_diff(date("Ymd"), $enddate)<14)
-      {
-        return COLOR_WARNING;
+        $contract = $contractnode->getMostRecentContract($record["id"]);
+
+        $enddate = dateutil::arr2str($contract["enddate"]);
+
+        if (!count($contract)||($enddate!=""&&$enddate<date("Ymd")))
+        {
+          return array(COLOR_ERROR, COLOR_HIGHLIGHT_ERROR);
+        }
+        else if ($enddate!=""&&dateutil::date_diff(date("Ymd"), $enddate)<14)
+        {
+          return array(COLOR_WARNING, COLOR_HIGHLIGHT_WARNING);
+        }
       }
     }
   }

@@ -167,7 +167,6 @@
         {
           triggerError($record, "startdate", "error_cannot_set_startdate_later_than_first_timereg");
         }
-
       }
 
       // Call the parents validate function to perform the default validation on the record
