@@ -26,7 +26,6 @@ class activity extends atkNode
   function activity()
   {
     $this->atkNode("activity");
-
     //@todo: add config activitynamereadonly to a config file.    
     $this->add(new atkAttribute("id",AF_AUTOKEY));        
     $this->add(new atkAttribute("name",AF_SEARCHABLE|(atkconfig("activitynamereadonly",false) ? AF_READONLY|AF_HIDE_ADD : AF_OBLIGATORY), 50));    
