@@ -139,12 +139,26 @@
       // This check can only be done when updating an existing phase, not when adding a new one
       if ($mode == "update")
       {
-        // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)
-        $hoursNode = getNode("timereg.hours");
-        $earliesttimeregforphase = $hoursNode->selectDb("phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
+        // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)                
+        $hoursNode = &getNode("timereg.hours");
+        $db = &atkGetDb();
+        atkimport('atk.db.atkquery');
+        $query = &new atkQuery();
+        $query->addField("taskdate","","hours");
+        $query->addTable("hours");
+        $query->addJoin("task","","hours.taskid=task.id",true);
+        $query->addJoin("activity","","task.refid=activity.id",true);
+        $query->addJoin("phase","","activity.phaseid=phase.id",true);
+        $query->addCondition("task.tasktype='activity'");
+        $query->addOrderBy("hours.taskdate ASC");
+        
+        //$earliesttimeregforphase = $hoursNode->selectDb("phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
+        $sql = $query->buildSelect();
+        $earliesttimeregforphase = $db->getrows($sql);
         atkimport("module.utils.dateutil");
-        $earliesttimeregdate = empty($earliesttimeregforphase) ? null : dateutil::arr2stamp($earliesttimeregforphase["0"]["activitydate"]);
-
+        $earliesttimeregdatestr = empty($earliesttimeregforphase) ? null : $earliesttimeregforphase[0]["taskdate"];
+        $earliesttimeregdate = dateutil::str2stamp(substr($earliesttimeregdatestr,0,4).substr($earliesttimeregdatestr,5,2).substr($earliesttimeregdatestr,8,2));
+        
         // Get the start date of this phase record
         $phasestartdate = dateutil::arr2stamp($record["startdate"]);
 
