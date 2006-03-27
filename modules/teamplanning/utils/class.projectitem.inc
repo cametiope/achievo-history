@@ -7,7 +7,7 @@ class projectItem
   var $m_teamid         = 0;
   var $m_headerfields   = array();  
   var $m_headerdata     = array();
-  var $m_weeknames      = array();
+  var $m_weeks          = array();
   var $m_weekdata       = array();
   var $m_conflicts      = array();
   
@@ -16,6 +16,9 @@ class projectItem
   var $m_closeimagesrc  = "";
   var $m_regopen        = "";
   var $m_regclose       = "";
+  
+  var $m_dataprefix     = "";
+  var $m_olddataprefix  = "";
   
   //calculated fields
   var $m_unassigned_projecthours = array();
@@ -46,28 +49,33 @@ class projectItem
     $this->m_conflicts = $conflicts;
   }
   
-  function render($headerfields, $weeknames)
+  function render($headerfields, $weeks, $dataprefix, $olddataprefix)
   {
-    $this->m_headerfields = $headerfields;
-    $this->m_weeknames    = $weeknames;
+    $this->m_headerfields   = $headerfields;
+    $this->m_weeks          = $weeks;
+    $this->m_dataprefix     = $dataprefix;
+    $this->m_olddataprefix  = $olddataprefix;
+    
     $numheaderfields = count($this->m_headerfields);
     $this->_init();        
             
     /* 
       calculate data 
     */
-    $this->_calculateData();
-            
+    $this->_calculateData();        
+    
     /*  
       Render header field values such as the name 
-    */
-    $rowid = $this->m_teamid."_".$this->m_id;    
+      Rowid:      Teamid_projectid_0_0
+      Colid:      teamid_projectid_0_0_fieldname
+    */                      
+    $rowid = $this->m_teamid."_".$this->m_id."_0_0";
     $result = '<tr class="row2" id="'.$rowid.'">';    
     foreach($this->m_headerfields as $field)
     {       
       if($field != "name")
       {
-        $inputid = implode("_",array($this->m_teamid,$this->m_id,"0",$this->_uus($field)));
+        $inputid = $rowid."_".$this->_uus($field);
         $value = (isset($this->m_headerdata[$field]) ? $this->m_headerdata[$field]/60 : "0");
         $result.= '<td align="center"><div id="'.$inputid.'">'.$value.'</div></td>';
       }
@@ -77,13 +85,17 @@ class projectItem
     
     /*  
       Render planned week values 
+      Rowid:      Teamid_projectid_0_0
+      Colid:      teamid_projectid_0_0_weekid
     */
-    foreach($this->m_weeknames as $week)    
+    $rowid = $this->m_teamid."_".$this->m_id."_0_0";
+    foreach($this->m_weeks as $weekitem)
     {
-      $inputid = implode("_",array($this->m_teamid,$this->m_id,"0",$week));      
-      $record[$inputid]= (isset($this->m_weekdata[$week]["time"]) ? $this->m_weekdata[$week]["time"]/60 : 0);
-      $att = &new atkNumberAttribute($inputid,0,4,0);
-      $result.= '<td>'.$att->edit($record).'</td>';
+      $week = $weekitem["week"];
+      $inputid  = $rowid."_".$week;      
+      $record[$this->m_dataprefix.$inputid] = (isset($this->m_weekdata[$week]["time"]) ? $this->m_weekdata[$week]["time"]/60 : 0);;
+      $att      = &new atkNumberAttribute($this->m_dataprefix.$inputid,0,4,0);      
+      $result.= '<td>'.$att->edit($record).$this->_hiddenAttr($this->m_olddataprefix.$inputid,$record[$this->m_dataprefix.$inputid]).'</td>';
     }
     $result.= "</tr>";
 
@@ -91,45 +103,57 @@ class projectItem
       Render phases 
     */
     foreach($this->m_items as $item)    
-      $result.= $item->render($headerfields, $weeknames);    
+      $result.= $item->render($headerfields, $this->m_weeks, $this->m_dataprefix, $this->m_olddataprefix);
     
     /*  
       Render unassigned project hours 
-    */
-    $result.= '<tr class="row1" id="'.$rowid.'_unassigned" style="display:none">';
+      Rowid:      Teamid_projectid_0_0_unassigned
+      Colid:      teamid_projectid_0_0_unassigned_weekid
+    */    
+    //rowid = teamid_projectid_phaseid_isbuffer
+    $rowid = $this->m_teamid."_".$this->m_id."_0_0_unassigned";
+    $result.= '<tr class="row1" id="'.$rowid.'" style="display:none">';
     $result.= '<td colspan="'.$numheaderfields.'">  <b>'.atktext("unassignedprojecthours","teamplanning").'</b></td>';
-    foreach($this->m_weeknames as $week)
+    foreach($this->m_weeks as $weekitem)
     { 
-      $inputid = implode("_",array($this->m_teamid,$this->m_id,"0",$this->_uus($field)));
-      $result.= '<td><div id="'.$rowid."_unassigned".$week.'">'.($this->m_unassigned_projecthours[$week]/60).'</div></td>';
+      $week = $weekitem["week"];
+      $inputid = $rowid."_".$week;
+      $result.= '<td><div id="'.$inputid.'">'.($this->m_unassigned_projecthours[$week]/60).'</div></td>';
     }
     $result.= '</tr>';
       
     /*  
       Render the projectbuffer  
-    */    
+      Rowid:      Teamid_projectid_0_buffer
+      Colid:      teamid_projectid_0_buffer_weekid
+    */
+    $rowid = $this->m_teamid."_".$this->m_id."_0_buffer";
     $result.= '<tr class="row3" bgcolor="#F7AD05" id="'.$rowid.'_buffer" style="display:none">';
     $result.= '<td colspan="'.$numheaderfields.'">  '.atktext("buffer","teamplanning").'</td>';
-    foreach($this->m_weeknames as $week)
+    foreach($this->m_weeks as $weekitem)
     {
-      $inputid = implode("_",array($this->m_teamid,$this->m_id,"buffer",$week));
-      $record[$inputid]= isset($this->m_weekdata[$week]["buffertime"]) ? $this->m_weekdata[$week]["buffertime"]/60 : 0;
-      $att = &new atkNumberAttribute($inputid,0,4,0);
-      $result.= '<td>'.$att->edit($record).'</td>';
+      $week = $weekitem["week"];
+      $inputid = $rowid."_".$week;
+      $record[$this->m_dataprefix.$inputid]= isset($this->m_weekdata[$week]["buffertime"]) ? $this->m_weekdata[$week]["buffertime"]/60 : 0;
+      $att = &new atkNumberAttribute($this->m_dataprefix.$inputid,0,4,0);
+      $result.= '<td>'.$att->edit($record).$this->_hiddenAttr($this->m_olddataprefix.$inputid,$record[$this->m_dataprefix.$inputid]).'</td>';
     }
     $result.= '</tr>';
     
     /*
       Render conflicts
-    */
+      Rowid:      Teamid_projectid_0_0_conflicts
+      Colid:      teamid_projectid_0_0_conflicts_0
+    */    
+    $rowid = $this->m_teamid."_".$this->m_id."_0_0_conflicts";
     $result.= '<tr class="row3" id="'.$rowid.'_conflicts" style="display:none">';
-    $colspan = $numheaderfields + count($this->m_weeknames);
+    $colspan = $numheaderfields + count($this->m_weeks);
     $conflicttitle = "<b>".atktext("conflicts","teamplanning")."</b><br />";
     $conflictdata = "";
     //if we have conflicts
     if(count($this->m_conflicts))
     {
-      $conflictdata.= '<div id="'.$rowid.'_conflicts"><font color="#FF0000">';
+      $conflictdata.= '<div id="'.$rowid.'_0"><font color="#FF0000">';
       foreach($this->m_conflicts as $conflict)
         $conflictdata.= $conflict.'<br />';
       $conflictdata.= '</font></div>';
@@ -182,8 +206,9 @@ class projectItem
   
   function _calculateUnassignedProjectHours()
   {
-    foreach($this->m_weeknames as $week)
+    foreach($this->m_weeks as $weekitem)
     {
+      $week = $weekitem["week"];
       $sum = 0;
       //calculate the total of all phases
       for($i=0,$_i=count($this->m_items);$i<$_i;$i++)
@@ -197,7 +222,6 @@ class projectItem
     }
   }
   
-
   function _init()
   {
     $this->m_openimagesrc   = atkconfig("atkroot").'atk/images/plus.gif';
@@ -206,7 +230,6 @@ class projectItem
     $this->m_regopen      = "^{$this->m_teamid}_{$this->m_id}_";
     $this->m_regclose     = "^{$this->m_teamid}_{$this->m_id}_";
   }
-    
   
   function _clickableImages()
   {  
@@ -225,5 +248,13 @@ class projectItem
     $images.= "<a href=\"$hrefclose\">$imgclose</a>";
     return $images;    
   }
+  
+  function _hiddenAttr($id, $value)
+  {
+    //create hidden attrib
+    return '<input type="hidden" name="'.$id.'" value="'.$value.'" />';
+  }
+  
+  
 }
 ?>

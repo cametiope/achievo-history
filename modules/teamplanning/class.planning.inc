@@ -8,6 +8,7 @@
 
   atkimport("module.utils.dateutil");
 
+  
   require_once(moduleDir("teamplanning")."utils/class.teamplanningrenderer.inc");
   require_once(moduleDir("teamplanning")."utils/class.teamitem.inc");
   require_once(moduleDir("teamplanning")."utils/class.projectitem.inc");
@@ -18,6 +19,9 @@
  
   class planning extends atkNode
   {
+    var $m_dataprefix     = "newdata_";
+    var $m_olddataprefix  = "olddata_";
+    
     function planning($type = "planning", $flags = 0)
     {
       $this->atkNode($type, $flags);
@@ -42,30 +46,95 @@
     function action_update()
     {
       atkimport("module.planning.conflictlistener");
-      $this->addListener(new conflictListener(array("update", "save")));
+      //$this->addListener(new conflictListener(array("update", "save")));
+        
+      atk_var_dump($this->m_postvars, "<h1>Postvars</h1>");
       
-      // Read the posted values
-      $data = $this->m_postvars["data"];
-      $olddata = $this->m_postvars["olddata"];
+      // Read the posted values (old, new and datearr)      
+      $data     = array();  $olddata  = array();  $datearr = array();
+      $this->getPostedData($data, $olddata, $datearr);    //we add two arrays by value to store the found items
 
-      // Get a reference to the database object
-      $db = &$this->getDb();
-      
-      $analysis_queue = array();
+//      atk_var_dump($olddata, "<h1>olddata</h1>");
+//      atk_var_dump($data, "<h1>data</h1>");
+           
+      $changeddata = array();
 
       // Loop through all cells
       foreach($data as $cell => $value)
       {
-
         // If the value is different from the original (old) value, then start update this particular planning value
-        if ($value != $olddata[$cell]) {
-
-          // Determine the employee_id, monday and phase_id variable according to the cellname
-          list($teamid, $date, $projectid, $phaseid) = explode("_", $cell);          
+        if ($value != $olddata[$cell]) 
+        {
+          /*          
+            Determine the values, according to the cellname
+            
+            The cellname contains 6 parts:
+            teamid_projectid_phaseid_isbuffer_weekid            
+            
+            teamid:     contains the id of the team
+            projectid:  contains the id of the project
+            phaseid:    contains the id of the phase or is empty, if the value belongs only to a project
+            buffer:     contains "0" if the value is not a buffertime, and contains "buffer" if the value
+                        IS a buffertime.
+            weekid:     The weekid
+          */
           
-          //$db->query("DELETE FROM weekplanning_planning WHERE employeeid='".$employee_id."' AND monday='".$monday."' AND phaseid='".$phase_id."'");
-
-          // Store the given planningvalue if set and higher than 0
+          list($teamid, $projectid, $phaseid, $buffer, $weekid) = explode("_", $cell);
+                  
+          //what kind of change is made? possibilities: project time, project-buffer time, phase time or phase-buffer time?          
+          if($phaseid==0 && $buffer==0)         //project time
+          {
+            $changeddata[$teamid][$projectid]["changes"][$weekid]["time"]                = ($value>=0 && $value!="") ? $value : 0;
+          }
+          elseif ($phaseid==0 && $buffer==0)          //project-buffer time  
+          {
+            $changeddata[$teamid][$projectid]["changes"][$weekid]["buffertime"]           = ($value>=0 && $value!="") ? $value : 0;
+          }
+          elseif ($phaseid>0 && $buffer==0)           //phase time
+          {
+            $changeddata[$teamid][$projectid]["phases"][$phaseid]["changes"][$weekid]["time"]       = ($value>=0 && $value!="") ? $value : 0;
+          }
+          elseif ($phaseid>0 && $buffer>0)           //phase-buffer time
+          {
+            $changeddata[$teamid][$projectid]["phases"][$phaseid]["changes"][$weekid]["buffertime"] = ($value>=0 && $value!="") ? $value : 0;
+          }
+          else 
+          {
+            //unknown
+          }          
+        }
+      }      
+      
+      atk_var_dump($changeddata,"<h1>CHANGED DATA</h1>");
+      atk_var_dump($datearr,"<h1>the date arr</h1>");
+      
+      // Get a reference to the database object
+      $db = &$this->getDb();
+      
+      $analysis_queue = array();
+      
+      //work with the changed data
+      foreach($changeddata as $teamid=>$projects)
+      {        
+        foreach($projects as $projectid=>$project)
+        {
+          //project changes per week
+          $this->_loopChangedItems($teamid, $projectid, 0, $project, $datearr, $analysis_queue);
+          
+          //any phases changed?
+          if(isset($project["phases"]))
+          {
+            foreach($project["phases"] as $phaseid=>$phase)
+            {
+              //phase changes per week
+              $this->_loopChangedItems($teamid, $projectid, $phaseid, $phase, $datearr, $analysis_queue);
+            }
+          }                    
+        }
+      }
+      
+      
+      // Store the given planningvalue if set and higher than 0
           if ($value > 0)
           {
 //            atkdebug("This module is ".$this->m_module);
@@ -75,9 +144,6 @@
 //            $analysis_queue[] = array("phaseid"=>$phase_id, "employeeid"=>$employee_id, "monday"=>$monday);
 //            atkdebug("This module is now ".$this->m_module);
           }
-        }              
-
-      }
       
       // After new situation is stored, perform all notifications at once, so we analyse conflicts
       // only for the complete situation.
@@ -88,6 +154,162 @@
 
       // Redirect to the user to the admin page
       $this->redirect();
+    }
+    
+    function _loopChangedItems($teamid, $projectid, $phaseid, $items, &$datearr, &$analysis_queue)
+    {
+      //atk_var_dump($items,"<h1>items</h1>");
+      
+      if(!isset($items["changes"])) 
+        $items["changes"] = array();
+      
+      foreach($items["changes"] as $weekid=>$change)
+      {
+        $date = "";
+        if(isset($datearr[$weekid]))        
+          $date = $datearr[$weekid];
+        else 
+        {
+          //we cannot do anything without a proper date
+          atkdebug("no date found, ignoring this planning item.");
+          break;
+        }
+        
+        $selector = "teamplanning_planning.teamid='$teamid' AND teamplanning_planning.projectid='$projectid' AND teamplanning_planning.phaseid='$phaseid' AND teamplanning_planning.date='$date'";
+        $records = $this->selectDb($selector);
+        
+        $numrecs = count($records);        
+        /*
+          if we have a record
+        */
+        if($numrecs > 0)
+        { 
+          //do we need to delete this record?
+          if($this->_recordMustBeDeleted($records[0],$change["time"],$change["buffertime"]))
+          {
+            //delete
+            atkdebug("deleting".$records[0]["atkprimkey"]);
+            $analysis_queue[] = array("projectid"=>$projectid,"phaseid"=>$phaseid, "teamid"=>$employee_id, "date"=>$date);
+            $this->deleteDb($records[0]["atkprimkey"],false);
+          }
+          else 
+          {
+            //update            
+            if(isset($change["time"]) && $change["time"]!="")            
+              $records[0]["time"]       = $change["time"]*60;
+            if(isset($change["buffertime"]) && $change["buffertime"]!="")
+              $records[0]["buffertime"] =  $change["buffertime"]*60;
+            atkdebug("updating id=".$records[0]["id"]);
+            $analysis_queue[] = array("projectid"=>$projectid,"phaseid"=>$phaseid, "teamid"=>$employee_id, "date"=>$date);
+            $this->updateDb($records[0],false);            
+          }
+        }
+        //no records found.
+        else 
+        {
+          //do we need to add a new record?
+          if($this->_recordMustBeAdded($change["time"],$change["buffertime"]))
+          {
+            $newrec = array();
+            $newrec["projectid"]  = array("id"=>$projectid);
+            $newrec["phaseid"]    = array("id"=>$phaseid);
+            $newrec["teamid"]     = array("id"=>$teamid);
+            $newrec["date"]       = $date;
+            $newrec["time"]       = (isset($change["time"]) && $change["time"]!="") ? $change["time"]*60 : 0;
+            $newrec["buffertime"] = (isset($change["buffertime"]) && $change["buffertime"]!="") ? $change["buffertime"]*60 : 0;
+            atkdebug("adding new record");
+            $analysis_queue[] = array("projectid"=>$projectid,"phaseid"=>$phaseid, "teamid"=>$employee_id, "date"=>$date);
+            $this->addDb($newrec,false);
+          }
+          else 
+          {
+            //do nothing
+          }
+        }            
+      }
+    }
+    
+    function _recordMustBeAdded($newtime,$newbuffertime)
+    {
+      /*
+        If both the time and buffertime have been changed to 0, we do not need to update        
+      */
+      if(isset($change["time"]) && $change["time"]==0 && isset($change["buffertime"]) && $change["buffertime"]==0)
+      {
+        return false;
+      }
+      /*
+        if only time has been set to 0 and buffertime has not been touched, we do not need to update
+      */
+      if(isset($change["time"]) && $change["time"]==0 && !isset($change["buffertime"]))
+      {
+        return false;
+      }
+      /*
+        if only buffertime has been set to 0 and time has not been touched, we do not need to update
+      */
+      if(isset($change["time"]) && $change["time"]==0 && !isset($change["buffertime"]))
+      {
+        return false;
+      }
+      
+      //we need to add one
+      return true;
+    }
+    
+    function _recordMustBeDeleted($record, $newtime, $newbuffertime)
+    {
+      /*  
+        if both the time and buffertime have been changed to 0 we remove the record.
+      */
+      if(isset($newtime) && $newtime==0 && isset($newbuffertime) && $newbuffertime==0)
+      {
+        return true;
+      }      
+      
+      /*
+        if only time has been set to 0 and buffertime has not been touched.
+      */
+      if(isset($newtime) && $newtime==0 && !isset($newbuffertime))
+      {
+        /*  
+          Check if the buffertime is already 0 in the database record. If so, delete the record.
+        */
+        if(!isset($record["buffertime"]) || $records["buffertime"]==0 || $records["buffertime"]=="")
+        {
+          return true;
+        }
+        /*
+          If the buffertime is not 0, we update the record
+        */
+        else
+        {
+          return false;
+        }
+      }
+      
+      /*
+        if only buffertime has been set to 0 and time has not been touched.
+      */
+      if (isset($newbuffertime) && $newbuffertime==0 && !isset($newtime))
+      {
+        /*  
+          Check if the time is already 0 in the database record. If so, delete the record.
+        */
+        if(!isset($records["time"]) || $records["time"]==0 || $records["time"]=="")
+        {
+          return true;
+        }
+        /*
+          If the time is not 0, we update the record
+        */
+        else
+        {
+          return false;
+        }
+      }
+      
+      return false;
     }
 
     /**
@@ -392,7 +614,7 @@
     
     function renderPlanning(&$teamsdata,&$workload,&$period,&$planneddata)
     { 
-      $planning = &new teamPlanningRenderer();
+      $planning = &new teamPlanningRenderer($this->m_dataprefix,$this->m_olddataprefix);
       
       $result = '<form name="entryform" action="dispatch.php" method="post">';
       $result.= session_form();
@@ -400,12 +622,12 @@
       
       //header fields
       $headerfields = array("name","initial_planning","current_planning","current_min_planned");      
-      $weeknames    = array();
-      foreach($period["weeks"] as $week)  //get weeknames      
-        $weeknames[] = $week["week"];
+      //$weeknames    = array();
+//      foreach($period["weeks"] as $week)  //get weeknames      
+//        $weeknames[] = $week["week"];
 
-      atk_var_dump($workload,"<h1>HAR TAH WORKLOAD</h1>");
-      $planning->setHeader($headerfields,$weeknames);
+      //atk_var_dump($workload,"<h1>HAR TAH WORKLOAD</h1>");
+      $planning->setHeader($headerfields,$period["weeks"]);      
       foreach($teamsdata as $team)
       {
         $teamkey = $team["id"];
@@ -424,7 +646,7 @@
           $projectItem->setConflicts(array("OH NO A CONFLICT!"));
           foreach($project["phases"] as $phase)
           {
-            $phasekey = $phase["id"];
+            $phasekey = $phase["id"];            
             $phaseItem = &new phaseItem($phasekey,$teamkey,$projectkey);
             $phaseItem->setHeaderData($phase);            
             $phaseItem->setWeekData($planneddata[$teamkey]["projects"][$projectkey]["phases"][$phasekey]["planneddata"]);
@@ -483,7 +705,7 @@
         $buffertime = $rec["buffertime"];
         
         //@todo: add config to force the use of only buffertimes for projects and then ignore the
-        //found buffertimes for phases. For now, at default we ignore the buffertimes for phases.
+        //found buffertimes for phases. For now, at default we ignore the buffertime for phases.
         
         //if the phaseid is 0, the time and buffer belong to a project registration.
         if($phaseid == 0)
@@ -503,7 +725,58 @@
       return $planneddata;
     }
     
+    function getPostedData(&$data, &$olddata, &$datearr)  
+    {
+      $pre            = $this->m_dataprefix;
+      $oldpre         = $this->m_olddataprefix;
+      $pre_len        = strlen($pre);      
+      $oldpre_len     = strlen($oldpre);
+      $weekdates_len  = strlen("weekdate_");
+      
+      //we loop through the posted data, and get the data, and olddata
+      //values, we remove the prefixes.
+      foreach($this->m_postvars as $itemkey=>$item)
+      {
+        //is this a data item ?        
+        if(substr($itemkey,0,$pre_len) == $pre)
+        {
+          $data[substr($itemkey,$pre_len)] =$item;
+        }
+        //is this a olddata item
+        elseif(substr($itemkey,0,$oldpre_len) == $oldpre)
+        {
+          $olddata[substr($itemkey,$oldpre_len)] = $item;
+        }
+        //is this a weekdate item?
+        elseif(substr($itemkey,0,$weekdates_len) == "weekdate_")
+        {
+          $datearr[substr($itemkey,$weekdates_len)] = $item;
+        }
+      }
+    }    
     
+    function _weekstampToDate($weekid)
+    {
+      $year = substr($weekid,0,4);
+      $week = substr($weekid,4);
+      return $this->datefromweek($year,$week,0);
+    }
     
+    function datefromweek ($y, $w, $o) 
+    {
+     $days = ($w - 1) * 7 + $o;
+  
+     $firstdayofyear = getdate(mktime(0,0,0,1,1,$y));
+     if ($firstdayofyear["wday"] == 0) $firstdayofyear["wday"] += 7;
+  # in getdate, Sunday is 0 instead of 7
+     $firstmonday = getdate(mktime(0,0,0,1,1-$firstdayofyear["wday"]+1,$y));
+     $calcdate = getdate(mktime(0,0,0,$firstmonday["mon"], $firstmonday["mday"]+$days,$firstmonday["year"]));
+  
+     $date["year"] = $calcdate["year"];
+     $date["month"] = $calcdate["mon"];
+     $date["day"] = $calcdate["mday"];
+  
+     return ($date);
+    }
   }
 ?>

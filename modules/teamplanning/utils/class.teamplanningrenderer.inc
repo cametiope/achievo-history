@@ -4,11 +4,15 @@ class teamPlanningRenderer
 {
   var $m_items          = array();
   var $m_headerfields   = array();
-  var $m_weeknames      = array();  
+  var $m_weeks          = array();  
   
-  function teamPlanningRenderer()
+  var $m_dataprefix     = "";
+  var $m_olddataprefix  = "";
+  
+  function teamPlanningRenderer($dataprefix,$olddataprefix)
   {
-    
+    $this->m_dataprefix     = $dataprefix;
+    $this->m_olddataprefix  = $olddataprefix;
   }
   
   /**
@@ -22,21 +26,21 @@ class teamPlanningRenderer
     $this->m_items[] = $item;
   }
   
-  function setHeader($headerfields,$weeknames)
+  function setHeader($headerfields,$weeks)
   {
     $this->m_headerfields = $headerfields;
-    $this->m_weeknames    = $weeknames;
+    $this->m_weeks        = $weeks;
   }
   
   function render()
   {    
     $result = "";
-    if($this->m_headerfields != array() && $this->m_weeknames != array())
+    if($this->m_headerfields != array() && $this->m_weeks != array())
     {
       //render headers and weeknumbers
       foreach($this->m_items as $item)
       {        
-        $result.= $item->render($this->m_headerfields,$this->m_weeknames);
+        $result.= $item->render($this->m_headerfields,$this->m_weeks,$this->m_dataprefix,$this->m_olddataprefix);
       }
     }
     else     

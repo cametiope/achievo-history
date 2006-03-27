@@ -9,7 +9,10 @@ class teamItem
   var $m_capacity_available = array();
   var $m_capacity_percentage= array();  
   var $m_headerfields       = array();
-  var $m_weeknames          = array();  
+  var $m_weeks              = array();  
+  
+  var $m_dataprefix     = "";
+  var $m_olddataprefix  = "";
     
   function teamItem($id)
   {
@@ -31,11 +34,14 @@ class teamItem
     $this->m_capacity_max = $teamcapacity;
   }
   
-  function render($headerfields, $weeknames)
+  function render($headerfields, $weeks, $dataprefix, $olddataprefix)
   {
-    $this->m_headerfields = $headerfields;
-    $this->m_weeknames    = $weeknames;
+    $this->m_headerfields   = $headerfields;
+    $this->m_weeks          = $weeks;
+    $this->m_dataprefix     = $dataprefix;
+    $this->m_olddataprefix  = $olddataprefix;
 
+    $headercolcount = count($headerfields);
     /*  
       Calculate data    
     */    
@@ -51,45 +57,61 @@ class teamItem
       Render headers and weeknumbers
     */    
     $result.= '<tr class="row2">';
-    foreach($headerfields as $field)  $result.= '<th>'.$field."</th>";        
-    foreach($weeknames as $week)      $result.= '<th>'.$week."</th>";    
+    foreach($headerfields as $field)  $result.= '<th>'.$field."</th>";
+    foreach($this->m_weeks as $weekitem)
+    {
+      $result.= '<th><input name="weekdate_'.$weekitem["week"].'" id="weekdate_'.$weekitem["week"].'" type="hidden" value="'.$weekitem["startdate"].'" />'.$weekitem["week"]."</th>";
+    }
     $result.= '</tr>';
     
     /*
       Render projects
     */
     foreach($this->m_items as $item)
-      $result.= $item->render($headerfields, $weeknames);
+      $result.= $item->render($headerfields, $this->m_weeks, $this->m_dataprefix, $this->m_olddataprefix);
       
     /*
       Render capacity rows
     */
     //max capacity
     $result.= '<tr class="row2">';
-    $result.= '<th colspan="'.count($headerfields).'">'.atktext("max_capacity","teamplanning").'</th>';
-    foreach($this->m_weeknames as $week)    
-      $result.= '<th>'.$this->m_capacity_max["weekspeed"][$week].'</th>';
+    $result.= '<th colspan="'.$headercolcount.'">'.atktext("max_capacity","teamplanning").'</th>';
+    foreach($this->m_weeks as $weekitem)
+    {
+      $week = $weekitem["week"];
+      $id = implode("_",array($this->m_id,"maxcapacity",$week));
+      $att = &new atkDummyAttribute($id,$this->m_capacity_max["weekspeed"][$week]);      
+      $result.= '<th>'.$att->edit(NULL).'</th>';
+    }
     $result.= '</tr>';        
     
     //available capacity  
     $result.= '<tr class="row2">';    
-    $result.= '<th colspan="'.count($headerfields).'">'.atktext("available_capacity","teamplanning").'</th>';
-    foreach($this->m_weeknames as $week)    
-      $result.= '<th>'.$this->m_capacity_available["weekspeed"][$week].'</th>';
+    $result.= '<th colspan="'.$headercolcount.'">'.atktext("available_capacity","teamplanning").'</th>';
+    foreach($this->m_weeks as $weekitem)
+    {
+      $week = $weekitem["week"];
+      $id = implode("_",array($this->m_id,"availablecapacity",$week));
+      $att = &new atkDummyAttribute($id,$this->m_capacity_available["weekspeed"][$week]);      
+      $result.= '<th>'.$att->edit(NULL).'</th>';
+    }
     $result.= '</tr>';
     
     //percentage capacity
     $result.= '<tr class="row2">';    
-    $result.= '<th colspan="'.count($headerfields).'">'.atktext("percentage_capacity","teamplanning").'</th>';
-    foreach($this->m_weeknames as $week)
+    $result.= '<th colspan="'.$headercolcount.'">'.atktext("percentage_capacity","teamplanning").'</th>';
+    foreach($this->m_weeks as $weekitem)
     {
+      $week = $weekitem["week"];
       $percentage = $this->m_capacity_percentage["weekspeed"][$week];
       
       $color = "";
       if(($percentage > 100) || ($percentage<0))  $color = "#FF0000";
       else                                        $color = "#00FF00";
       
-      $result.= '<th><font color="'.$color.'">'.$percentage.'%</font></th>';
+      $id = implode("_",array($this->m_id,"percentagecapacity",$week));
+      $att = &new atkDummyAttribute($id,'<font color="'.$color.'">'.$percentage.'%</font>');      
+      $result.= '<th>'.$att->edit(NULL).'</th>';
     }
     $result.= '</tr>';
     
@@ -106,8 +128,9 @@ class teamItem
   
   function _calculateCapacity()
   {    
-    foreach($this->m_weeknames as $week)
+    foreach($this->m_weeks as $weekitem)
     {
+      $week = $weekitem["week"];
       $max      = $this->m_capacity_max["weekspeed"][$week];
 
       $sumprojects = 0;
