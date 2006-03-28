@@ -12,6 +12,8 @@ useattrib("timereg.taskattribute");
 useattrib("atkdummyattribute");
 userelation("atkmanytoonerelation");
 
+useattrib("atkdatetimeattribute");
+
 class hours extends atkNode
 {
   var $m_lock = "";
@@ -42,7 +44,7 @@ class hours extends atkNode
     
     $this->add(new atkTextAttribute("remark",0 , 0));
     $this->add(new atkDurationAttribute("time"));
-    $this->add(new atkDateAttribute("entrydate",AF_HIDE));
+    $this->add(new atkDateAttribute("entrydate",AF_HIDE));    
 
     $this->setOrder("hours.id"); // Sort by order of input..
     $this->setTable("hours","hours");
@@ -195,9 +197,72 @@ class hours extends atkNode
       if (atkconfig("timereg_week_bookable")==true && $this->m_lock=="") $output.= $handler->invoke("addPage");      
       $output.= $this->weekview();
     }
+
     $page = &$this->getPage();
     $this->addStyle("style.css");
     $page->addContent($this->renderActionPage("admin", $output));
+  }
+  
+  function adminHeader()
+  {
+    if ($this->m_weekview!=1)
+    {
+      $viewdatestamp  = adodb_mktime(0,0,0,substr($this->m_viewdate,5,2),substr($this->m_viewdate,8,2),substr($this->m_viewdate,0,4));
+      $yesterday      = date('Y-m-d',$viewdatestamp-(86400-3601));   // we substract 3601 seconds to account for Daylight Savings Time      
+      $tomorrow       = date('Y-m-d',$viewdatestamp+86400+3601);      // we add 3601 seconds to account for Daylight Savings Time
+      $today          = date('Y-m-d');
+      
+      $output=  '<form name="dayview" method="post" action="dispatch.php">';
+      $output.= session_form();
+      $output.= '<table border=0 cellpadding=0 cellspacing=0 width="100%" class="table">';
+      $output.= '<tr>
+                  <td align="left" valign="top">'
+                    .href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$yesterday, atktext("previousday"));
+      
+      // If current is not today we can also move forward
+      if ($this->m_viewdate<date('Y-m-d'))
+      {        
+        $output.='&nbsp;&nbsp;'.href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$tomorrow, atktext("nextday"));
+        $output.='&nbsp;&nbsp;'.href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$today, atktext("today", "", "houradmin"));
+      }
+      
+      $output.= '&nbsp;&nbsp;'.href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$this->m_viewdate.'&weekview=1', atktext("gotoweekview"));
+      $output.='</td><td align="right" valign="top">';
+      
+      $output.= $this->getUserSelect().'&nbsp;';
+      $output.= $this->getDateJumper();      
+      $output.='&nbsp;<input type="submit" value="'.atktext("goto").'">';
+      $output.='</td></tr></table></form>';
+      $output.='<b>'.atktext(strtolower(date("l", $viewdatestamp)))." ".atktext(strtolower(date("F", $viewdatestamp)))." ".date("d, Y", $viewdatestamp).'</b>'.$this->getLockIcon();
+    }
+    return $output;
+  }
+  
+  function adminFooter()
+  {
+    //@todo: fix overtime_balance    
+    if ($this->m_weekview!=1)
+    {
+      /* @var $balancenode atkNode */
+      $balancenode = &getNode("timereg.overtime_balance");
+      $balance = $balancenode->getBalance(date("Y-m-d", adodb_mktime(0,0,0,substr($this->m_viewdate,5,2),substr($this->m_viewdate,8,2),substr($this->m_viewdate,0,4))), $this->m_user);
+      $output ='<table border=0 cellpadding=0 cellspacing=0 width="100%" class="table">';
+      $output.='<tr><td align="left" valign="top">';
+      $output.= href('dispatch.php?atknodetype=calendar.schedule&atkaction=admin&viewdate='.$this->m_viewdate, atktext("viewschedule"), SESSION_NESTED);
+      $output.='</td><td align="right">'.atktext("current_balance").': '.time_format((60*$balance["balance"]),true).'&nbsp;</td></tr></table>';
+      return $output;
+    }
+    else
+    {
+      return "";
+    }
+  }
+
+  function getDateJumper()
+  {
+    $dummy_rec = array("viewdate"=>$this->getInitialDate());    
+    $datebox = new atkDateAttribute("viewdate","F d Y","d F Y",0, date("Ymd"),AF_OBLIGATORY);
+    return $datebox->edit($dummy_rec);
   }
   
   function weekview()
@@ -569,8 +634,7 @@ class hours extends atkNode
     $errors = array();
     
     //In this array we will store the items we need to add to the db.
-    $storeList = $this->getChangedProjectItems($projects,$errors);
-    
+    $storeList = $this->getChangedProjectItems($projects,$errors);    
 
     //if we have any errors, store the items
     if(count($errors))
@@ -603,7 +667,7 @@ class hours extends atkNode
   function getChangedProjectItems(&$projects, &$errors)
   {
     //the estimated time for the phase can be obligatory
-    $phasetimeisobligatory = atkConfig("hours_obligatory_estimated_phasetime", false);
+    $estimatedtimeisobligatory = atkConfig("hours_obligatory_estimated_time", false);
     
     $storeList = array();
     
@@ -626,7 +690,7 @@ class hours extends atkNode
             $activityname = $this->getActivityName($activity["id"]);
               
             //if the estimated phasetime is obligatory, check if it is provided (it is allowed to be 0)
-            if($phasetimeisobligatory && (!isset($phase["estimated"]) || $phase["estimated"]==""))
+            if($estimatedtimeisobligatory && (!isset($activity["estimated"]) || $activity["estimated"]==""))
             {
               $errmsg = atktext("project").": $projectname, "
                         .atktext("phase").": $phasename, "
@@ -634,13 +698,14 @@ class hours extends atkNode
               $errors["obligatoryfields"][] = $errmsg;              
             }
             else 
-            {              
+            { 
               //add it to the storeList
               $storeList[] = array(                            
                             "activityid"    =>$activity["id"],
                             "activityname"  =>$activityname,
                             "tasktype"      =>'activity',
                             "time"          =>$activity["time"],
+                            "estimated"     =>$activity["estimated"],
                             "taskdate"      =>$this->m_viewdate,
                             "workperiod"    =>$activity["workperiod"],
                             "remark"        =>$activity["remark"]
@@ -661,7 +726,15 @@ class hours extends atkNode
     $tasknode   = &getNode("task.task");
     $hoursnode  = &getNode("timereg.hours");
     $db         = &atkGetDb();    
-    $dt         = date("Y-m-d");    
+    $dt         = date("Y-m-d");
+    $datearr    = explode("-",date("Y-m-d-H-i-s"));    
+    $datetime   = array();    
+    $datetime["year"]   = $datearr[0];
+    $datetime["month"]  = $datearr[1];
+    $datetime["day"]    = $datearr[2];
+    $datetime["hours"]  = $datearr[3];
+    $datetime["minutes"]= $datearr[4];
+    $datetime["seconds"]= $datearr[5];
     
     foreach($storeList as $item)
     {      
@@ -669,12 +742,13 @@ class hours extends atkNode
       
       //for now only the tasktype activity is supported
       if($tasktype == 'activity')
-      {        
+      { 
         $activityid   = $item["activityid"];
         $activityname = $item["activityname"];
         $taskdate     = $item["taskdate"];
         $workperiod   = $item["workperiod"];
         $time         = $item["time"];
+        $estimated    = $item["estimated"];
         $remark       = $item["remark"];
         
         //does the currently logged in user have a task linked to the current activity?
@@ -686,19 +760,31 @@ class hours extends atkNode
         {
           atkdebug("this user does not yet have a task related to this activity.");            
           
-          $taskid                 = $db->nextid('task');
-          $newtask["id"]          = $taskid;
-          $newtask["name"]        = $activityname;
-          $newtask["owner"]       = array("id"=>$this->m_user);
-          $newtask["createdate"]  = $dt;
-          $newtask["refid"]       = $activityid;
-          $newtask["tasktype"]    = $tasktype;
+          $taskid                       = $db->nextid('task');
+          $newtask["id"]                = $taskid;
+          $newtask["name"]              = $activityname;
+          $newtask["owner"]             = array("id"=>$this->m_user);
+          $newtask["createdate"]        = $dt;
+          if($estimated != "")  //if the user provided an estimated time value, we store it.
+            $newtask["current_planning"]  = $estimated;
+          else 
+            $newtask["current_planning"] = "";
+          $newtask["editdatetime"]      = $datetime;
+          $newtask["refid"]             = $activityid;
+          $newtask["tasktype"]          = $tasktype;
           $tasknode->addDb($newtask, false);
         }
         else 
         {
           atkdebug("this user already has a task related to this activity");          
-          $taskid = $taskrecords[0]["id"];
+          $taskid = $taskrecords[0]["id"];          
+          atkdebug("estimeded value = ".$estimated);
+          if($estimated != "")    //if the user provided an estimated time value, we store it.
+          { 
+            $taskrecords[0]["editdatetime"]     = $datetime;
+            $taskrecords[0]["current_planning"] = $estimated;
+            $tasknode->updateDb($taskrecords[0],false);
+          }          
         }
                         
         $newhour["id"]          = $db->nextid('hours');
@@ -709,9 +795,7 @@ class hours extends atkNode
         $newhour["time"]        = $time;
         $newhour["workperiod"]  = array("id"=>$workperiod);
         $newhour["remark"]      = $remark;
-        $hoursnode->addDb($newhour,true);
-        
-        //@todo: add estimated_time to the current_planning for the phases
+        $hoursnode->addDb($newhour,true);       
       }
       else 
       {
@@ -744,67 +828,53 @@ class hours extends atkNode
   function getDataFromCells(&$data)
   {
     //data is found in the following format:
-    
-    //cellname : 1_1_estimated -> value:
+
+    //cellname : 1_1_1_estimated -> value:   
     //cellname : 1_1_1_hours -> value: 0
     //cellname : 1_1_1_minutes -> value: 0
     //cellname : 1_1_1_workperiod -> value: 1
     //cellname : 1_1_2_hours -> value: 0
     //cellname : 1_1_2_minutes -> value: 0
     //cellname : 1_1_2_workperiod -> value: 1 
-    
+        
     $projects = array();
     
     // Loop through all cells
     foreach($data as $cell => $value)
     { 
+      // Determine the projectid phaseid and activityid according to the cellname
+      list($projectid, $phaseid, $activityid) = explode("_", $cell);
+      $projects[$projectid]["id"] = $projectid;
+      $projects[$projectid]["phase"][$phaseid]["id"] = $phaseid;
+      $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["id"] = $activityid;  
+      
       //estimated field
       if(strpos($cell,"estimated"))
-      {
-        // Determine the projectid and phaseid according to the cellname
-        list($projectid, $phaseid) = explode("_", $cell);
-        $projects[$projectid]["phase"][$phaseid]["estimated"] = $value;
-        $projects[$projectid]["id"] = $projectid;
-        $projects[$projectid]["phase"][$phaseid]["id"] = $phaseid;
+      {                
+        if($value != "" && isset($value))        
+          $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["estimated"] = $value * 60;        
+        else 
+          $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["estimated"] = "";
       }
       //hours field
       elseif(strpos($cell,"hours"))
       {
-        // Determine the projectid phaseid and activityid according to the cellname
-        list($projectid, $phaseid, $activityid) = explode("_", $cell);
         $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["time"] = ($value * 60);
-        $projects[$projectid]["id"] = $projectid;
-        $projects[$projectid]["phase"][$phaseid]["id"] = $phaseid;
-        $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["id"] = $activityid;
       }
       //minutes field
       elseif(strpos($cell,"minutes"))
-      {
-        // Determine the projectid phaseid and activityid according to the cellname
-        list($projectid, $phaseid, $activityid) = explode("_", $cell);
+      {       
         $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["time"] += $value;
-        $projects[$projectid]["id"] = $projectid;
-        $projects[$projectid]["phase"][$phaseid]["id"] = $phaseid;
-        $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["id"] = $activityid;
       }
       //workperiod field
       elseif(strpos($cell,"workperiod"))
-      {
-        // Determine the projectid phaseid and activityid according to the cellname
-        list($projectid, $phaseid, $activityid) = explode("_", $cell);
+      {       
         $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["workperiod"] = $value;
-        $projects[$projectid]["id"] = $projectid;
-        $projects[$projectid]["phase"][$phaseid]["id"] = $phaseid;
-        $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["id"] = $activityid;
       }
       //remark field
       elseif(strpos($cell,"remark"))
       {
-        list($projectid, $phaseid, $activityid) = explode("_", $cell);
         $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["remark"] = $value;
-        $projects[$projectid]["id"] = $projectid;
-        $projects[$projectid]["phase"][$phaseid]["id"] = $phaseid;
-        $projects[$projectid]["phase"][$phaseid]["activities"][$activityid]["id"] = $activityid;
       }
     }
     
@@ -825,7 +895,7 @@ class hours extends atkNode
   function clickableImages($id, $srcopen, $srcclose, $regopen, $regclose)
   { 
     $openimageid = "img_open_$id";
-    $closeimageid = "img_close_$id";    
+    $closeimageid = "img_close_$id";
     
     $hrefopen = "javascript:openObject('projects','$regopen','$openimageid','$closeimageid')";
     $hrefclose = "javascript:closeObject('projects','$regclose','$openimageid','$closeimageid')";
@@ -939,31 +1009,43 @@ class hours extends atkNode
     $output.= '      
     <table class="recordlist" id="projects">
     <tr class="row1">
-      <th>'.atktext("projectsphasesandactivities").'</th>
+      <th>'."Projecten\Fases\Activiteiten".'</th>
       <th>'.atktext("initial_planning").'</th>
       <th>'.atktext("current_planning").'</th>      
       <th>'.atktext("spend_hours").'</th>
-      <th>'.atktext("register_hours")."&nbsp;<br />".atktext("hours").":".atktext("minutes").'</th>
-      <th>'.atktext("workperiod").'</th>
-      <th>'.atktext("neededforphase").'</th>
+      <th>'.atktext("Gewerkte")."&nbsp;<br />".atktext("hours").":".atktext("minutes").'</th>
+      <th>'.atktext("werktijd<br />periode").'</th>
+      <th>'."Schatting".'</th>
       <th>'.atktext("remark").'</th>
     </tr>
     ';
         
     foreach($data["projects"] as $project)
     {
-      $projectid    = $project["id"];
-      $projectname  = $project["name"];      
-      $rowid        = "$projectid";
-      $regopen      = "^row_{$projectid}_[0-9]+$";
-      $regclose     = "^row_{$projectid}_";      
-      $images       = $this->clickableImages($projectid,$plusimagesrc,$minimagesrc, $regopen, $regclose);
+      $projectid        = $project["id"];
+      $projectname      = $project["name"];      
+      $rowid            = "$projectid";
+      $regopen          = "^row_{$projectid}_[0-9]+$";
+      $regclose         = "^row_{$projectid}_";      
+      $images           = $this->clickableImages($projectid,$plusimagesrc,$minimagesrc, $regopen, $regclose);      
+      $currentplanning = 0;
       
+      if(!isset($project["current_planning"]) || $project["current_planning"] == "" || $project["current_planning"] == 0)      
+        $project["current_planning"] = (isset($project["initial_planning"]) && $project["initial_planning"]!="") ? $project["initial_planning"] : 0;
+        
+      if($project["allactivities"] === false)
+      {
+        $currentplanning = $this->convertTime($project["calculated_current_planning"])." / ".$this->convertTime($project["current_planning"]);
+      }
+      else 
+      {
+        $currentplanning = $this->convertTime($project["calculated_current_planning"]);
+      }
       $output.='        
         <tr class="row2" id="row_'.$rowid.'">
           <td>'.$images.'&nbsp;<b>'.$projectname.'</b></td>          
           <td align="center">'.$this->convertTime($project["initial_planning"]).'</td>
-          <td align="center">'.$this->convertTime($project["current_planning"]).'</td>
+          <td align="center">'.$currentplanning.'</td>
           <td align="center">'.$this->convertTime($project["spend_hours"]).'</td>
           <td align="center">&nbsp;</td>
           <td align="center">&nbsp;</td>
@@ -979,16 +1061,30 @@ class hours extends atkNode
         $rowid          = "{$projectid}_$phaseid";        
         $reg            = "^row_{$projectid}_{$phaseid}_[0-9]+$";
         $images         = $this->clickableImages($projectid."_".$phaseid, $plusimagesrc, $minimagesrc, $reg, $reg);        
+        $currentplanning = 0;
         
+        if(!isset($phase["current_planning"]) || $phase["current_planning"] == "" || $phase["current_planning"] == 0)      
+          $phase["current_planning"] = (isset($phase["initial_planning"]) && $phase["initial_planning"]!="") ? $phase["initial_planning"] : 0;
+          
+        if($project["allactivities"] === false)
+        {
+          $value1 = $phase["calculated_current_planning"];
+          $value2 = $this->convertTime($phase["current_planning"]);
+          $currentplanning = $this->convertTime($phase["calculated_current_planning"])." / ".$this->convertTime($phase["current_planning"]);
+        }
+        else 
+        {
+          $currentplanning = $this->convertTime($phase["calculated_current_planning"]);
+        }
         $output.='          
           <tr class="row2" '.$initdisplay.' id="row_'.$rowid.'">
             <td>'.str_repeat("&nbsp;",5).$images.'&nbsp;'.$phasename.'</td>
             <td align="center">'.$this->convertTime($phase["initial_planning"]).'</td>
-            <td align="center">'.$this->convertTime($phase["current_planning"]).'</td>
+            <td align="center">'.$currentplanning.'</td>
             <td align="center">'.$this->convertTime($phase["spend_hours"]).'</td>
             <td align="center">&nbsp;</td>
             <td align="center">&nbsp;</td>
-            <td align="center"><input type="text" name="data['.$rowid.'_estimated]" id="data['.$rowid.'_estimated]" value="'.$sessionData[$rowid.'_estimated'].'" size="4"></input></td>
+            <td align="center">&nbsp;</td>            
             <td align="center">&nbsp;</td>
           </tr>
         ';        
@@ -1002,12 +1098,13 @@ class hours extends atkNode
           $output.='
           <tr class="row1" '.$initdisplay.' id="row_'.$rowid.'">
             <td>'.str_repeat("&nbsp;",10).$activityname.'</td>  
-            <td align="center" colspan="2">&nbsp;</td>
+            <td align="center">&nbsp;</td>
+            <td align="center">'.$this->convertTime($activity["current_planning"]).'</td>
             <td align="center">'.$this->convertTime($activity["spend_hours"]).'</td>
             <td align="center">'.$this->getHourRegistrationDropDownLists($rowid, $sessionData[$rowid.'_hours'], $sessionData[$rowid.'_minutes']).'</td>
             <td align="center">'.$this->getWorkPeriodDropDownLists($rowid,$workperiods,$standardworkperiod,$sessionData[$rowid.'_workperiod']).'</td>
-            <td align="center">&nbsp;</td>
-            <td align="center"><textarea name="data['.$rowid.'_remark]" id="data['.$rowid.'_remark]" cols="20" rows="'.$maxlines.'">'.$sessionData[$rowid.'_remark'].'</textarea></td>
+            <td align="center"><input type="text" name="data['.$rowid.'_estimated]" id="data['.$rowid.'_estimated]" value="'.$sessionData[$rowid.'_estimated'].'" size="2"></input></td>
+            <td align="center"><textarea name="data['.$rowid.'_remark]" id="data['.$rowid.'_remark]" cols="10" rows="'.$maxlines.'">'.$sessionData[$rowid.'_remark'].'</textarea></td>
           </tr>';
         }
       }      
@@ -1102,27 +1199,41 @@ class hours extends atkNode
     $data = array();
       
     //get all projects that this user has recently registered hours on.
-    $recent = $this->getRecentProjects();
-    $data["projects"] = $recent;
+    //And all projects that appear in the teamplanning for this user.
+    $projects = $this->getProjects();    
+    $data["projects"] = $projects;
+    
+    
     
     //if $selectedprojectid has a value, we came back from selecting a project.
     //select that project too. We put it at the bottom.
     if(isset($selectedprojectid) && $selectedprojectid!="")    
       $data["projects"][] = $this->getProject($selectedprojectid);
         
-    //@todo: add tasks assigned to this user.        
-    
-//    $id = rand(1000,1500);
-//    $data["projects"][$id] = array("id"=>$id, "name"=>"projecten voor ".$this->m_viewdate,"phase"=>array());
+    //@todo: add tasks assigned to this user.
+
     return $data;
   }  
    
-  /**
-    * Get the most recent projects, the currently logged in user has registered hours on.
-    *
-    * @return array projects
-    */ 
-  function getRecentProjects()
+  
+  function getProjects()
+  {
+    $recentids = $this->getRecentProjectIds();
+    $planningids = $this->getPlanningProjects();    
+    return $this->getProjectsByIds(array_unique(array_merge($recentids,$planningids)));    
+  }
+  
+  function getPlanningProjects()
+  {
+    if(moduleExists("teamplanning"))
+    {
+      $user = &getUser();
+      $node = atkGetNode("teamplanning.teamplanning");
+      return $node->getUserPlanningProjectIds($user["id"],date("Ymd"));
+    }
+  }
+  
+  function getRecentProjectIds()
   {
     atkimport('atk.db.atkquery');
     
@@ -1150,53 +1261,66 @@ class hours extends atkNode
     //get only the ids
     $recentprojectids = array();    
     foreach($recentprojects as $recentproject)
-      $recentprojectids[] = $recentproject["id"];    
-      
+      $recentprojectids[] = $recentproject["id"];   
+    
+    return $recentprojectids;
+  }
+  /**
+    * Get projects by an array of ids.
+    *
+    * @return array projects
+    */ 
+  function getProjectsByIds($projectids)
+  {        
+    atkimport('atk.db.atkquery');
+    
+    $db     = &atkGetDb();
+    $query  = &new atkQuery();
+    
     //get all data that belongs to these projects    
     $projects = array();
     /* @var $node atkNode */
     $node   = &getNode("project.project");    
-    if($recentprojectids != array())
+    if($projectids != array())
     {
       //get the projects, phases and activities
-      $projects = $node->selectDb("project.id IN (".implode(", ",$recentprojectids).")","project.name","","",array("id","name","phase"));
+      $projects = $node->selectDb("project.id IN (".implode(", ",$projectids).")","project.name","","",array("id","name","phase"));
+      
+      $mostrecentestimations = $this->_getMostRecentEstimations($projectids);
       
       //calculate some values
       for($i=0,$_i=count($projects);$i<$_i;$i++)
       {
-        $projects[$i]["initial_planning"] = "-";
-        $projects[$i]["current_planning"] = "-";
-        $projects[$i]["spend_hours"] = "-";
+        //get a reference to the project
+        $project = &$projects[$i];
+        
+        $projects[$i]["initial_planning"] = 0;
+        $projects[$i]["current_planning"] = 0;        
+        $projects[$i]["spend_hours"] = 0;
         
         for($j=0,$_j=count($projects[$i]["phase"]);$j<$_j;$j++)
         {
           //get a reference to the phase
           $phase = &$projects[$i]["phase"][$j];
-          $phase["spend_hours"] = "-";
-                    
+          $phase["spend_hours"] = "-";          
+          
           if(isset($phase["initial_planning"]) && $phase["initial_planning"] != "")
-          {
-            if($projects[$i]["initial_planning"] == "-")
-              $projects[$i]["initial_planning"] = 0;
-            
+          {            
             $projects[$i]["initial_planning"] += $phase["initial_planning"];
           }           
 
           //calculate current planning for project and phases
           if(isset($phase["current_planning"]) && $phase["initial_planning"] != "")
-          {
-            if($projects[$i]["current_planning"] == "-")
-              $projects[$i]["current_planning"] = 0;
-            
+          {            
             $projects[$i]["current_planning"] += $phase["current_planning"];
           }
-          
+
           //calculate spend_hours for project, phase and activities
           for($k=0,$_k=count($phase["activities"]);$k<$_k;$k++)
           {
             //get a reference to the activity
             $activity = &$phase["activities"][$k];
-            
+
             //get registered hours for this phase.
             $query = &new atkQuery();
             $query->addField("sum(hours.time) as spend_hours");
@@ -1205,21 +1329,49 @@ class hours extends atkNode
             $query->addJoin("activity","","task.refid=activity.id",true);            
             $query->addCondition("task.tasktype='activity'");
             $query->addCondition("activity.id=".$activity["id"]);
-            $spend_hours_activity = $db->getrows($query->buildSelect());    
-           
-            if($projects[$i]["spend_hours"] == "-")
-              $projects[$i]["spend_hours"] = 0;
-            
-            if($phase["spend_hours"] == "-")
-              $phase["spend_hours"] = 0;
+            $spend_hours_activity = $db->getrows($query->buildSelect());
               
+            $activityestimate = $mostrecentestimations[$project["id"]]["phases"][$phase["id"]]["activities"][$activity["id"]]["current_planning"];
+                        
             $activity["spend_hours"]      = $spend_hours_activity[0]["spend_hours"];
+            $activity["current_planning"] = $activityestimate;
             $phase["spend_hours"]         += $spend_hours_activity[0]["spend_hours"];
             $projects[$i]["spend_hours"]  += $spend_hours_activity[0]["spend_hours"];
           }
         }        
       }
     }
+    
+    //loop through all projects to recalculate the current_planning to show a range if needed
+    for($i=0,$_i=count($projects);$i<$_i;$i++)
+    {      
+      $project = &$projects[$i];      
+      $sumphases = 0;      
+      $allphases = true;      
+      for($j=0,$_j=count($project["phase"]);$j<$_j;$j++)
+      {        
+        $phase = &$project["phase"][$j];
+        $sumactivity = 0;
+        $allactivities = true;
+        for($k=0,$_k=count($phase["activities"]);$k<$_k;$k++)
+        {     
+          $activity = &$phase["activities"][$k];
+          if(!isset($activity["current_planning"]))          
+            $allactivities = false;
+          else          
+          {
+            $sumactivity += $activity["current_planning"];            
+          }            
+        }
+        
+        $phase["allactivities"] = $allactivities;        
+        $phase["calculated_current_planning"] = $sumactivity;
+        $sumphases += $sumactivity;
+      }
+      
+      $project["allactivities"] = $allactivities;
+      $project["calculated_current_planning"] = $sumphases;
+    }    
     
     return $projects;
   }
@@ -1274,62 +1426,7 @@ class hours extends atkNode
     //it appears to be, none of them is default. Lets select the first
     return $workperiods[0]["id"];
   }
-  
-  function adminHeader()
-  {
-    if ($this->m_weekview!=1)
-    {
-      $viewdatestamp  = adodb_mktime(0,0,0,substr($this->m_viewdate,5,2),substr($this->m_viewdate,8,2),substr($this->m_viewdate,0,4));
-      $yesterday      = date('Y-m-d',$viewdatestamp-(86400-3601));   // we substract 3601 seconds to account for Daylight Savings Time      
-      $tomorrow       = date('Y-m-d',$viewdatestamp+86400+3601);      // we add 3601 seconds to account for Daylight Savings Time
-      $today          = date('Y-m-d');
-      
-      $output=  '<form name="dayview" method="post" action="dispatch.php">';
-      $output.= session_form();
-      $output.= '<table border=0 cellpadding=0 cellspacing=0 width="100%" class="table">';
-      $output.= '<tr>
-                  <td align="left" valign="top">'
-                    .href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$yesterday, atktext("previousday"));
-      
-      // If current is not today we can also move forward
-      if ($this->m_viewdate<date('Y-m-d'))
-      {        
-        $output.='&nbsp;&nbsp;'.href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$tomorrow, atktext("nextday"));
-        $output.='&nbsp;&nbsp;'.href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$today, atktext("today", "", "houradmin"));
-      }
-      
-      $output.= '&nbsp;&nbsp;'.href('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$this->m_viewdate.'&weekview=1', atktext("gotoweekview"));
-      $output.='</td><td align="right" valign="top">';
-      
-      $output.= $this->getUserSelect().'&nbsp;';
-      $output.= $this->getDateJumper();      
-      $output.='&nbsp;<input type="submit" value="'.atktext("goto").'">';
-      $output.='</td></tr></table></form>';
-      $output.='<b>'.atktext(strtolower(date("l", $viewdatestamp)))." ".atktext(strtolower(date("F", $viewdatestamp)))." ".date("d, Y", $viewdatestamp).'</b>'.$this->getLockIcon();
-    }
-    return $output;
-  }
-
-  function adminFooter()
-  {
-    //@todo: fix overtime_balance    
-    if ($this->m_weekview!=1)
-    {
-      /* @var $balancenode atkNode */
-      $balancenode = &getNode("timereg.overtime_balance");
-      $balance = $balancenode->getBalance(date("Y-m-d", adodb_mktime(0,0,0,substr($this->m_viewdate,5,2),substr($this->m_viewdate,8,2),substr($this->m_viewdate,0,4))), $this->m_user);
-      $res ='<table border=0 cellpadding=0 cellspacing=0 width="100%" class="table">';
-      $res.='<tr><td align="left" valign="top">';
-      $res.= href('dispatch.php?atknodetype=calendar.schedule&atkaction=admin&viewdate='.$this->m_viewdate, atktext("viewschedule"), SESSION_NESTED);
-      $res.='</td><td align="right">'.atktext("current_balance").': '.time_format((60*$balance["balance"]),true).'&nbsp;</td></tr></table>';
-      return $res;
-    }
-    else
-    {
-      return "";
-    }
-  }
-  
+   
   function postAdd($rec)
   {
     return $this->postAddOrUpdate($rec,"add");
@@ -1342,7 +1439,6 @@ class hours extends atkNode
   
   function postAddOrUpdate($rec, $mode)
   {
-    atk_var_dump($rec,"<h1>TAH REC</h1>");
     $this->getPageData();
     // if we add or update a record on a date that is not the currently viewed date, we jump to that date.
     //we also put it in the session.
@@ -1354,10 +1450,9 @@ class hours extends atkNode
     $this->calculateNewBalance($rec, $mode);
     return true;
   }
-
-  function postDel($rec)
-  {
-    // update overtime balance
+  
+  function postDelete($rec)
+  {  
     $this->calculateNewBalance($rec, "delete");
     return true;
   }
@@ -1365,16 +1460,25 @@ class hours extends atkNode
   function calculateNewBalance($rec, $mode)
   {
     $balancenode = &getNode("timereg.overtime_balance");
+    
     $userid       = $rec["userid"]["id"];
-    $taskdate     = $rec["taskdate"];    
-    $year         = substr($taskdate,0,4);
-    $month        = substr($taskdate,5,2);
-    $activityday  = substr($taskdate,8,2);
+    if(is_array($rec["taskdate"]))
+    {
+      $year         = $rec["taskdate"]["year"];
+      $month        = $rec["taskdate"]["month"];
+      $activityday  = $rec["taskdate"]["day"];
+    }
+    else 
+    {
+      $year         = substr($taskdate,0,4);
+      $month        = substr($taskdate,5,2);
+      $activityday  = substr($taskdate,8,2);    
+    }
     
     $day = date("Y-m-d", adodb_mktime(0,0,0,$month,$activityday,$year));
     $yesterday = date("Y-m-d", adodb_mktime(0,0,0,$month,$activityday-1,$year));    
     $balance = $balancenode->getBalance($day, $userid);
-    
+        
     // only update balance if balance was not set manually
     if ($balance["manual"] == 0)
     {
@@ -1431,12 +1535,7 @@ class hours extends atkNode
     return $res;
   }
   
-  function getDateJumper()
-  {
-    $dummy_rec = array("viewdate"=>$this->getInitialDate());    
-    $datebox = new atkDateAttribute("viewdate","F d Y","d F Y",0, date("Ymd"),AF_OBLIGATORY);
-    return $datebox->edit($dummy_rec);
-  }
+  
   
   function getInitialDate()
   {
@@ -1478,9 +1577,49 @@ class hours extends atkNode
   {
     return array();
   }
+  
+  /**
+   * Get the most recent estimations for each activity. Estimations for activities are stored in the task table.
+   * @todo: create a good query that does just that instead of first having to
+   * edit the records.      
+   *
+   * @param type name description
+   * @return type description
+   */
+  function _getMostRecentEstimations()
+  {
+    $db = &atkGetDb();    
+    $query = &new atkQuery();
+    
+    $query->addTable("task");
+    //$query->addField("id AS taskid","","task");
+    $query->addField("id AS activityid","","activity");
+    $query->addField("id AS phaseid","","phase");
+    $query->addField("id AS projectid","","project");    
+    $query->addField("current_planning","","task");    
+    $query->addJoin("activity","activity","task.refid=activity.id",true);
+    $query->addJoin("phase","phase","activity.phaseid=phase.id",true);
+    $query->addJoin("project","project","phase.projectid=project.id",true);
+    $query->addCondition("task.tasktype='activity'");
+    $query->addCondition("project.status='active'");
+    $query->addCondition("phase.status='active'");
+    $query->addCondition("task.current_planning > 0");
+    $query->addOrderBy("task.refid, task.editdatetime ASC");
+    $records = $db->getrows($query->buildSelect());    
+    $estimations = array();
+    
+    //we recieve the estimation records ordered by refid and editdatetime.
+    //we loop through all records and overwrite every current_planning so in the end we have the most recent one.
+    foreach($records as $rec)
+    {
+      $projectid        = $rec["projectid"];
+      $phaseid          = $rec["phaseid"];
+      $activityid       = $rec["activityid"];
+      $current_planning = $rec["current_planning"];      
+      $estimations[$projectid]["phases"][$phaseid]["activities"][$activityid]["current_planning"] = $current_planning;
+    }    
+    return $estimations;
+  } 
 }
-
-
-
 
 ?>
