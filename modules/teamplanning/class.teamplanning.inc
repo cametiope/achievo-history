@@ -13,16 +13,17 @@
   require_once(moduleDir("teamplanning")."utils/class.teamitem.inc");
   require_once(moduleDir("teamplanning")."utils/class.projectitem.inc");
   require_once(moduleDir("teamplanning")."utils/class.phaseitem.inc");
+  require_once(moduleDir("teamplanning")."utils/class.activityitem.inc");
   require_once(moduleDir("teamplanning")."class.teamcapacity.inc");
   require_once(moduleDir("teamplanning")."class.workload.inc");
   
  
-  class planning extends atkNode
+  class teamplanning extends atkNode
   {
     var $m_dataprefix     = "newdata_";
     var $m_olddataprefix  = "olddata_";
     
-    function planning($type = "planning", $flags = 0)
+    function teamplanning($type = "teamplanning", $flags = 0)
     {
       $this->atkNode($type, $flags);
       $this->add(new atkAttribute("id", AF_AUTOKEY));
@@ -47,15 +48,10 @@
     {
       atkimport("module.planning.conflictlistener");
       //$this->addListener(new conflictListener(array("update", "save")));
-        
-      atk_var_dump($this->m_postvars, "<h1>Postvars</h1>");
-      
+            
       // Read the posted values (old, new and datearr)      
       $data     = array();  $olddata  = array();  $datearr = array();
       $this->getPostedData($data, $olddata, $datearr);    //we add two arrays by value to store the found items
-
-//      atk_var_dump($olddata, "<h1>olddata</h1>");
-//      atk_var_dump($data, "<h1>data</h1>");
            
       $changeddata = array();
 
@@ -77,39 +73,41 @@
             buffer:     contains "0" if the value is not a buffertime, and contains "buffer" if the value
                         IS a buffertime.
             weekid:     The weekid
-          */
-          
+          */          
           list($teamid, $projectid, $phaseid, $buffer, $weekid) = explode("_", $cell);
                   
-          //what kind of change is made? possibilities: project time, project-buffer time, phase time or phase-buffer time?          
-          if($phaseid==0 && $buffer==0)         //project time
+          $value = ($value>=0 && $value!="") ? $value : 0;
+                    
+          //what kind of change is made? 
+          //possibilities: project time, project-buffer time, phase time or phase-buffer time?          
+          if($phaseid == 0)
           {
-            $changeddata[$teamid][$projectid]["changes"][$weekid]["time"]                = ($value>=0 && $value!="") ? $value : 0;
-          }
-          elseif ($phaseid==0 && $buffer==0)          //project-buffer time  
-          {
-            $changeddata[$teamid][$projectid]["changes"][$weekid]["buffertime"]           = ($value>=0 && $value!="") ? $value : 0;
-          }
-          elseif ($phaseid>0 && $buffer==0)           //phase time
-          {
-            $changeddata[$teamid][$projectid]["phases"][$phaseid]["changes"][$weekid]["time"]       = ($value>=0 && $value!="") ? $value : 0;
-          }
-          elseif ($phaseid>0 && $buffer>0)           //phase-buffer time
-          {
-            $changeddata[$teamid][$projectid]["phases"][$phaseid]["changes"][$weekid]["buffertime"] = ($value>=0 && $value!="") ? $value : 0;
+            if($buffer != 'buffer')
+            {
+              atkdebug("project item, no buffer");
+              $changeddata[$teamid][$projectid]["changes"][$weekid]["time"] = $value;
+            }
+            else 
+            {
+              atkdebug("project item, buffer");
+              $changeddata[$teamid][$projectid]["changes"][$weekid]["buffertime"] = $value;
+            }
           }
           else 
           {
-            //unknown
-          }          
+            if($buffer != 'buffer')
+            {
+              atkdebug("phase item, no buffer");
+              $changeddata[$teamid][$projectid]["phases"][$phaseid]["changes"][$weekid]["time"] = $value;
+            }
+            else
+            {
+              atkdebug("phase item, buffer");
+              $changeddata[$teamid][$projectid]["phases"][$phaseid]["changes"][$weekid]["buffertime"] = $value;
+            }
+          }
         }
-      }      
-      
-      atk_var_dump($changeddata,"<h1>CHANGED DATA</h1>");
-      atk_var_dump($datearr,"<h1>the date arr</h1>");
-      
-      // Get a reference to the database object
-      $db = &$this->getDb();
+      }
       
       $analysis_queue = array();
       
@@ -131,19 +129,7 @@
             }
           }                    
         }
-      }
-      
-      
-      // Store the given planningvalue if set and higher than 0
-          if ($value > 0)
-          {
-//            atkdebug("This module is ".$this->m_module);
-//            $id = $db->nextid("planning");
-//            $db->query("INSERT INTO weekplanning_planning (id, employeeid, monday, phaseid, minutes)
-//                               VALUES ($id, $employee_id, '$monday', $phase_id, ".($value*60).")");
-//            $analysis_queue[] = array("phaseid"=>$phase_id, "employeeid"=>$employee_id, "monday"=>$monday);
-//            atkdebug("This module is now ".$this->m_module);
-          }
+      }      
       
       // After new situation is stored, perform all notifications at once, so we analyse conflicts
       // only for the complete situation.
@@ -444,8 +430,8 @@
       $output.= $this->getDateNavLink($record, 0, -1, 0, 0, -1, 0, "previous_month");
       $output.= $this->getDateNavLink($record, 0, 1, 0, 0, 1, 0, "next_month");
       $output.= $this->getDateNavLink($record, 7, 0, 0, 7, 0, 0, "nextweek");
-      $output.= $this->getDateNavLink($record, 0, 0, 0, 7, 0, 0, "add_week", "weekplanning");
-      $output.= $this->getDateNavLink($record, 0, 0, 0, -7, 0, 0, "remove_week", "weekplanning");
+      $output.= $this->getDateNavLink($record, 0, 0, 0, 7, 0, 0, "add_week", "teamplanning");
+      $output.= $this->getDateNavLink($record, 0, 0, 0, -7, 0, 0, "remove_week", "teamplanning");
       $output.= href("?mode=print", atktext("report_output_printable"));
       return $output."<br/>";
     }
@@ -498,17 +484,13 @@
 
     function getConflicts()
     {
-      $output = "<b>".atktext("conflicts")."</b>:<br/><br/>";
-
       // List all present conflicts.
-      $cn = &getNode("planning.planningconflictlog");
+      $cn = &getNode("teamplanning.teamplanningconflictlog");
       $conflicts = $cn->selectDb();
 
-      $rl = &atknew("atk.recordlist.atkrecordlist");
-
-      $output.= $rl->render($cn, $conflicts, array(), RL_NO_SEARCH|RL_NO_SORT);
-
-      return $output;
+      //@todo: reformat the conflicts
+      
+      return $conflicts;
     }
         
     function getFilterRecord()
@@ -554,8 +536,8 @@
 
       useattrib("employee.myemployeesattribute");
 
-      $attrs["supervisor"]  = &new myEmployeesAttribute("supervisor", "teamplanning.planning.any_user");
-      $attrs["coordinator"] = &new myEmployeesAttribute("coordinator", "teamplanning.planning.any_project");
+      $attrs["supervisor"]  = &new myEmployeesAttribute("supervisor", "teamplanning.teamplanning.any_user");
+      $attrs["coordinator"] = &new myEmployeesAttribute("coordinator", "teamplanning.teamplanning.any_project");
 
       $attrs["from"]        = &new atkDateAttribute("from");
       $attrs["to"]          = &new atkDateAttribute("to");
@@ -584,8 +566,8 @@
 
       $output.= "<br/>";
 
-      $output.= atktext("period_from", "weekplanning")." ".$attrs["from"]->edit($record)." ";
-      $output.= atktext("to", "weekplanning")." ".$attrs["to"]->edit($record);
+      $output.= atktext("period_from", "teamplanning")." ".$attrs["from"]->edit($record)." ";
+      $output.= atktext("to", "teamplanning")." ".$attrs["to"]->edit($record);
 
       $output.= ' <input type="submit" value="'.atktext("refresh").'">';
 
@@ -605,7 +587,8 @@
       $workloadobject   = &new workload();
       $teamsdata    = $teamscapacityobj->getCapacity($period);
       $workload     = $workloadobject->getWorkLoad();      
-      $planneddata  = $this->getPlannedData($period);
+      $planneddata  = $this->getPlannedData();
+      $conflicts    = $this->getConflicts();
       
       //we need to combine the data we found to use it in the planning.
       
@@ -622,11 +605,7 @@
       
       //header fields
       $headerfields = array("name","initial_planning","current_planning","current_min_planned");      
-      //$weeknames    = array();
-//      foreach($period["weeks"] as $week)  //get weeknames      
-//        $weeknames[] = $week["week"];
 
-      //atk_var_dump($workload,"<h1>HAR TAH WORKLOAD</h1>");
       $planning->setHeader($headerfields,$period["weeks"]);      
       foreach($teamsdata as $team)
       {
@@ -646,19 +625,27 @@
           $projectItem->setConflicts(array("OH NO A CONFLICT!"));
           foreach($project["phases"] as $phase)
           {
-            $phasekey = $phase["id"];            
+            $phasekey = $phase["id"];
             $phaseItem = &new phaseItem($phasekey,$teamkey,$projectkey);
             $phaseItem->setHeaderData($phase);            
             $phaseItem->setWeekData($planneddata[$teamkey]["projects"][$projectkey]["phases"][$phasekey]["planneddata"]);
+            foreach($phase["activities"] as $activity)
+            {
+              $activitykey = $activity["id"];
+              $activityItem = &new activityItem($activitykey,$teamkey,$projectkey,$phasekey);
+              $activityItem->setHeaderData($activity);
+              $activityItem->setWeekData($planneddata[$teamkey]["projects"][$projectkey]["phases"][$phasekey]["activities"]["planneddata"]);
+              $phaseItem->addItem($activityItem);
+            }
             $projectItem->addItem($phaseItem);  
           }
           $teamItem->addItem($projectItem);
         }        
         $planning->addItem($teamItem);
-      }      
+      }
       $result.= $planning->render();
       
-      $result.= '<br /><input type="submit" value="'.atktext("save").'"> ';
+      $result.= '<br /><input type="submit" value="'.atktext("save").'">';
 
       $result.= '</form>';
       return $result;
@@ -666,20 +653,17 @@
     
     
     /**
-     * Get all planned items that fall within the given period.     
+     * Get all planned items.
      *
      * @param type name description
      * @return type description
      */
-    function getPlannedData($period)
+    function getPlannedData()
     { 
       /* @var $query atkQuery */
       $db     = &atkGetDb();
       $query  = &new atkQuery();
-                 
-      $fromdate = $period["from"];
-      $todate   = $period["to"];
-      
+
       $query->addField("id","","teamplanning_planning","",true);
       $query->addField("date","","teamplanning_planning","",true);
       $query->addField("teamid","","teamplanning_planning","",true);
@@ -687,8 +671,7 @@
       $query->addField("phaseid","","teamplanning_planning","",true);
       $query->addField("time","","teamplanning_planning","",true);
       $query->addField("buffertime","","teamplanning_planning","",true);
-      $query->addTable("teamplanning_planning");
-      $query->addCondition("'$fromdate' <= teamplanning_planning.date AND '$todate' >= teamplanning_planning.date");
+      $query->addTable("teamplanning_planning");      
       $records = $db->getrows($query->buildSelect());      
 
       $planneddata = array();
@@ -753,30 +736,48 @@
           $datearr[substr($itemkey,$weekdates_len)] = $item;
         }
       }
-    }    
-    
-    function _weekstampToDate($weekid)
-    {
-      $year = substr($weekid,0,4);
-      $week = substr($weekid,4);
-      return $this->datefromweek($year,$week,0);
     }
-    
-    function datefromweek ($y, $w, $o) 
+  
+    /**
+     * Get planned projects for a specified userid and a date     
+     *     
+     * @return array projectids
+     */
+    function getUserPlanningProjectIds($userid, $date)
     {
-     $days = ($w - 1) * 7 + $o;
+      /* @var $team_employee_node atkNode */
+      /* @var $team_node atkNode */
+      //get the teamid this user belongs to.
+      $team_employee_node = &atkGetNode("employee.team_employee");
+      $team_node = &atkGetNode("employee.team");
+      $monday = dateutil::startOfWeek($date);
+      $team_emplyee_records = $team_employee_node->selectDb("team_employee.employeeid='$userid'");      
+      $teamid = 0;
+      
+      if(count($team_emplyee_records))      
+        $teamid = $team_emplyee_records[0]["teamid"]["id"];
+            
+      if($teamid != 0)
+      {
+        /* @var $query atkQuery */
+        $db     = &atkGetDb();
+        $query  = &new atkQuery();
   
-     $firstdayofyear = getdate(mktime(0,0,0,1,1,$y));
-     if ($firstdayofyear["wday"] == 0) $firstdayofyear["wday"] += 7;
-  # in getdate, Sunday is 0 instead of 7
-     $firstmonday = getdate(mktime(0,0,0,1,1-$firstdayofyear["wday"]+1,$y));
-     $calcdate = getdate(mktime(0,0,0,$firstmonday["mon"], $firstmonday["mday"]+$days,$firstmonday["year"]));
-  
-     $date["year"] = $calcdate["year"];
-     $date["month"] = $calcdate["mon"];
-     $date["day"] = $calcdate["mday"];
-  
-     return ($date);
+        $query->addField("projectid","","teamplanning_planning","",true);        
+        $query->addTable("teamplanning_planning");
+        $query->addCondition("teamid=$teamid");
+        $query->addCondition("date='$monday'");        
+        $records = $db->getrows($query->buildSelect());
+        atk_var_dump($records,"<h1>found records on planning:</h1>");
+      }
+      
+      $projectids = array();
+      foreach($records as $rec)
+      {
+        $projectids[] = $rec["projectid"];
+      }
+      
+      return $projectids;      
     }
   }
 ?>
