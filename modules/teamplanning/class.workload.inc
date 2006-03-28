@@ -18,9 +18,7 @@ class workload
       //current_planing
     //4. Bereken voor elk project 
       //initial_planning
-      //current_planing    
-    
-      
+      //current_planing
       
     //Get all active projects/phases and activities, all timeregistrations and all mostrecentestimations
     $projectdata            = $this->_getAllProjectData();
@@ -36,37 +34,26 @@ class workload
       $projectname              = $rec["projectname"];
       $phaseid                  = $rec["phaseid"];
       $phasename                = $rec["phasename"];
-      $activityid               = $rec["activityid"];      
+      $activityid               = $rec["activityid"];
+      $activityname             = $rec["activityname"];
       $phaseinitialplanning     = $rec["phase_initial_planning"];
       $phasecurrentplanning     = $rec["phase_current_planning"];
-      $registeredtime           = $registeredtime[$projectid]["phases"][$phaseid]["activities"][$activityid]["activitytime"];
+      $registeredtime           = $timeregistrations[$projectid]["phases"][$phaseid]["activities"][$activityid]["time"];
+      //we calculate everything based on minutes.
+      if(isset($registeredtime))  $registeredtime = $registeredtime * 60;        
       $activitycurrentplanning  = $mostrecentestimations[$projectid]["phases"][$phaseid]["activities"][$activityid]["current_planning"];      
       
       $workload[$projectid]["id"]       = $projectid;
       $workload[$projectid]["name"]     = $projectname;
-      //add initial_planning for project
-      //add current_planning for project
-      $workload[$projectid]["phases"][$phaseid]["id"] = $phaseid;
+      $workload[$projectid]["phases"][$phaseid]["id"]   = $phaseid;
       $workload[$projectid]["phases"][$phaseid]["name"] = $phasename;
-      $workload[$projectid]["phases"][$phaseid]["initial_planning"] = $phaseinitialplanning;
-      $workload[$projectid]["phases"][$phaseid]["current_planning"] = $phasecurrentplanning;
-      $workload[$projectid]["phases"][$phaseid]["activities"][$activityid]["id"] = $activityid;
-      
-      $workload[$projectid]["phases"][$phaseid]["activities"][$activityid]["registeredtime"]  = $registeredtime;
-      $workload[$projectid]["phases"][$phaseid]["activities"][$activityid]["estimatedtime"]   = $activitycurrentplanning;
+      $workload[$projectid]["phases"][$phaseid]["initial_planning"]           = $phaseinitialplanning;
+      $workload[$projectid]["phases"][$phaseid]["current_planning"]           = $phasecurrentplanning;
+      $workload[$projectid]["phases"][$phaseid]["activities"][$activityid]["id"]    = $activityid;
+      $workload[$projectid]["phases"][$phaseid]["activities"][$activityid]["name"]  = $activityname;      
+      $workload[$projectid]["phases"][$phaseid]["activities"][$activityid]["registeredtime"]    = $registeredtime;
+      $workload[$projectid]["phases"][$phaseid]["activities"][$activityid]["current_planning"]  = $activitycurrentplanning;
     }
-    
-    //atk_var_dump($workload,"<h1>TAH WORKLLOAD</h1>");
-    /*
-      $timeregistration[$projectid]["phases"][$phaseid]["activities"][$activityid]["time"]      = 10;
-      $timeregistration[$projectid]["phases"][$phaseid]["activities"][$activityid]["estimate"]  = 10;
-      $timeregistration[$projectid]["phases"][$phaseid]["time"]                       = 10;
-      $timeregistration[$projectid]["phases"][$phaseid]["estimate"]                   = 10;
-      $timeregistration[$projectid]["phases"][$phaseid]["initial_planning"]           = 10;
-      $timeregistration[$projectid]["phases"][$phaseid]["current_planning"]["value"]  = 10;
-      $timeregistration[$projectid]["phases"][$phaseid]["allphases"]  = 1/0;  //hebben we van alle activiteiten een urenschatting?
-      $timeregistration[$projectid]["time"]  = 10;
-    */
     return $workload;
   }
   
@@ -86,6 +73,7 @@ class workload
     */
     $query->addTable("activity");
     $query->addField("id AS activityid","","activity");
+    $query->addField("name AS activityname","","activity");
     $query->addField("id AS phaseid","","phase");
     $query->addField("name AS phasename","","phase");
     $query->addField("initial_planning AS phase_initial_planning","","phase");
@@ -95,11 +83,8 @@ class workload
     $query->addJoin("phase","phase","activity.phaseid=phase.id",true);
     $query->addJoin("project","project","phase.projectid=project.id",true);
     $query->addCondition("project.status='active'");
-    $query->addCondition("phase.status='active'");    
-    $sql = $query->buildSelect();
-    $records = $db->getrows($sql);
-    //atk_var_dump($records,"<h1>projectdata</h1>");
-    return $records;
+    $query->addCondition("phase.status='active'");
+    return $db->getrows($query->buildSelect());    
   }
   
   function _getAllTimeRegistrations()
@@ -132,8 +117,7 @@ class workload
       $activitytime   = $rec["activitytime"];      
        
       $regs[$projectid]["phases"][$phaseid]["activities"][$activityid]["time"] = $activitytime;
-    }
-    //atk_var_dump($regs,"<h1>timeregs</h1>");
+    }    
     return $regs;
   }
   
@@ -164,10 +148,7 @@ class workload
     $query->addCondition("phase.status='active'");
     $query->addCondition("task.current_planning > 0");
     $query->addOrderBy("task.refid, task.editdatetime ASC");
-    $records = $db->getrows($query->buildSelect());
-    //$sql = "SELECT id,name,refid AS activityid,current_planning FROM `task` WHERE current_planning > 0 AND task.tasktype='activity' ORDER BY refid, editdatetime ASC";
-    
-    
+    $records = $db->getrows($query->buildSelect());    
     $estimations = array();
     
     //we recieve the estimation records ordered by refid and editdatetime.
@@ -179,27 +160,8 @@ class workload
       $activityid       = $rec["activityid"];
       $current_planning = $rec["current_planning"];      
       $estimations[$projectid]["phases"][$phaseid]["activities"][$activityid]["current_planning"] = $current_planning;
-    }
-    //atk_var_dump($estimations,"<h1>estimations</h1>");
+    }    
     return $estimations;
-  }
-  
-  function blah()
-  {
-    /* @var $projnode atkNode */
-    /* @var $phasenode atkNode */
-    $projnode     = &atkGetNode("project.project");
-    $phasenode    = &atkGetNode("project.phase");
-    //in the future we may add the activities as well.
-    //$activitynode = &atkGetNode("project.activity");
-    
-    $workload = array();
-    /* @var $query atkNode */
-    $db = &atkGetDb();
-    $query = &new atkQuery();
-    
-    //get all active projects
-    $workload["projects"] = $projnode->selectDb();
-  }
+  } 
 }
 ?>
