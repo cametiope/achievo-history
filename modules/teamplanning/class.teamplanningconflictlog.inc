@@ -18,12 +18,12 @@
 
 
   
-  class planningconflictlog extends atkNode
+  class teamplanningconflictlog extends atkNode
   {
     /**
      * planningconflictlog constructor
      */
-    function planningconflictlog()
+    function teamplanningconflictlog()
     {
       // Call the parent constructor
       $this->atkNode("planningconflictlog");
@@ -37,9 +37,9 @@
       $this->add(new atkManyToOneRelation("subjectid", "employee.employee", AF_HIDE|AF_FORCE_LOAD));
       $this->add(new atkDateAttribute("conflictdate", "", "", 0, 0, AF_HIDE|AF_FORCE_LOAD));
       $this->add(new atkDummyAttribute("resolution", ""));
-      $this->setTable("planning_conflict");
+      $this->setTable("teamplanning_conflict");
 
-      $this->addFilter("planning_conflict.status IN ('new', 'persistent')");
+      $this->addFilter("teamplanning_conflict.status IN ('new', 'persistent')");
 
     }
 
