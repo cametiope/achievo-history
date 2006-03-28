@@ -12,8 +12,8 @@
      */
     function getNodes()
     {
-      registerNode("teamplanning.planning", array("admin", "edit", "any_user", "any_project"));
-      registerNode("teamplanning.planningconflictlog", array("admin", "view"));
+      registerNode("teamplanning.teamplanning", array("admin", "edit", "any_user", "any_project"));
+      registerNode("teamplanning.teamplanningconflictlog", array("admin", "view"));
     }
     
     function getDescription()
@@ -24,16 +24,16 @@
     function getMenuItems()
     {
       // Add a teamplanning submenu if the user has either admin access to the teamplanning or teamplanningconflictlog node
-      $this->menuitem("teamplanning", "", "main", array("teamplanning.planning", "admin", "teamplanning.planningconflictlog", "admin"));
+      $this->menuitem("teamplanning", "", "main", array("teamplanning.teamplanning", "admin", "teamplanning.teamplanningconflictlog", "admin"));
       
       // Add links to the 2 teamplanning views if the user has admin access to the teamplanning node
-      $this->menuitem("teamplanning_planning", dispatch_url("teamplanning.planning", "admin"), "teamplanning", array("teamplanning.planning", "admin"));      
+      $this->menuitem("teamplanning_planning", dispatch_url("teamplanning.teamplanning", "admin"), "teamplanning", array("teamplanning.teamplanning", "admin"));      
 
       // Add a link to the teamplanningconflictlog node if the user has admin access on this node
-      $this->menuitem("planningconflicts", dispatch_url("teamplanning.planningconflictlog", "admin"), "teamplanning", array("teamplanning.planningconflictlog", "admin"));
+      $this->menuitem("teamplanningconflicts", dispatch_url("teamplanning.teamplanningconflictlog", "admin"), "teamplanning", array("teamplanning.teamplanningconflictlog", "admin"));
 
       // Add a seperator after the last item, to create a spacing between the menu items and the "Back to the main menu" link
-      $this->menuitem("-", "", "teamplanning", array("teamplanning.planning", "admin", "teamplanning.planningconflictlog", "admin"));
+      $this->menuitem("-", "", "teamplanning", array("teamplanning.teamplanning", "admin", "teamplanning.teamplanningconflictlog", "admin"));
 
     }
 
