@@ -102,9 +102,6 @@ class teamcapacity
     //get calendar hours
     $calendarhours  = $this->_getCalendarHours($period,$userids,$speeds);
     
-    //atk_var_dump($calendarhours,"<h1>calendarhours of ".implode(",",$userids)."</h1>");
-    //atk_var_dump($period["weeks"],"<h1>weeks</h1>");
-    //atk_var_dump($calendarhours,"<h1>calendarhours of ".implode(",",$userids)."</h1>");
     //calculate the weekspeed for each week
     foreach($period["weeks"] as $week)
     {
@@ -174,10 +171,7 @@ class teamcapacity
     
     /* @var $node atkNode */
     $records  = $db->getrows($query->buildSelect());
-    
-    //atk_var_dump($records,"<h1>cal records</h1>");
-    //atk_var_dump($period["weeks"],"<h1>weeks</h1>");
-    
+        
     $hours = array();    
     
     foreach ($period["weeks"] as $week)
@@ -222,23 +216,24 @@ class teamcapacity
     //is this calendar item in this week?
     if($startitemstamp < $endweekstamp && $enditemstamp > $startweekstamp)
     { 
-      //atkdebug("this week");
+      atkdebug("this week");
       //does this calendar item span multiple days?
       if($startitemstamp == $enditemstamp)                                    //NO
       {        
-        //atkdebug("one day");
+        atkdebug("one day");
         //is this an all day item? yes -> get basespeed hours of one day
         if($item["allday"] == 1)
         {          
-          //atkdebug("all day");          
+          atkdebug("all day");          
           return $speed["daybasespeed"];
         }
         else 
         {
           //@todo: basespeed time should be the max
           atkdebug("not all day");
+          atk_var_dump($item,"<h1>DIFFING:</h1>");
           //calculate the hours (starttime - endtime)          
-          return $this->hours_diff($item["endtime"],$item["starttime"]);
+          return min($this->hours_diff($item["endtime"],$item["starttime"]),$speed["daybasespeed"]);
         }
       }
       else                                                                    //YES
@@ -246,16 +241,20 @@ class teamcapacity
         atkdebug("multiple days");
           
         //calculate how many days in this week this calender item is valid
-        $matchingdays = 0;        
-        
+        $matchingdays = 0;
         $days = $this->daysBetween($week["startdate"],$week["enddate"]);        
+        
         foreach($days as $day)
         {
+          $startdate  = substr($item["startdate"],0,4).substr($item["startdate"],5,2).substr($item["startdate"],8,2);
+          $enddate    = substr($item["enddate"],0,4).substr($item["enddate"],5,2).substr($item["enddate"],8,2);          
+          
           //if startdate of cal item is on or before this day AND enddate is on or after this day --> goodday
-          if(dateutil::date_diff($day,$item["startdate"])>=0 && dateUtil::date_diff($day,$item["enddate"])<=0)
-            $matchingdays++;          
+          if(dateutil::date_diff($day["date"],$startdate)<=0 && dateUtil::date_diff($day["date"],$enddate)>=0)          
+            $matchingdays++;
+          
         }
-        
+        atkdebug("matching days: ".$matchingdays);
         if($item["allday"] == 1)        
           return $speed["daybasespeed"] * $matchingdays;        
         else 
@@ -314,7 +313,7 @@ class teamcapacity
       // If the day is a monday, then register the weekid, startdate and
       // enddate of the week in the weekdata array and jump one week ahead
       $key = date("Ymd",$curstamp);
-      $daydata[$key]["day"] = $key;
+      //$daydata[$key]["day"] = $key;
       $daydata[$key]["date"] = date("Ymd",$curstamp);
     }
 
