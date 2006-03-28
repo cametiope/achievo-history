@@ -23,6 +23,8 @@ class projectItem
   //calculated fields
   var $m_unassigned_projecthours = array();
   
+  var $m_allactivitieshaveestimation = true;  
+  
   function projectItem($projectid, $teamid)
   {
     $this->m_id = $projectid;
@@ -36,12 +38,13 @@ class projectItem
   
   function setHeaderData($headerdata)
   {
-    $this->m_headerdata = $headerdata;
+    $this->m_headerdata = isset($headerdata) ? $headerdata : array();
   }
   
   function setWeekData($weekdata)
-  {
-    $this->m_weekdata = $weekdata;
+  {    
+    $this->m_weekdata = isset($weekdata) ? $weekdata : array();
+    //atk_var_dump($this->m_weekdata,"<h1>har tah weekdata</h1>");
   }
     
   function setConflicts($conflicts)
@@ -72,15 +75,30 @@ class projectItem
     $rowid = $this->m_teamid."_".$this->m_id."_0_0";
     $result = '<tr class="row2" id="'.$rowid.'">';    
     foreach($this->m_headerfields as $field)
-    {       
-      if($field != "name")
+    {
+      
+      $output = "";
+      switch ($field)
       {
-        $inputid = $rowid."_".$this->_uus($field);
-        $value = (isset($this->m_headerdata[$field]) ? $this->m_headerdata[$field]/60 : "0");
-        $result.= '<td align="center"><div id="'.$inputid.'">'.$value.'</div></td>';
+        case "name":
+          $output.= '<td>'.$this->_clickableImages().' <b>'.(isset($this->m_headerdata[$field]) ? $this->m_headerdata[$field] : "?").'</b></td>';
+          break;
+        case "current_planning":
+          $output = $this->m_calculated["current_planning"]["low"]/60;
+          if($this->m_calculated["current_planning"]["high"] != "")
+            $output.= " / ".$this->m_calculated["current_planning"]["high"]/60;
+          $output = '<td align="center"><div id="'.$inputid.'">'.$output.'</div></td>';
+          break;
+        case "current_min_planned":
+          $output = $this->m_calculated["current_min_planned"]["low"]/60;
+          if($this->m_calculated["current_min_planned"]["high"] != "")
+            $output.= " / ".$this->m_calculated["current_min_planned"]["high"]/60; 
+          $output = '<td align="center"><div id="'.$inputid.'">'.$output.'</div></td>';
+          break;
+        default:
+          $output = '<td align="center">'.(isset($this->m_headerdata[$field]) ? $this->m_headerdata[$field]/60 : "0").'</td>';
       }
-      else
-        $result.= '<td>'.$this->_clickableImages().' <b>'.(isset($this->m_headerdata[$field]) ? $this->m_headerdata[$field] : "?").'</b></td>';
+      $result.= $output;
     }
     
     /*  
@@ -109,8 +127,7 @@ class projectItem
       Render unassigned project hours 
       Rowid:      Teamid_projectid_0_0_unassigned
       Colid:      teamid_projectid_0_0_unassigned_weekid
-    */    
-    //rowid = teamid_projectid_phaseid_isbuffer
+    */
     $rowid = $this->m_teamid."_".$this->m_id."_0_0_unassigned";
     $result.= '<tr class="row1" id="'.$rowid.'" style="display:none">';
     $result.= '<td colspan="'.$numheaderfields.'">  <b>'.atktext("unassignedprojecthours","teamplanning").'</b></td>';
@@ -184,23 +201,108 @@ class projectItem
   {
     $this->_calculateHeaderData();
     $this->_calculateUnassignedProjectHours();
+    $this->_calculateEstimation();
+    $this->_calculateCurrentPlanning();
+    $this->_calculateCurrentMinPlanned();
   }
   
   function _calculateHeaderData()
   {
     foreach($this->m_headerfields as $field)
     {
-      //temp: 'id' can be deleted
-      if($field != "name" && $field != "id")
+      if($field != "name")
       {
         $sum = 0;        
         for($i=0,$_i=count($this->m_items);$i<$_i;$i++)
         {
-          $item = &$this->m_items[$i];
+          $item = &$this->m_items[$i];  
           $sum += $item->m_headerdata[$field];
         }        
-        $this->m_headerdata[$field] = $sum;
+        $this->m_headerdata[$field] = $sum;       
       }
+    }
+  }
+  
+  function _calculateEstimation()
+  {
+    $this->m_allactivitieshaveestimation = true;
+    
+    $sum = 0;    
+    //calculate the total of all phases
+    for($i=0,$_i=count($this->m_items);$i<$_i;$i++)
+    {
+      $item = &$this->m_items[$i];
+      $item->_calculateEstimation();
+      if(!$item->m_allitemshaveestimation)      
+        $this->m_allactivitieshaveestimation = false;      
+      $sum += $item->m_headerdata["estimation"];      
+    }    
+    $this->m_headerdata["estimation"] = $sum;
+  }
+
+  function _calculateCurrentMinPlanned()
+  {
+    $sum = 0;
+    
+    foreach($this->m_weekdata as $week=>$weekitem)
+    {
+      //$week = $weekitem["week"];
+      if(isset($this->m_weekdata[$week]))
+        $sum+= $this->m_weekdata[$week]["time"];
+    }
+    $this->m_calculated["current_min_planned"]["low"] = $this->m_calculated["current_planning"]["low"] - $sum;
+    if($this->m_calculated["current_planning"]["high"] != "")
+      $this->m_calculated["current_min_planned"]["high"] = $this->m_calculated["current_planning"]["high"] - $sum;
+    else 
+      $this->m_calculated["current_min_planned"]["high"] = "";
+  }  
+  
+  /**
+   * Get current planning values
+   *
+   * When all activities have an estimation, we show their total as the current planning, or else
+   * we show a range where the current planning should be in depending on the current_planning that
+   * was entered for the phase and the sum of the estimations of the activities.
+   * If the initial_planning is omitted, we assume the current_planning is the same as the initial_planning.
+   */
+  function _calculateCurrentPlanning()
+  {
+    $value  = (isset($this->m_headerdata["current_planning"]) && $this->m_headerdata["current_planning"] !="" ) ? $this->m_headerdata["current_planning"] : "0";
+    $value2 = (isset($this->m_headerdata["estimation"]) && $this->m_headerdata["estimation"] !="" ) ? $this->m_headerdata["estimation"] : "0";
+    
+    /* If we do not have a current_planning, we assume the initial planning is the current planning */
+    if($value == "0")
+    {
+      $value = (isset($this->m_headerdata["initial_planning"]) && $this->m_headerdata["initial_planning"] !="") ? $this->m_headerdata["initial_planning"] : "0";
+//      $this->m_calculated["current_planning"]["low"]   = (isset($this->m_headerdata["initial_planning"]) && $this->m_headerdata["initial_planning"] !="") ? $this->m_headerdata["initial_planning"] : "0";
+//      $this->m_calculated["current_planning"]["high"]  = "";
+    }        
+        
+    if(!$this->m_allactivitieshaveestimation)
+    {      
+      if($value != $value2)
+      {
+        if(max($value,$value2) == $value) 
+        {
+          $this->m_calculated["current_planning"]["low"]   = $value2;
+          $this->m_calculated["current_planning"]["high"]  = $value;          
+        }
+        else 
+        {
+          $this->m_calculated["current_planning"]["low"]   = $value;
+          $this->m_calculated["current_planning"]["high"]  = $value2;
+        }          
+      }
+      else 
+      {
+        $this->m_calculated["current_planning"]["low"]   = $value;
+        $this->m_calculated["current_planning"]["high"]  = "";
+      }
+    }    
+    else    
+    {
+      $this->m_calculated["current_planning"]["low"]   = $value2;
+      $this->m_calculated["current_planning"]["high"]  = "";
     }
   }
   
@@ -220,7 +322,7 @@ class projectItem
       $projecthours = isset($this->m_weekdata[$week]["time"]) ? $this->m_weekdata[$week]["time"] : 0;
       $this->m_unassigned_projecthours[$week] = $projecthours - $sum;
     }
-  }
+  }  
   
   function _init()
   {

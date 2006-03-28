@@ -45,7 +45,7 @@ class teamItem
     /*  
       Calculate data    
     */    
-    $this->_calculateCapacity();    
+    $this->_calculateData();
     
     /*  
       Render title  
@@ -134,14 +134,26 @@ class teamItem
       $max      = $this->m_capacity_max["weekspeed"][$week];
 
       $sumprojects = 0;
+      
       //calculate the total of all projects
       for($i=0,$_i=count($this->m_items);$i<$_i;$i++)
       {
         $item = &$this->m_items[$i];
         $itemhours = isset($item->m_weekdata[$week]["time"]) ? $item->m_weekdata[$week]["time"] : 0;
-        $sumprojects += $item->m_weekdata[$week]["time"];
         
-        //@todo: count total hours of planned phases and take max
+        $sumphases = 0;
+        
+        //calculate the total of all projects
+        for($j=0,$_j=count($item->m_items);$j<$_j;$j++)
+        {
+          $subitem = &$item->m_items[$j];
+          $subitemhours = isset($subitem->m_weekdata[$week]["time"]) ? $subitem->m_weekdata[$week]["time"] : 0;
+          $sumphases += $subitemhours;
+        }
+
+        //if the hours sum of the phases of a project are different from the hours of the project.
+        //take the max. 
+        $sumprojects += max($itemhours,$sumphases);
       }
       $planned = $sumprojects/60;
 

@@ -33,7 +33,7 @@ class teamPlanningRenderer
   }
   
   function render()
-  {    
+  {
     $result = "";
     if($this->m_headerfields != array() && $this->m_weeks != array())
     {
@@ -47,8 +47,7 @@ class teamPlanningRenderer
       $result.= "<h1>cannot render planning, unknown header and/or weekfields</h1>";
     
     return $result;    
-  }  
-  
+  }
   
 }
 ?>
