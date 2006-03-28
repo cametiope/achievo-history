@@ -1,6 +1,6 @@
 <?php
 
-  $setup->installNode("teamplanning.planning");
-  $setup->installNode("teamplanning.planningconflictlog");
+  $setup->installNode("teamplanning.teamplanning");
+  $setup->installNode("teamplanning.teamplanningconflictlog");
   $setup->setVersion(1);
 ?>
