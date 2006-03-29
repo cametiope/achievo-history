@@ -2,6 +2,7 @@
 //  module("core","./");
   module("utils");
   module("setup");
+  module("task");
   module("employee");
   module("person");
   module("timereg");
@@ -14,5 +15,4 @@
   module("pim");
   module("search");  
   module("graph");
-  module("task");
 ?>
