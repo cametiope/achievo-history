@@ -1,6 +1,7 @@
 <?php
 
   $setup->installNode("project.activity");
+  $setup->installNode("project.activitytype");
   $setup->installNode("project.phase");
   $setup->installNode("project.phase_activity");
   $setup->installNode("project.phaseplanning");
@@ -17,6 +18,7 @@
   $setup->installNode("project.deliverable");
   $setup->installNode("project.mastergantt_colorconfig");
 
-  $setup->setVersion(11);
+  $setup->setVersion(13);
+
 
 ?>
