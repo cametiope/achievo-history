@@ -10,6 +10,7 @@
   $setup->installNode("project.project_personemployee");
   $setup->installNode("project.role");
   $setup->installNode("project.dependency");
+  $setup->installNode("project.tpl_activity");
   $setup->installNode("project.tpl_phase");
   $setup->installNode("project.tpl_phase_activity");
   $setup->installNode("project.tpl_project");
