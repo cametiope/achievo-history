@@ -3,6 +3,7 @@
   define("ONEDAY", 24*60*60);
   define("ONEWEEK", ONEDAY*7);
 
+  include_once("achievotools.inc");
 
   class dateutil
   {
