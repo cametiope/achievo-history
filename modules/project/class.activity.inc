@@ -26,9 +26,9 @@ class activity extends atkNode
   function activity()
   {
     $this->atkNode("activity");
-    //@todo: add config activitynamereadonly to a config file.    
+    //@todo: add config project_activity_activitynamereadonly to a config file.    
     $this->add(new atkAttribute("id",AF_AUTOKEY));        
-    $this->add(new atkAttribute("name",AF_SEARCHABLE|(atkconfig("activitynamereadonly",false) ? AF_READONLY|AF_HIDE_ADD : AF_OBLIGATORY), 50));    
+    $this->add(new atkAttribute("name",AF_SEARCHABLE|(atkconfig("project_activity_activitynamereadonly",true) ? (AF_READONLY|AF_HIDE_ADD) : AF_OBLIGATORY), 50));    
     $this->add(new atkManyToOneRelation("phaseid","project.phase", AF_HIDE));    
     //tasks with the tasktype 'activity' can be linked to an activity.
     $rel = &new atkOneToManyRelation("taskid","task.task","refid", AF_HIDE);
@@ -40,8 +40,7 @@ class activity extends atkNode
     //contains a warning message. At default it is hidden.
     $this->add(new atkDummyAttribute("noactivitypes",'<font style="color:red">'.atktext("noactivitytypes").'</font>',AF_HIDE));
     
-    $this->add(new atkManyToOneRelation("activitytype","project.activitytype",AF_OBLIGATORY|AF_RELATION_AUTOLINK));
-    
+    $this->add(new atkManyToOneRelation("activitytype","project.activitytype",AF_OBLIGATORY|AF_RELATION_AUTOLINK));    
     $this->setTable("activity","activity");
     $this->setOrder("activity.name");
 
@@ -106,7 +105,7 @@ class activity extends atkNode
      * cannot select an activity which is already added to this phase.
      * Therefore we should filter out the selectable options in the dropdownlist for activitytypes.
      */
-    if(atkconfig("activitynamereadonly",false))
+    if(atkconfig("project_activity_activitynamereadonly",false))
     {
       //get all activitytypes that this phase already have      
       $node     = &getNode("project.activity");
