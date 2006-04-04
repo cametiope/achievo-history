@@ -116,7 +116,7 @@ class atkProjectPhaseAttribute extends atkAttribute
   {
     return $rec[$this->fieldName()]["phaseid"];
   }
-
+  
   function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level=0, $mode="")
   {
     if ($mode == "add" || $mode == "update")
@@ -124,17 +124,14 @@ class atkProjectPhaseAttribute extends atkAttribute
       $query->addField($this->fieldName(),$this->value2db($rec),"","",!$this->hasFlag(AF_NO_QUOTES));
     }
     else
-    {
-      $query->addField($this->fieldName(),"","hours",$fieldaliasprefix,!$this->hasFlag(AF_NO_QUOTES));
+    {      
+      /* @var $query atkQuery */
+      $query->addField($this->fieldName(),"","E",$fieldaliasprefix,!$this->hasFlag(AF_NO_QUOTES));
       $query->addField("name","", "B", "proj_", false);
       $query->addField("name","", "A", "phase_", false);
-      $query->addField("name","", "C", "activity_", false);
-      $query->addJoin("activity", "C", "C.id=hours.activityid", false);
-      $query->addJoin("phase", "A","A.id=hours.phaseid", true);
-      $query->addJoin("project", "B","B.id=A.projectid", true);
+      $query->addField("name","", "D", "activity_", false);
+
     }
-
-
   }
 
   function getOrderByStatement()
@@ -160,7 +157,7 @@ class atkProjectPhaseAttribute extends atkAttribute
     $phases = $this->getRecentPhases();
             
     //check currentphaseid
-    $validcurrentphaseid = (isset($currentphaseid) && $currentphaseid != "")?true:false;      
+    $validcurrentphaseid = (isset($currentphaseid) && $currentphaseid != "");      
     
     //if we have a legimate currentphaseid check if we already have it in our recentphases.        
     $alreadyadded = false;    //we start by assuming we don't have it
@@ -242,9 +239,26 @@ class atkProjectPhaseAttribute extends atkAttribute
     else
       $projectPhaseFilter = "phase.status='active' AND project.status='active'";
 
-    $query = "SELECT DISTINCT phase.id, phase.name, project.name as projectname FROM phase,hours,project LEFT JOIN project_person ON (project_person.projectid = project.id)";
-    $query.= "WHERE phase.id=hours.phaseid AND userid='".$user["id"]."' AND phase.status='active' AND project.status='active' AND phase.projectid=project.id ";
-
+    $query = "SELECT DISTINCT 
+                phase.id, 
+                phase.name, 
+                project.name as projectname                 
+              FROM 
+                project,phase
+              LEFT JOIN 
+                project_person ON project_person.projectid = project.id
+              LEFT JOIN 
+                activity ON activity.phaseid=phase.id 
+              LEFT JOIN 
+                task ON task.refid=activity.id 
+              LEFT JOIN 
+                hours ON hours.taskid=task.id 
+              WHERE                 
+                phase.status='active' 
+                AND project.status='active' 
+                AND task.tasktype='activity'
+                AND hours.userid='".$user["id"]."' ";
+    
     if (!$g_securityManager->allowed("timereg.hours", "any_project"))
     {
       $query.= "AND (project_person.personid = ".$user["id"]." OR project.timereg_limit = ".PRJ_TIMEREG_ALL_USERS.")";

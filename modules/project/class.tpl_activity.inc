@@ -26,9 +26,8 @@ class tpl_activity extends atkNode
   {
     $this->atkNode("tpl_activity");
     
-    $this->add(new atkAttribute("id",AF_AUTOKEY));        
-    $flags = AF_UNIQUE|AF_SEARCHABLE|(atkconfig("project_activity_activitynamereadonly",true) ? (AF_READONLY|AF_HIDE_ADD) : AF_OBLIGATORY);
-    $this->add(new atkAttribute("name",$flags, 50));
+    $this->add(new atkAttribute("id",AF_AUTOKEY));
+    $this->add(new atkAttribute("name",AF_UNIQUE|AF_SEARCHABLE|AF_OBLIGATORY, 50));
     $this->add(new atkAttribute("description",AF_SEARCHABLE, 50));        
     $this->add(new atkManyToOneRelation("activitytype","project.activitytype", AF_OBLIGATORY|AF_RELATION_AUTOLINK));
     $this->setTable("tpl_activity");
@@ -39,5 +38,6 @@ class tpl_activity extends atkNode
   {
     return "[name]";
   }
+  
 }
 ?>
