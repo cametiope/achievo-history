@@ -155,20 +155,26 @@
         //$earliesttimeregforphase = $hoursNode->selectDb("phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
         $sql = $query->buildSelect();
         $earliesttimeregforphase = $db->getrows($sql);
-        atkimport("module.utils.dateutil");
-        $earliesttimeregdatestr = empty($earliesttimeregforphase) ? null : $earliesttimeregforphase[0]["taskdate"];
-        $earliesttimeregdate = dateutil::str2stamp(substr($earliesttimeregdatestr,0,4).substr($earliesttimeregdatestr,5,2).substr($earliesttimeregdatestr,8,2));
-        
-        // Get the start date of this phase record
-        $phasestartdate = dateutil::arr2stamp($record["startdate"]);
-
-        // Trigger an error on the startdate attribute if the earliesttimeregdate is not null and the startdate of this record is higher than de first earliesttimeregdate
-        if ((!is_null($earliesttimeregdate)) && ($phasestartdate > $earliesttimeregdate))
+                
+        //if we have found timereg records, perform some checks on it.
+        if(count($earliesttimeregforphase))
         {
-          triggerError($record, "startdate", "error_cannot_set_startdate_later_than_first_timereg");
+          atkimport("module.utils.dateutil");
+          $earliesttimeregdatestr = $earliesttimeregforphase[0]["taskdate"];
+          $earliesttimeregdate = dateutil::str2stamp(substr($earliesttimeregdatestr,0,4).substr($earliesttimeregdatestr,5,2).substr($earliesttimeregdatestr,8,2));
+          
+          // Get the start date of this phase record
+          $phasestartdate = dateutil::arr2stamp($record["startdate"]);
+     
+          // Trigger an error on the startdate attribute if the earliesttimeregdate is 
+          // not null and the startdate of this record is higher than de first earliesttimeregdate
+          if ((!is_null($earliesttimeregdate)) && ($phasestartdate > $earliesttimeregdate))
+          {
+            triggerError($record, "startdate", "error_cannot_set_startdate_later_than_first_timereg");
+          }
         }
       }
-
+      
       // Call the parents validate function to perform the default validation on the record
       atkNode::validate($record, $mode, $ignoreList);
     }
