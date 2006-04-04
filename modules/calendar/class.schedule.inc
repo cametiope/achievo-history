@@ -25,6 +25,7 @@
   useattrib("atktimeattribute");
   useattrib("atklistattribute");
   useattrib("atkdummyattribute");
+  useattrib("calendar.addmeattribute");
   userelation("atkmanytoonerelation");
   userelation("atkonetomanyrelation");
   useattrib("atkfuzzysearchattribute");
@@ -76,6 +77,7 @@
 
       $this->add(new atkDummyAttribute("hint", atktext("attendee_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW));
       $this->add(new atkFuzzySearchAttribute("attendee_empsearch", "employee.employee", "storeAttendees","multiselect"));
+      $this->add(new addMeAttribute("addme",AF_HIDE-AF_HIDE_ADD));
       $this->add(new atkFuzzySearchAttribute("attendee_contactsearch", "organization.contact", "storeAttendees", "multiselect"));
 
       $this->add(new atkOneToManyRelation("notes", "calendar.schedule_notes", "schedule_id", AF_HIDE_LIST|AF_CASCADE_DELETE));
@@ -126,6 +128,7 @@
       $initial["owner"]["id"] = $user["id"];
       $initial["publicitem"] = 1;
       $initial["status"] = $initialstatus;
+      $initial["addme"] = 1;
 
       if ($this->m_viewdate!="")
       {
@@ -136,6 +139,20 @@
         $initial["enddate"] = $arr_date;
       }
       return $initial;
+    }
+    
+    function validate(&$record, $mode, $ignoreList=array())
+    {      
+      if($mode == "add")
+      {
+        if($record["addme"]!=1 && (!isset($record["attendee_empsearch"])||$record["attendee_empsearch"] == ""))
+        {
+          triggerError($record, "addme", "error_addme_no_attendees");
+          /* @var $att addMeAttribute */
+          $att = &$this->getAttribute("addme");        
+        }
+      }
+      atkNode::validate($record, $mode, $ignoreList);
     }
 
     function enddate_validate(&$record, $mode)
@@ -423,10 +440,13 @@
       return $buff;
     }
 
-    function postAdd($rec, $mode)
-    {
-      // insert the owner as first attendee.
-      $this->_addAttendeeRecord($rec["id"], $rec["owner"]["id"]);
+    function postAdd($rec, $mode="add")
+    {      
+      if($rec["addme"] == 1)
+      {
+        // insert the owner as first attendee.
+        $this->_addAttendeeRecord($rec["id"], $rec["owner"]["id"]);
+      }
 
       // Return true to report a succesfull operation.
       return true;
