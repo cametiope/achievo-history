@@ -1019,7 +1019,7 @@ class hours extends atkNode
       <th>'.atktext("remark").'</th>
     </tr>
     ';
-        
+    
     foreach($data["projects"] as $project)
     {
       $projectid        = $project["id"];
@@ -1228,9 +1228,12 @@ class hours extends atkNode
     if(moduleExists("teamplanning"))
     {
       $user = &getUser();
+      /* @var $node teamplanning */
       $node = atkGetNode("teamplanning.teamplanning");
       return $node->getUserPlanningProjectIds($user["id"],date("Ymd"));
     }
+    else 
+      return array();
   }
   
   function getRecentProjectIds()
