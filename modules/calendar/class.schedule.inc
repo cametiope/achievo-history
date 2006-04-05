@@ -25,7 +25,7 @@
   useattrib("atktimeattribute");
   useattrib("atklistattribute");
   useattrib("atkdummyattribute");
-  useattrib("calendar.addmeattribute");
+  useattrib("calendar.dummyboolattribute");
   userelation("atkmanytoonerelation");
   userelation("atkonetomanyrelation");
   useattrib("atkfuzzysearchattribute");
@@ -77,7 +77,7 @@
 
       $this->add(new atkDummyAttribute("hint", atktext("attendee_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW));
       $this->add(new atkFuzzySearchAttribute("attendee_empsearch", "employee.employee", "storeAttendees","multiselect"));
-      $this->add(new addMeAttribute("addme",AF_HIDE-AF_HIDE_ADD));
+      $this->add(new dummyBoolAttribute("addme",AF_HIDE-AF_HIDE_ADD));
       $this->add(new atkFuzzySearchAttribute("attendee_contactsearch", "organization.contact", "storeAttendees", "multiselect"));
 
       $this->add(new atkOneToManyRelation("notes", "calendar.schedule_notes", "schedule_id", AF_HIDE_LIST|AF_CASCADE_DELETE));
@@ -148,7 +148,7 @@
         if($record["addme"]!=1 && (!isset($record["attendee_empsearch"])||$record["attendee_empsearch"] == ""))
         {
           triggerError($record, "addme", "error_addme_no_attendees");
-          /* @var $att addMeAttribute */
+          /* @var $att dummyBoolAttribute */
           $att = &$this->getAttribute("addme");        
         }
       }
