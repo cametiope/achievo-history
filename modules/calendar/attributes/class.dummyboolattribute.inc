@@ -2,17 +2,20 @@
 
   useattrib("atkboolattribute");
 
-  class addMeAttribute extends atkBoolAttribute 
+  class dummyBoolAttribute extends atkBoolAttribute 
   {
     /**
      * Constructor
      * @param $name Name of the attribute
      * @param $flags Flags for this attribute
      */
-    function addMeAttribute($name, $flags=0)
+    function dummyBoolAttribute($name, $flags=0)
     {
+      //we do not want to search on a dummy
+      //if we provide this flag we do not need to implement the function searchModes()
+      $flags |= AF_HIDE_SEARCH; 
       // Call base class constructor. 
-      $this->atkAttribute($name,$flags);
+      $this->atkBoolAttribute($name,$flags);
     }
 
     /**
@@ -28,36 +31,17 @@
       $id = $fieldprefix.$this->fieldName();
       $this->registerKeyListener($id, KB_CTRLCURSOR|KB_CURSOR);
       return '<input type="checkbox" id="'.$id.'" name="'.$id.'" value="1" '.$checked.'>';
-    }    
-    
-    /**
-    * No function, but is neccesary
-    */
-    function store($a, $b)
-    {
-      return true;
-    }
-  
-    function db2value($record)
-    {
-      return NULL;
-    }
+    }        
   
     /**
-      * No function, but is neccesary
-      */
-    function addToQuery(&$query, $tablename="", $fieldaliasprefix="",$level)
-    {    
-    }
-  
-    function getSearchModes()
-    {    
-      return array();
-    }
-  
-    function dbFieldType()
-    {
-      return "";
-    }
+     * This attribute does not need to be stored.
+     * If we return NOSTORE at storageType and 0 (NOLOAD) at loadType, 
+     * we do not need to override other functions like store(), 
+     * addToQuery() etc.     
+     *
+     * @return int number
+     */
+    function storageType() { return NOSTORE; }
+    function loadType()    { return 0; }
   }
 ?>
