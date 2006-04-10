@@ -315,6 +315,7 @@
   "phase_activity" => "Activities",
   "phase_plan_employee" => "Plan employee",
   "phase_select" => "Now select a phase",
+  "editallphases" => "Edit current and initial planning of all phases",
   "phaseid" => "Project/Phase",
   "phaseplanning" => "Phase planning",
   "phasetimedistribution" => "Per phase",

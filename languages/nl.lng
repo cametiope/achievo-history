@@ -315,6 +315,7 @@
   "phase_activity" => "Activiteiten",
   "phase_plan_employee" => "Plan medewerker",
   "phase_select" => "Selecteer een fase",
+  "editallphases" => "Initiele en huidige planning van alle fases bewerken",
   "phaseid" => "Project/Fase",
   "phaseplanning" => "Fase planning",
   "phasetimedistribution" => "Per fase",
