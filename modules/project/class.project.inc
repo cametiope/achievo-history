@@ -8,6 +8,7 @@
   useattrib("atkboolattribute");
   useattrib("project.dependencyattrib");
   useattrib("project.projecttemplateattribute");
+  useattrib("project.editabledummyattribute");
   useattrib("atknumberattribute");
   useattrib("graph.datagraphattribute");
   useattrib("atkfuzzysearchattribute");
@@ -77,8 +78,9 @@
       
       $this->add(new atkOneToManyRelation("deliverables", "project.deliverable", "project_id", AF_HIDE_LIST), "planning");
 
+      $this->add(new editableDummyAttribute("phaseediturl","text",(AF_HIDE-AF_HIDE_EDIT)),"planning");
       $this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE), "planning");
-
+      
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW), "planning");
       $this->add(new projecttemplateAttribute("template","project.tpl_project", AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD|AF_HIDE_SEARCH|AF_HIDE_VIEW));
       
@@ -96,7 +98,7 @@
       $this->setTable("project","project");
 
       $this->setOrder("name");
-      $this->setIndex("name");      
+      $this->setIndex("name");
     }
 
     function name_display($record, $mode)
@@ -520,7 +522,7 @@
         $db->query("INSERT INTO project_person (projectid, personid, role) VALUES ($project_id, $person_id, $role_id)");
       }
     }
-
+    
      /**
      * Are we in 'active' emps or 'archive' mode?
      */
@@ -561,6 +563,15 @@
       return $handler->action_admin();
     }
 
+    function edit_values(&$record)
+    {
+      $id = $record["id"];      
+      $url = href(dispatch_url("project.phase","multi_edit",array("atkfilter"=>"phase.projectid='$id'")),atktext("editallphases","project"));
+      $record["phaseediturl"] = $url;
+      return $record;
+    }
+
+    
     function adminFooter()
     {
       $view = $this->getView();

@@ -27,24 +27,21 @@
 
   class phase extends atkNode
   {
+    //attributes that are used in the multi_edit action.
+    var $m_multi_edit_attribnames = array("initial_planning","current_planning");
+    
     function phase()
     {
-      global $g_securityManager;
-
-      $this->atkNode("phase",NF_AUTOSELECT|NF_EDITAFTERADD); // node() constructor is *not* called automatically!
-
+      global $g_securityManager;      
+      
+      $this->atkNode("phase",NF_AUTOSELECT|NF_EDITAFTERADD|NF_MRA); // node() constructor is *not* called automatically!
       $this->add(new atkAttribute("id",AF_AUTOKEY));
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE, 50));
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT));
 
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY));
-      
-//      $tmp = new phaseManyBoolRelation("phase_activity", "project.phase_activity", "project.activity", AF_HIDE_LIST|AF_OBLIGATORY|AF_MANYBOOL_AUTOLINK);
-//      $tmp->m_localKey = "phaseid";
-//      $tmp->m_remoteKey = "activityid";
-//      $this->add($tmp);
-      //@todo: Vlaggen controleren, zijn deze vlaggen nodig ?
+
       $this->add(new atkOneToManyRelation("activities","project.activity","phaseid",AF_HIDE_LIST));
 
       // template *must* come after phase_activity, because phase_activity does a delete of all
@@ -66,9 +63,25 @@
       $this->add(new atkOneToManyRelation("phaseplanning", "project.phaseplanning", "phaseid", AF_HIDE_LIST));
 
       $this->add(new atkFuzzySearchAttribute("phaseplanning_add", "employee.employee", "storePhaseplanning", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL, 20));
-
+      
       $this->setOrder("phase.startdate, phase.name");
       $this->setTable("phase","phase");
+    }
+    
+    /**
+     * Initialize the phase node
+     *
+     * Function initializes the phase node.
+     *
+     * @param type name description
+     * @return type description
+     */
+    function init()
+    {
+      //if a user may edit a phase, he/she may also edit multiple phases.
+      if($this->allowed("phase.edit"))      
+        $this->addAllowedAction("multi_edit");        
+      parent::init();
     }
 
     function descriptor_def()
@@ -250,5 +263,52 @@
         }
       }
     }
+
+    function action_multi_edit()
+    {
+      $handler = &$this->getHandler('admin');
+      $this->m_flags |= NF_ADD_LINK;  //add this flag to remove the add screen in action_multi_edit.      
+      $this->setEditableListAttributes($this->m_multi_edit_attribnames);
+      $this->setMRASelectionMode(MRA_NO_SELECT);      
+      $handler->action_admin();
+    } 
+    
+    function recordActions($record, &$actions, &$mra)
+    {
+      parent::recordActions($record, $actions, $mra);
+     
+      if ($this->m_action == 'multi_edit')
+      {
+        $mra = array('update');
+      }
+      else
+      {
+        // your normal multi-record-actions
+      }
+    } 
+    
+    function action_update(&$handler)
+    { 
+      $selectors = $this->m_postvars['atkselector'];
+      if (!is_array($selectors))
+        return $handler->action_update();
+    
+      $rlName = $this->m_postvars['atkrecordlist'];
+      $rlData = $this->m_postvars['atkrecordlistdata'][$rlName];
+      
+      foreach ($selectors as $nr => $selector)
+      {
+        $data = $rlData[$nr];
+        list($row) = $this->selectDb($selector, "", "", "", "", "edit");        
+        
+        foreach ($this->m_multi_edit_attribnames as $attrName)
+        {
+          $attr = &$this->getAttribute($attrName);          
+          $row[$attrName] = $attr->value2db(array($attr->fieldName() => $attr->fetchValue($data)));          
+        }    
+        $this->updateDb($row);
+      }      
+      $this->redirect();
+    }     
   }
 ?>
