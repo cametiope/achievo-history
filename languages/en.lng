@@ -165,6 +165,8 @@
   "hours_approve_remarkweekblock" => "Weeks will not be displayed until they are blocked.",
   "hours_approve_thestatusofthisweekis" => "The status of this week is",
   "hours_lock" => "Lock hours",
+  "hours_taskid" => "Project\Phase",
+  "hours_taskid[activityid]" => "Activity",
   "hoursleft" => "Hours left",
   "hoursurvey" => "Time Survey",
   "id" => "ID",

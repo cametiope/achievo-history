@@ -165,6 +165,8 @@
   "hours_approve_remarkweekblock" => "Weken worden pas weergegeven als ze geblokkeerd zijn.",
   "hours_approve_thestatusofthisweekis" => "De status van deze week is",
   "hours_lock" => "Uren blokkeren",
+  "hours_taskid" => "Project\Fase",
+  "hours_taskid[activityid]" => "Activiteit",
   "hoursleft" => "Uren nog beschikbaar",
   "hoursurvey" => "Uren overzicht",
   "id" => "ID",
