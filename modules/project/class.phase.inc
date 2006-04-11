@@ -66,24 +66,11 @@
       
       $this->setOrder("phase.startdate, phase.name");
       $this->setTable("phase","phase");
+      
+      /* @var $securityManager atkSecurityManager */      
+      $this->addSecurityMap("multi_edit", "edit");
     }
     
-    /**
-     * Initialize the phase node
-     *
-     * Function initializes the phase node.
-     *
-     * @param type name description
-     * @return type description
-     */
-    function init()
-    {
-      //if a user may edit a phase, he/she may also edit multiple phases.
-      if($this->allowed("phase.edit"))      
-        $this->addAllowedAction("multi_edit");        
-      parent::init();
-    }
-
     function descriptor_def()
     {
       return "[name]";

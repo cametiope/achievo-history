@@ -565,12 +565,11 @@
 
     function edit_values(&$record)
     {
-      $id = $record["id"];      
-      $url = href(dispatch_url("project.phase","multi_edit",array("atkfilter"=>"phase.projectid='$id'")),atktext("editallphases","project"));
+      $id = $record["id"];
+      $url = href(session_url(dispatch_url("project.phase","multi_edit",array("atkfilter"=>"phase.projectid='$id'")),SESSION_NESTED),atktext("editallphases","project"));
       $record["phaseediturl"] = $url;
       return $record;
     }
-
     
     function adminFooter()
     {
