@@ -38,10 +38,23 @@
 
     function schedule()
     {
-      global $g_sessionManager;
-
-      $time = $g_sessionManager->stackVar("time");
-
+      $sessionManager = &atkGetSessionManager();      
+      
+      if(is_object($sessionManager))
+      {
+        $this->m_view     = $sessionManager->stackVar("view");
+        $this->m_user     = $sessionManager->stackVar("user");
+        $this->m_viewdate = $sessionManager->stackVar("viewdate");
+        $time             = $sessionManager->stackVar("time");
+      }
+      else 
+      {
+        $this->m_view     = "";
+        $this->m_user     = "";
+        $this->m_viewdate = "";
+        $time = "";
+      }      
+      
       if ($time!="")
       {
         $default_start_time = $time; // passed from the url.
@@ -82,11 +95,9 @@
 
       $this->add(new atkOneToManyRelation("notes", "calendar.schedule_notes", "schedule_id", AF_HIDE_LIST|AF_CASCADE_DELETE));
       $this->add(new atkManyToOneRelation("owner", "employee.employee", AF_READONLY|AF_HIDE_ADD|AF_OBLIGATORY));
-
-      $this->m_view     = $g_sessionManager->stackVar("view");
+      
       if (trim($this->m_view) == "") { $this->m_view = "dayview"; }
-
-      $this->m_user     = $g_sessionManager->stackVar("user");
+      
       if ($this->m_user=="")
       {
         $user = getUser();
@@ -99,10 +110,8 @@
           // User has opted to show all users by default.
           $this->m_user = "all";
         }
-
       }
-
-      $this->m_viewdate = $g_sessionManager->stackVar("viewdate");
+      
       if ($this->m_viewdate=="") $this->m_viewdate = strftime("%Y-%m-%d");
 
       $this->addAllowedAction("view");
