@@ -57,17 +57,21 @@ class projectstats extends atkNode
     atkimport("atk.layout");
     $layout = &layout::getInstance();
 
-    $layout->initGui();
-    $layout->ui_top(atktext("parameters", "projectstats", "project"));
+    $content = "";
+    //$layout->initGui();
+    //$layout->ui_top(atktext("parameters", "projectstats", "project"));
 
     $startdate  = $this->m_viewstart;
     $enddate    = $this->m_viewend;
     $projectid  = $this->m_projectid;
 
-    $layout->output('<br>'.$this->navigator().'<br>');
-
-    $layout->ui_bottom();
-
+    //$layout->output('<br>'.$this->navigator().'<br>');
+    $content.= '<br>'.$this->navigator().'<br>';
+    //$layout->ui_bottom();
+    $page = &$this->getPage();
+    $page->addContent($this->genericPage(atktext("parameters", "projectstats", "project"),$content));
+    
+    $content = "";
     $prjnode = &atkGetNode("project.project");
 
     $descriptor="";
@@ -78,7 +82,7 @@ class projectstats extends atkNode
       $descriptor = " - ".$prjnode->descriptor($recs[0]);
     }
 
-    $layout->ui_top(atktext("stats","projectstats","project").$descriptor);
+    //$layout->ui_top(atktext("stats","projectstats","project").$descriptor);
 
     $backbtn = "";
     if (atkLevel()>0)
@@ -103,12 +107,15 @@ class projectstats extends atkNode
 
       $query = &$db->createQuery();
       $query->addTable("hours");
-      $query->addJoin("phase", "", "phase.id = hours.phaseid", false);
+      $query->addJoin("task", "", "task.id = hours.taskid", false);
+      $query->addJoin("activity", "", "activity.id = task.refid", false);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase", "", "phase.id = activity.phaseid", false);
       $query->addJoin("project", "", "phase.projectid = project.id", false);
       $query->addField("project.name");
       $query->addField("project.id");
       $query->addField("sum(time) as totaltime");
-      $query->addCondition("hours.activitydate BETWEEN '".$startdate."' AND '".$enddate."'");
+      $query->addCondition("hours.taskdate BETWEEN '".$startdate."' AND '".$enddate."'");
       if ($max)
       {
         $query->setLimit(0,$max);
@@ -121,8 +128,7 @@ class projectstats extends atkNode
       {
         $params["from"] = ($this->m_zoom=="topprojects"?$i:0);
         $topProjects = &new dataGraphAttribute("topprojectsdistribution", "topprojects", $params, "pie");
-        $topProjects->setSource("project.project");
-        atkdebug("<H1>DRAWING TOPPROJECTS!</H1>");
+        $topProjects->setSource("project.project");        
 
         $output.= "<br>".$topProjects->showGraph();
       }
@@ -188,10 +194,11 @@ class projectstats extends atkNode
     }
 
     $output.="<br>".$backbtn."<br>";
-
-    $layout->output($output);
-
-    $layout->ui_bottom();
+    $content.= $output;
+    //$layout->output($output);
+    
+    //$layout->ui_bottom();
+    $page->addContent($this->genericPage(atktext("stats","projectstats","project").$descriptor,$content));
   }
 
   function _paramForm($contents)
@@ -231,17 +238,22 @@ class projectstats extends atkNode
 
   function topProjects($start, $end, $max=0)
   {
+    /* @var $query atkQuery */
     $db = &atkGetDb();
     atkdebug("niet in graph maar in topprojects");
     $query = &$db->createQuery();
-
+    
     $query->addTable("hours");
-    $query->addJoin("phase", "", "phase.id = hours.phaseid", false);
+    $query->addJoin("task", "", "task.id = hours.taskid", false);
+    $query->addJoin("activity", "", "activity.id = task.refid", false);
+    $query->addCondition("task.tasktype='activity'");
+    $query->addJoin("phase", "", "phase.id = activity.phaseid", false);
     $query->addJoin("project", "", "phase.projectid = project.id", false);
     $query->addField("project.name");
     $query->addField("project.id");
     $query->addField("sum(time) as totaltime");
-    $query->addCondition("hours.activitydate BETWEEN '".$start."' AND '".$end."'");
+    $query->addCondition("hours.taskdate BETWEEN '".$start."' AND '".$end."'");
+
     if ($max)
     {
       $query->setLimit(0,$max);
