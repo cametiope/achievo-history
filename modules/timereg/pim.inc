@@ -9,8 +9,8 @@
     $pda = browserInfo::detectPDA();
     $actions = array();
 
-    // Show only todays bookings, and only your own.
-    $hoursnode->addFilter("activitydate",strftime("%Y-%m-%d"));
+    // Show only todays bookings, and only your own.    
+    $hoursnode->addFilter("taskdate",strftime("%Y-%m-%d"));
     $hoursnode->addFilter("hours.userid",strtolower($g_user["id"]));
 
     $recs = $hoursnode->selectDb();
