@@ -81,9 +81,20 @@
   
   function getBooked($projectid)
   {
+    //    $rows = $db->getrows("SELECT sum(time) as booked FROM hours, phase
+//                            WHERE hours.phaseid = phase.id AND phase.projectid=".$projectid);
     $db = &atkGetDb();
-    $rows = $db->getrows("SELECT sum(time) as booked FROM hours, phase
-                            WHERE hours.phaseid = phase.id AND phase.projectid=".$projectid);
+    $query = $db->createQuery();
+    $query->addField("SUM(time) AS booked");
+    $query->addTable("hours");
+    $query->addTable("task");
+    $query->addTable("activity");
+    $query->addTable("phase");
+    $query->addCondition("task.id=hours.taskid");
+    $query->addCondition("activity.id=task.refid");
+    $query->addCondition("task.tasktype='activity'");
+    $query->addCondition("phase.id=activity.phaseid");
+    $query->addCondition("phase.projectid=".$params["projectid"]);
     return $rows[0]["booked"];
   }
   
