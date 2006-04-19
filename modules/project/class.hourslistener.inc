@@ -96,17 +96,13 @@
         return;
       }
 
-      //get the phaseid
-      $tasknode = &getNode("task.task");
-      $activitynode = &getNode("project.activity");
-      $phasenode = &getNode("project.phase");
+      // Get the phase record from the database and throw an error if not found
+      /* @var $phaseNode atkNode */
+      $phaseid = $record["taskid"]["phaseid"];
       
-      /* @var $activitynode atkNode */
-      $taskrecords      = $tasknode->selectDb("task.id='".$record["taskid"]["id"]."' AND task.tasktype='activity'");
-      $activityrecords  = $activitynode->selectDb("activity.id='".$taskrecords[0]["refid"]["id"]."'");          
+      $phaseNode = &atkGetNode("project.phase");
       
-      // Get the phase record from the database and throw an error if not found      
-      $phaserecords = $phasenode->selectDb("phase.id='".$activityrecords[0]["phaseid"]["id"]."'");
+      $phaserecords = $phaseNode->selectDb("phase.id='$phaseid'");      
             
       if (count($phaserecords) == 0)
       {
