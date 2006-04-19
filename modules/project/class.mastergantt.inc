@@ -34,11 +34,11 @@
   class mastergantt extends atkNode
   {
     /**
-     * projectstatus constructor
+     * mastergantt constructor
      */
     function mastergantt()
     {
-      $this->atkNode("projectstatus");
+      $this->atkNode("mastergantt");
       $this->setSecurityAlias("project.project");      
     }
 
