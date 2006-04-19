@@ -114,30 +114,34 @@
 
     function graph_topprojects($params)
     {      
+      /* @var $db atkDb */
+      /* @var $query atkQuery */
       $db = &atkGetDb();
+      $query = $db->createQuery();
 
       $start = $params["startdate"];
       $end   = $params["enddate"];
       $max   = $params["max"];
       $from  = $params["from"];
-
-      $query = &$db->createQuery();
-
+      
+      $query->addField("id","","project");
+      $query->addField("name","","project");
+      $query->addField("SUM(time) AS totaltime");
       $query->addTable("hours");
-      $query->addJoin("phase", "", "phase.id = hours.phaseid", false);
-      $query->addJoin("project", "", "phase.projectid = project.id", false);
-      $query->addField("project.name");
-      $query->addField("project.id");
-      $query->addField("sum(time) as totaltime");
-      $query->addCondition("hours.activitydate BETWEEN '".$start."' AND '".$end."'");
+      $query->addJoin("task","","task.id=hours.taskid", true);
+      $query->addJoin("activity","","activity.id=task.refid", true);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase","","phase.id=activity.phaseid",true);
+      $query->addCondition("hours.taskdate BETWEEN '".$start."' AND '".$end."'");
+      
+      $query->addOrderBy("totaltime DESC");
+      $query->addGroupBy("project.name");
       if ($max)
       {
         $query->setLimit($from,$max);
       }
-      $query->addOrderBy("totaltime DESC");
-      $query->addGroupBy("project.name");
       $data = $db->getrows($query->buildSelect());
-
+      
       // convert records to graph-compatible array.
       $dataset = array();
       for ($i=0, $_i=count($data); $i<$_i; $i++)
@@ -254,21 +258,31 @@
 
     function graph_phasetime($params, $raw=false)
     {
+      /* @var $db atkDb */
+      /* @var $query atkQuery */
       $db = &atkGetDb();
-      $data = $db->getrows("SELECT
-                                phase.id, phase.name, SUM(time) as total
-                              FROM
-                                hours, phase
-                              WHERE
-                                hours.phaseid = phase.id
-                                AND phase.projectid = ".$params["projectid"].
-                                ($params["viewstart"]!=""?" AND hours.activitydate>='".$params["viewstart"]."'":"").
-                                ($params["viewend"]!=""?" AND hours.activitydate<='".$params["viewend"]."'":"").
-                            " GROUP BY
-                                phase.name
-                              ORDER BY
-                                phase.name");
-
+      $query = $db->createQuery();
+      
+      $query->addField("id","","phase");
+      $query->addField("name","","phase");
+      $query->addField("SUM(time) AS total");
+      $query->addTable("hours");
+      $query->addJoin("task","","task.id=hours.taskid", true);
+      $query->addJoin("activity","","activity.id=task.refid", true);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase","","phase.id=activity.phaseid",true);
+      $query->addCondition("phase.projectid=".$params["projectid"]);
+      
+      if($params["viewstart"]!="")
+        $query->addCondition("hours.taskdate>='".$params["viewstart"]."'");
+        
+      if($params["viewend"]!="")
+        $query->addCondition("hours.taskdate<='".$params["viewend"]."'");
+      
+      $query->addGroupBy("phase.name");
+      $query->addOrderBy("phase.name");
+      $data = $db->getrows($query->buildSelect());
+                            
       if ($raw) return $data;
 
       // convert records to graph-compatible array.
@@ -283,22 +297,32 @@
 
     function graph_emptime($params, $raw=false)
     {
+      /* @var $db atkDb */
+      /* @var $query atkQuery */            
       $db = &atkGetDb();
-      $data = $db->getrows("SELECT
-                                person.id, person.firstname, person.lastname, SUM(time) as total
-                              FROM
-                                hours, phase, person
-                              WHERE
-                                hours.phaseid = phase.id
-                                AND hours.userid = person.id
-                                AND phase.projectid = ".$params["projectid"].
-                                ($params["viewstart"]!=""?" AND hours.activitydate>='".$params["viewstart"]."'":"").
-                                ($params["viewend"]!=""?" AND hours.activitydate<='".$params["viewend"]."'":"").
-                            " GROUP BY
-                                person.id
-                              ORDER BY
-                                person.lastname");
-
+      $query = $db->createQuery();
+      $query->addField("id","","person");
+      $query->addField("firstname","","person");
+      $query->addField("lastname","","person");
+      $query->addField("SUM(time) AS total");      
+      $query->addTable("hours");
+      $query->addJoin("task","","task.id=hours.taskid",true);
+      $query->addJoin("activity","","activity.id=task.refid",true);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase","","phase.id=activity.phaseid",true);
+      $query->addJoin("person","","person.id=hours.userid",true);
+      $query->addCondition("phase.projectid=".$params["projectid"]);
+      
+      if($params["viewstart"]!="")
+        $query->addCondition("hours.taskdate>='".$params["viewstart"]."'");
+        
+      if($params["viewend"]!="")
+        $query->addCondition("hours.taskdate<='".$params["viewend"]."'");
+        
+      $query->addGroupBy("person.id");
+      $query->addOrderBy("person.lastname");
+      $data = $db->getrows($query->buildSelect());  
+      
       if ($raw)
       {
         return $data;
@@ -315,22 +339,32 @@
     }
 
     function graph_activitytime($params, $raw=false)
-    {
+    { 
+      /* @var $db atkDb */
+      /* @var $query atkQuery */            
       $db = &atkGetDb();
-      $data = $db->getrows("SELECT
-                                activity.id, activity.name, SUM(time) as total
-                              FROM
-                                hours, phase, activity
-                              WHERE
-                                hours.phaseid = phase.id
-                                AND phase.projectid = ".$params["projectid"].
-                                ($params["viewstart"]!=""?" AND hours.activitydate>='".$params["viewstart"]."'":"").
-                                ($params["viewend"]!=""?" AND hours.activitydate<='".$params["viewend"]."'":"").
-                            "   AND hours.activityid = activity.id
-                              GROUP BY
-                                activity.name
-                              ORDER BY
-                                activity.name");
+      $query = $db->createQuery();
+      $query->addField("id","","activity");
+      $query->addField("name","","activity");      
+      $query->addField("SUM(time) AS total");      
+      $query->addTable("hours");
+      $query->addJoin("task","","task.id=hours.taskid",true);
+      $query->addJoin("activity","","activity.id=task.refid",true);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase","","phase.id=activity.phaseid",true);
+      $query->addJoin("person","","person.id=hours.userid",true);
+      $query->addCondition("phase.projectid=".$params["projectid"]);
+      
+      if($params["viewstart"]!="")
+        $query->addCondition("hours.taskdate>='".$params["viewstart"]."'");
+        
+      if($params["viewend"]!="")
+        $query->addCondition("hours.taskdate<='".$params["viewend"]."'");
+        
+      $query->addGroupBy("activity.name");
+      $query->addOrderBy("activity.name");
+      $data = $db->getrows($query->buildSelect());  
+      
       // In raw mode the data is sufficient.
       if ($raw) return $data;
 
@@ -347,24 +381,32 @@
 
     function graph_dowtime($params, $raw=false)
     {
+      /* @var $db atkDb */
+      /* @var $query atkQuery */            
       $db = &atkGetDb();
+      $query = $db->createQuery();
 
       $days = array("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday");
 
-      $data = $db->getrows("SELECT
-                                date_format(hours.activitydate, '%w') as dow, SUM(time) as total
-                              FROM
-                                hours, phase, activity
-                              WHERE
-                                hours.phaseid = phase.id
-                                AND phase.projectid = ".$params["projectid"].
-                                ($params["viewstart"]!=""?" AND hours.activitydate>='".$params["viewstart"]."'":"").
-                                ($params["viewend"]!=""?" AND hours.activitydate<='".$params["viewend"]."'":"").
-                            "   AND hours.activityid = activity.id
-                              GROUP BY
-                                date_format(hours.activitydate, '%w')
-                              ORDER BY
-                                dow");
+      $query->addField("date_format(hours.taskdate,'%w') AS dow");      
+      $query->addField("SUM(time) AS total");      
+      $query->addTable("hours");
+      $query->addJoin("task","","task.id=hours.taskid",true);
+      $query->addJoin("activity","","activity.id=task.refid",true);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase","","phase.id=activity.phaseid",true);
+      $query->addJoin("person","","person.id=hours.userid",true);
+      $query->addCondition("phase.projectid=".$params["projectid"]);
+      
+      if($params["viewstart"]!="")
+        $query->addCondition("hours.taskdate>='".$params["viewstart"]."'");
+        
+      if($params["viewend"]!="")
+        $query->addCondition("hours.taskdate<='".$params["viewend"]."'");
+        
+      $query->addGroupBy("date_format(hours.taskdate, '%w')");
+      $query->addOrderBy("dow");
+      $data = $db->getrows($query->buildSelect());
 
       // Add weekday names.
       for ($i=0, $_i=count($data); $i<$_i; $i++)
@@ -388,21 +430,33 @@
 
     function graph_timeline($params)
     {
+      /* @var $db atkDb */
+      /* @var $query atkQuery */            
       $db = &atkGetDb();
+      $query = $db->createQuery();
 
       // First find out if a timeline would make more sense per week, per
       // month or per day. This all depends on the amount of time between the
       // first and last time entry.
-      $range = $db->getrows("SELECT
-                                 min(activitydate) as minimum,
-                                 max(activitydate) as maximum
-                               FROM
-                                 hours, phase
-                               WHERE
-                                 hours.phaseid = phase.id
-                                 AND phase.projectid = ".$params["projectid"].
-                                ($params["viewstart"]!=""?" AND hours.activitydate>='".$params["viewstart"]."'":"").
-                                ($params["viewend"]!=""?" AND hours.activitydate<='".$params["viewend"]."'":""));
+      
+      $query->addField("min(taskdate) AS minimum");
+      $query->addField("max(taskdate) AS maximum");
+      $query->addTable("hours");
+      $query->addJoin("task","","task.id=hours.taskid",true);
+      $query->addJoin("activity","","activity.id=task.refid",true);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase","","phase.id=activity.phaseid",true);
+      $query->addJoin("person","","person.id=hours.userid",true);
+      $query->addCondition("phase.projectid=".$params["projectid"]);
+      
+      if($params["viewstart"]!="")
+        $query->addCondition("hours.taskdate>='".$params["viewstart"]."'");
+        
+      if($params["viewend"]!="")
+        $query->addCondition("hours.taskdate<='".$params["viewend"]."'");        
+      
+      $range = $db->getrows($query->buildSelect());
+      
       $maxdate = array();
       $mindate = array();
       list ($maxyear, $maxmonth, $maxday) = explode("-", $range[0]["maximum"]);
@@ -435,23 +489,33 @@
 
       switch ($resolution)
       {
-        case "month": $groupbystmt = "DATE_FORMAT(activitydate,'%Y%m')"; break;
-        case "week": $groupbystmt = "DATE_FORMAT(activitydate,'%Y%V')"; break;
+        case "month": $groupbystmt = "DATE_FORMAT(taskdate,'%Y%m')"; break;
+        case "week": $groupbystmt = "DATE_FORMAT(taskdate,'%Y%V')"; break;
         default: $groupbybystmt = "";
       }
 
-      $query = "SELECT
-                  ".($groupbystmt==""?"activitydate":$groupbystmt)." as label, sum(time) as total
-                FROM
-                  hours, phase
-                WHERE
-                  hours.phaseid = phase.id
-                  AND phase.projectid = ".$params["projectid"].
-                  ($params["viewstart"]!=""?" AND hours.activitydate>='".$params["viewstart"]."'":"").
-                  ($params["viewend"]!=""?" AND hours.activitydate<='".$params["viewend"]."'":"").
-              " GROUP BY
-                  ".($groupbystmt==""?"activitydate":$groupbystmt);
-      $data = $db->getrows($query);
+      //reinitialise $query
+      $query = $db->createQuery();        
+
+      $query->addField(($groupbystmt==""?"taskdate":$groupbystmt)." AS label");      
+      $query->addField("SUM(time) AS total");      
+      $query->addTable("hours");
+      $query->addJoin("task","","task.id=hours.taskid",true);
+      $query->addJoin("activity","","activity.id=task.refid",true);
+      $query->addCondition("task.tasktype='activity'");
+      $query->addJoin("phase","","phase.id=activity.phaseid",true);
+      $query->addJoin("person","","person.id=hours.userid",true);
+      $query->addCondition("phase.projectid=".$params["projectid"]);
+      
+      if($params["viewstart"]!="")
+        $query->addCondition("hours.taskdate>='".$params["viewstart"]."'");
+        
+      if($params["viewend"]!="")
+        $query->addCondition("hours.taskdate<='".$params["viewend"]."'");
+        
+      $query->addGroupBy(($groupbystmt==""?"taskdate":$groupbystmt));
+      
+      $data = $db->getrows($query->buildSelect());
 
       // convert records to graph-compatible array.
       $dataset = array();
