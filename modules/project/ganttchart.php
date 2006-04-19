@@ -91,11 +91,34 @@ for($i=0;$i<count($dbrecordsphase);$i++)
   $phase_maxtimes[$i] = ($dbrecordsphase[$i]['phase_current_planning']/60)/8; // convert minutes to days
 }
 
+$query = &$db->createQuery();
+$query->addTable("hours");
+$query->addJoin("task", "", "task.id = hours.taskid", false);
+$query->addJoin("activity", "", "activity.id = task.refid", false);
+$query->addCondition("task.tasktype='activity'");
+$query->addJoin("phase", "", "phase.id = activity.phaseid", false);
+$query->addJoin("project", "", "phase.projectid = project.id", false);
+$query->addField("project.name");
+$query->addField("project.id");
+$query->addField("sum(time) as totaltime");
+$query->addCondition("hours.taskdate BETWEEN '".$startdate."' AND '".$enddate."'");
+if ($max)
+{
+$query->setLimit(0,$max);
+}
+$query->addOrderBy("totaltime DESC");
+$query->addGroupBy("project.name");
+$projects = $db->getrows($query->buildSelect());
+
 //$dep = load_dependencies($phase_ids,$dbrecordsdep);
 // Select the TIMES that have been booked on the project
 $querybooked = &$db->createQuery();
-$querybooked->addTable('phase');
-$querybooked->addJoin('hours', '', 'hours.phaseid=phase.id', FALSE);
+
+$querybooked->addTable("hours");
+$querybooked->addJoin("task", "", "task.id = hours.taskid", false);
+$querybooked->addJoin("activity", "", "activity.id = task.refid", false);
+$querybooked->addCondition("task.tasktype='activity'");
+$querybooked->addJoin("phase", "", "phase.id = activity.phaseid", false);
 $querybooked->addField('id', ' ', 'phase', 'phase_');
 $querybooked->addField('name', ' ', 'phase', 'phase_');
 $querybooked->addField('SUM(hours.time) AS hours');
