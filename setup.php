@@ -196,6 +196,7 @@
   }
 
   /* Setup the system */
+  $config_atkroot = "./";
   include_once("atk.inc");
 
   atksession();
@@ -249,7 +250,7 @@
   }
 
   // Create node
-  $obj = getNode("setup.setup");
+  $obj = &atkGetNode("setup.setup");
   if ($ATK_VARS["atkaction"]=="") $ATK_VARS["atkaction"] = "intro";
 
   if (is_object($obj))

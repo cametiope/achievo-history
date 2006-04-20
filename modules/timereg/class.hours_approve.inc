@@ -43,9 +43,16 @@
 	    // Call the base class constructor
 	    $this->hours("hours_approve");
 
-	    $this->getPageData();  	  
+	    // Get a reference to the global sessionmanager
+	  	global $g_sessionManager;
 
-//$hourslocknode = &getNode("timereg.hours_lock");
+	  	// Make sure the year session variable is available at all times
+  	  $g_sessionManager->pageVar("year");
+  	  $g_sessionManager->pageVar("viewdate");
+  	  $g_sessionManager->pageVar("weekid");
+  	  $g_sessionManager->pageVar("viewuser");
+
+//$hourslocknode = &atkGetNode("timereg.hours_lock");
 //$users=array(367,794);
 //atk_var_dump($users);
 //foreach($users as $userid)
@@ -150,7 +157,7 @@
      */
 	  function weekviewTitle($userid, $viewtime)
     {
-      $employeenode = &getNode("employee.employee");
+      $employeenode = &atkGetNode("employee.employee");
       $employees = $employeenode->selectDb("person.id=" . $userid);
       $employeedesc = (count($employees) > 0) ? $employees[0]["firstname"]." ".$employees[0]["lastname"] : "";
 
@@ -185,7 +192,7 @@
 	    }
 
 	    // Retrieve the hours_lock record for the specified weekid
-	    $hourslocknode = &getNode("timereg.hours_lock");
+	    $hourslocknode = &atkGetNode("timereg.hours_lock");
       $hourlocks = $hourslocknode->selectDb("hours_lock.id='".$weekid."' AND hours_lock.userid='".$this->m_user."'");
 
       // Don't display any buttons if there are no hourlocks found
@@ -265,7 +272,7 @@
 	    if (isset($this->m_user) && isset($this->m_viewdate) && (($this->m_postvars["year"] == null) || ($this->m_postvars["year"] == substr($this->m_viewdate, 0, 4))))
 	    {
 	    	// Try to find the hour_lock in de database
-	    	$hourslocknode = &getNode("timereg.hours_lock");
+	    	$hourslocknode = &atkGetNode("timereg.hours_lock");
 	    	$hourlocks = $hourslocknode->selectDb("hours_lock.id='" . $this->m_postvars["weekid"] . "'");
 
 	    	// Only show the weekview if the lock still exists:
@@ -403,7 +410,7 @@
 	  function getEmployeesData($userid, $year)
 	  {
 	    // Load the employee node
-	    $employeenode = &getNode("employee.employee");
+	    $employeenode = &atkGetNode("employee.employee");
 
 	    // Do we select only the employees the current user is maanger of, or all employees
 	    $where = $this->allowed("any_user") ? "" : "person.supervisor = '$userid'";
@@ -418,7 +425,7 @@
 	      $users[$key]["name"] = $user["firstname"].' '.$user["lastname"];
 	      $users[$key]["weeks"]=array();
 
-	      $houslocknode = &getNode("timereg.hours_lock");
+	      $houslocknode = &atkGetNode("timereg.hours_lock");
 	      $lockedweeks = $houslocknode->selectDb("hours_lock.userid='".$user["id"]."'");
 
 	      foreach ($lockedweeks as $lockedweek)
@@ -490,7 +497,7 @@
 	    $viewdate = $this->m_postvars['viewdate'];
 	    $weekid = $this->m_postvars["weekid"];
 
-	    $hourslocknode = &getNode("timereg.hours_lock");
+	    $hourslocknode = &atkGetNode("timereg.hours_lock");
 
 	    if (is_numeric($weekid))
 	    {
@@ -524,7 +531,7 @@
 	    }
 
 	    // Get a reference to the hours_lock node
-	    $hourslocknode = &getNode("timereg.hours_lock");
+	    $hourslocknode = &atkGetNode("timereg.hours_lock");
 
 	    // Get the lock
 	    $hourlocks = $hourslocknode->selectDb("hours_lock.id='".$weekid."'");
@@ -608,7 +615,7 @@
       }
 
       // Get the employee
-      $employeenode = &getNode("employee.employee");
+      $employeenode = &atkGetNode("employee.employee");
       $employees = $employeenode->selectDb("person.id = '".$hourlock["userid"]["id"]."'");
       if (count($employees)==0)
       {

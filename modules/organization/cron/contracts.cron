@@ -171,7 +171,7 @@
   function getActiveExpiredContracts($hascolumnandvalue)
   { 
     $dt = date("Y-m-d");
-    $node = &getNode("organization.contracts");    
+    $node = &atkGetNode("organization.contracts");    
     
     $selector = "contract.enddate IS NOT NULL AND contract.enddate <> '' AND contract.enddate < '$dt' AND contract.status = 'active'";    
     
@@ -190,7 +190,7 @@
 	 */
   function getEndedContracts($status)
   {    
-    $node = &getNode("organization.contracts");    
+    $node = &atkGetNode("organization.contracts");    
     
     //add 'contract.status=' before each element and '' around the element.
     for($i=0,$_i=count($status);$i<$_i;$i++)    
@@ -211,8 +211,8 @@
    */
   function getActiveLinkedProjects($contractid)
   { 
-    $node = &getNode("organization.contract_project");
-    $nodeemp = &getNode("employee.employee");
+    $node = &atkGetNode("organization.contract_project");
+    $nodeemp = &atkGetNode("employee.employee");
     
     $selector = "project.contract_id=$contractid AND project.status = 'active'";
     $records = $node->selectDb($selector, "", "", "", array("id", "status", "contract_id", "name", "coordinator", "description"));
@@ -228,7 +228,7 @@
         $records[$i]["coordinator"] = $recordemp[0];
       }
       else 
-        $records[$id]["coordinator"] = array();
+        $records[$i]["coordinator"] = array();
     }        
         
     return $records;    
@@ -249,7 +249,7 @@
   function handleExpiredContracts($expiredcontracts, $newprojectstatus, $newcontractstatus, $mailto, $mailtocoordinator, $debug_mode)
   {
     //get nodes
-    $node         = &getNode("organization.contracts");    
+    $node         = &atkGetNode("organization.contracts");    
     $desc = "";
     
     echo "**Expired contracts: (".count($expiredcontracts)." contract(s) found)**\n\n";
@@ -312,7 +312,7 @@
   function handleEndedContracts($endedcontracts, $newprojectstatus, $newcontractstatus, $mailto, $mailtocoordinator, $debug_mode)
   {
     //get nodes
-    $node         = &getNode("organization.contracts");
+    $node         = &atkGetNode("organization.contracts");
     
     $desc = "";
     
@@ -354,7 +354,7 @@
    */
   function handleLinkedProjects($projects, $newprojectstatus, $debug_mode)
   {
-    $projectnode  = &getNode("organization.contract_project");
+    $projectnode  = &atkGetNode("organization.contract_project");
             
     foreach ($projects as $p)
     {             
@@ -385,8 +385,8 @@
     echo "\nStarting cronjob: contracts.cron\n\n";    
         
     //get nodes
-    $node         = &getNode("organization.contracts");
-    $projectnode  = &getNode("organization.contract_project");
+    $node         = &atkGetNode("organization.contracts");
+    $projectnode  = &atkGetNode("organization.contract_project");
     
     
     

@@ -21,12 +21,18 @@
 
     function getPimItems()
     {
+      return array("schedule"=>"getPimListView");
+    }
+
+    function getPimListView()
+    {
       if (!(browserInfo::detectPDA()))
       {
         include_once(moduleDir("calendar")."pim.inc");
-        return array("schedule"=>pimSchedule());
+        return pimSchedule();
       }
     }
+
 
     function getDependencies($mode)
     {
@@ -36,7 +42,7 @@
     function userprefs_modifier(&$node)
     {
       useattrib("atklistattribute");
-      $usernode = &getNode("employee.employee");
+      $usernode = &atkGetNode("employee.employee");
       $node->add(new atkListAttribute("calendar_defaultuserview",
                                       array($usernode->descriptor(getUser()),
                                             "allusers"),

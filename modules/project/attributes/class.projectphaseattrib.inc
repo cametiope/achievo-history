@@ -234,11 +234,6 @@ class atkProjectPhaseAttribute extends atkAttribute
 
     $reportnodetype = $g_sessionManager->stackVar("reportnodetype");
 
-    if (strstr($ATK_VARS["atknodetype"],"reports") || $reportnodetype=="hoursurvey")
-      $projectPhaseFilter = "phase.status<>'archived' AND project.status<>'archived'";
-    else
-      $projectPhaseFilter = "phase.status='active' AND project.status='active'";
-
     $query = "SELECT DISTINCT 
                 phase.id, 
                 phase.name, 
@@ -254,8 +249,12 @@ class atkProjectPhaseAttribute extends atkAttribute
               LEFT JOIN 
                 hours ON hours.taskid=task.id 
               WHERE                 
-                phase.status='active' 
+                phase.status='active'
+                AND ((phase.startdate IS NULL OR phase.startdate<= NOW())
+                     AND (phase.enddate IS NULL OR phase.enddate>= NOW()))
                 AND project.status='active' 
+                AND ((project.startdate IS NULL OR project.startdate<= NOW())
+                     AND (project.enddate IS NULL OR project.enddate>= NOW()))
                 AND task.tasktype='activity'
                 AND hours.userid='".$user["id"]."' ";
     
@@ -283,8 +282,15 @@ class atkProjectPhaseAttribute extends atkAttribute
         $j++;
       }
     }
+    usort($newarr,array("atkProjectPhaseAttribute","cmp_projectname"));
     return $newarr;
   }
+  
+  function cmp_projectname($a, $b)
+  {
+    return strcmp($a["projectname"], $b["projectname"]);
+  }
+
 
   /**
    * Retrieve a phase record by its phaseid

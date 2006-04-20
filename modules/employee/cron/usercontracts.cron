@@ -113,16 +113,38 @@
 		$warn_user = atkConfig::get("employee", "employee_usercontracts_expiration_send_warning_to_user",false);
 		$dest_addr = atkConfig::get("employee", "employee_usercontracts_expiration_supervisors",array());
 		
-		if($dest_addr == array()) 									echo ("No supervisor emailaddresses provided in config file.\n");			
+				
 		if(!$warn_user) 														echo "Owners of usercontract will not recieve a warning mail.\n.";		
-		if(!$warn_user && ($dest_addr == array())) 	exit ("Nothing to do.\nExiting.\n");
+//		if(!$warn_user) 	exit ("Nothing to do.\nExiting.\n");
 		
 		//send mail per contract    	
 		foreach ($contracts as $contract)
 		{
 			if($contract != array())
 			{
-				$usr = getUserById($contract['userid']['id']);    			
+				$usr = getUserById($contract['userid']['id']); 
+				
+				if ($usr[0]['supervisor']['id'] != '') 
+				{
+					$supervisor = getUserById($usr[0]['supervisor']['id']);
+					
+					if ($supervisor[0]['email'] != '')
+					{
+					  $dest_addr[] = $supervisor[0]['email'];
+					}
+					else 
+					{
+						echo ("The supervisor (".$supervisor[0]['firstname']." ".$supervisor[0]['lastname'].") of employee (".$usr[0]['firstname']." ".$usr[0]['lastname'].") has no emailaddress.\n");
+					}
+				}	
+				else 
+				{
+					echo ("Employee (".$usr[0]['firstname']." ".$usr[0]['lastname'].") has no supervisor.\n");		   	
+				}			   
+				
+				if($dest_addr == array()) 									echo ("No supervisor emailaddresses provided in config file.\n");	
+				if(!$warn_user && ($dest_addr == array())) 	exit ("Nothing to do.\nExiting.\n");
+							
 				mailwarning($usr[0], $contract, $dest_addr, $warn_user);    		
 			}
 		}    	
@@ -138,7 +160,7 @@
 	 */
 	function getUserById($id)
 	{	
-		$usernode = &getNode("person.person");
+		$usernode = &getNode("employee.employee");
 		return $usernode->selectDb("person.id = ".$id);
 	}
 			
@@ -176,12 +198,12 @@
 		if($warn_user && ($user['email'] != ""))
 		{
 			echo "sending mail to user: ".$user['email']."\n";
-			$body= "Your contract will expire on ".$usercontract['enddate']."\n\n";
+			$body= "Your contract will expire on ".$enddate."\n\n";
 					
 			$body.= "Employee information:\n\n";
 			$body.= $user['firstname']." ".$user['lastname']."\n\n\n";				
 			$body.= "Contract information:\n\n";
-			$body.= "Contract period: ".$usercontract['startdate']." to ".$usercontract['enddate']."\n";	
+			$body.= "Contract period: ".$startdate." to ".$enddate."\n";	
 							
 			$to = $user['email'];
 	  	$cc = "";

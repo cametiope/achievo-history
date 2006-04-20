@@ -5,13 +5,14 @@
   useattrib("atknumberattribute");
   useattrib("atkdateattribute");
   useattrib("timereg.manualattribute");
+  useattrib("atknumberattribute");
 
   class overtime_balance extends atkNode
   {
     function overtime_balance()
     {
       $this->atkNode("overtime_balance");
-      $this->add(new atkAttribute("id",AF_AUTOKEY));
+      $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
       $this->add(new atkManyToOneRelation("userid", "employee.employee", AF_OBLIGATORY|AF_SEARCHABLE|AF_READONLY));
       $this->add(new atkDateAttribute("day","F j Y","F j Y", 0, date("Y-m-d"), AF_SEARCHABLE|AF_OBLIGATORY));
       $this->add(new atkNumberAttribute("balance", AF_OBLIGATORY, 10,2));
@@ -85,7 +86,7 @@
 
     function getBalance($day, $userid)
     {
-      $node = &getNode("timereg.overtime_balance");
+      $node = &atkGetNode("timereg.overtime_balance");
       $result = $node->selectDb("day <= '$day' AND userid.id = '$userid'", "day DESC", 1);
       atk_var_dump($day,"<h1>day</h1>");
       atk_var_dump($result,"<h1>result</h1>");
@@ -126,7 +127,7 @@
 
     function getLatestManualCorrection($userid, $default, $day="")
     {
-      $node = &getNode("timereg.overtime_balance");
+      $node = &atkGetNode("timereg.overtime_balance");
       $result = $node->selectDb("userid.id = '$userid' AND manual = 1 ".($day != "" ? "AND day <= '$day' " : ""), "day DESC", 1);
       return (count($result[0]) ? $result[0] : $default);
     }
@@ -193,7 +194,7 @@
         $time = $hours[$i]["time"]/60;
         if (count($percentages) && $hours[$i]["workperiod"] != 0) $percentage = $percentages[$hours[$i]["workperiod"]];
         else $percentage = 1;
-        if(!$this->isOvertimeCompensationActivity($hours[$i]["activityid"], $overtimeids));
+        if(!$this->isOvertimeCompensationActivity($hours[$i]["activityid"], $overtimeids))
           $total += $percentage * $time;
       }
       return ($oldbalance + ($total - $contracthours));
@@ -221,18 +222,18 @@
     function getOvertimeCompensationActivities()
     {
       $db = &atkGetDb();
-      $res = $db->getrows("SELECT id FROM activity WHERE overtimecompensation = 1");            
+      $res = $db->getrows("SELECT id FROM activity WHERE overtimecompensation = 1");
       return $res;
     }
-    
+
     function isOvertimeCompensationActivity($id, $overtimeactivities)
-    {        
+    {
       foreach($overtimeactivities as $item)
-      {      
-        if($item["id"]==$id) return true;      
-      }    
+      {
+        if($item["id"]==$id) return true;
+      }
       return false;
-    }    
+    }
 
     function getContractHours($begin, $end, $userid)
     {

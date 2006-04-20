@@ -46,8 +46,8 @@
         return array();
 
       // Try to get the incomplete delverable form the database
-      $deliverablenode = &getNode("project.deliverable");
-      $deliverablerecords = $deliverablenode->selectDb("deliverable.id='".$phase["dependsondeliverable"]["id"]."' AND deliverable.status<>'complete'");
+      $deliverablenode = &atkGetNode("project.deliverable");
+      $deliverablerecords = $deliverablenode->selectDb("deliverable.id='".($phase["dependsondeliverable"]["id"]!=""?$phase["dependsondeliverable"]["id"]:0)."' AND deliverable.status<>'complete'");
 
       // Return records
       return $deliverablerecords;
@@ -98,12 +98,10 @@
 
       // Get the phase record from the database and throw an error if not found
       /* @var $phaseNode atkNode */
-      $phaseid = $record["taskid"]["phaseid"];
-      
-      $phaseNode = &atkGetNode("project.phase");
-      
-      $phaserecords = $phaseNode->selectDb("phase.id='$phaseid'");      
-            
+      $phaseid = $record["taskid"]["phaseid"];      
+      $phaseNode = &atkGetNode("project.phase");      
+      $phaserecords = $phaseNode->selectDb("phase.id='$phaseid'");
+
       if (count($phaserecords) == 0)
       {
         atkerror("Cannot find phase to which the hours were registered.");
@@ -124,7 +122,7 @@
       {
 
         // Get the project and throw an error if not found
-        $projectnode = &getNode("project.project");
+        $projectnode = &atkGetNode("project.project");
         $projectrecords = $projectnode->selectDb("project.id='".$phaserecords[0]["projectid"]["id"] ."'");
         if (count($projectrecords) == 0)
         {
@@ -133,7 +131,7 @@
         }
 
         // Try to find the person who registered the hours and throw an error if not found
-        $employeenode = &getNode("employee.employee");
+        $employeenode = &atkGetNode("employee.employee");
         $employeerecords = $employeenode->selectDb("person.id='".$projectrecords[0]["coordinator"]["id"]."'");
         if (count($employeerecords) == 0)
         {

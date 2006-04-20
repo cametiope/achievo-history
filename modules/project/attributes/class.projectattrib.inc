@@ -22,7 +22,7 @@ class atkProjectAttribute extends atkAttribute
    * @return piece of html code with a textarea
    */
   function edit($record="")
-  {      
+  {
     $selectedprojectid = $_REQUEST["selectedprojectid"];
 
     // The current phase (in case of edit of an existing record)
@@ -57,7 +57,7 @@ class atkProjectAttribute extends atkAttribute
     }
 
     $result.= '<select name="projectid">';
-    $result.= '<option value="">'.text('select');
+    $result.= '<option value="">'.atktext('select');
 
     for ($i=0,$_i=count($projects);$i<$_i;$i++)
     {
@@ -111,10 +111,8 @@ class atkProjectAttribute extends atkAttribute
   
   function getRecentProjects()
   {
-    global $g_user;
     $user = &getUser();
     $db = &atkGetDb();
-
     $query = "SELECT DISTINCT 
                 project.name as name,
                 project.id as id

@@ -32,10 +32,11 @@
     
     function phase()
     {
-      global $g_securityManager;      
+      global $g_securityManager;  
       
       $this->atkNode("phase",NF_AUTOSELECT|NF_EDITAFTERADD|NF_MRA); // node() constructor is *not* called automatically!
       $this->add(new atkAttribute("id",AF_AUTOKEY));
+
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE, 50));
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT));
 
@@ -83,7 +84,20 @@
 
     function initial_values()
     {
-      return Array("status"=>"active");
+      // Compose the default initual values array
+      $initial_values = array("status"=>"active");
+
+      // If there is just one activity, it should be selected by default:
+      $activitynode = &atkGetNode("project.activity");
+      $count = $activitynode->countDb("");
+      if ($count == 1)
+      {
+        $activity = $activitynode->selectDb("", "", "", "", array("id"));
+        $initial_values["phase_activity"] = array(array("activityid"=>$activity[0]["id"]));
+      }
+
+      // Return the initual values:
+      return $initial_values;
     }
 
     function addDb(&$record, $exectrigger=true, $mode="add")
@@ -95,16 +109,21 @@
 
     function postDel($rec)
     {
-      $node = &getNode("project.dependency");
-      $delphase = $rec["id"];
-      $deprec = $node->deleteDb("phaseid_row = $delphase OR phaseid_col = $delphase");
+      if(isset($rec["id"]))
+      {
+        $node = &atkGetNode("project.dependency");
+        $delphase = $rec["id"];
+        $deprec = $node->deleteDb("phaseid_row = $delphase OR phaseid_col = $delphase");
+      }
       return true;
     }
 
     function action_select(&$handler)
     {
       // In select mode, we place a filter, because we may only select active phases.
-      $this->addFilter("phase.status='active'");
+      $this->addFilter("phase.status='active'
+                        AND ((phase.startdate IS NULL OR phase.startdate<= NOW())
+                              AND (phase.enddate IS NULL OR phase.enddate>= NOW()))");
 
       // Also, we hide the status field (we're showing only active phases,
       // so this column is not necessary.
@@ -121,7 +140,7 @@
       $hours = new atkAttribute("phaseplanning_initial");
 
       $dummy = array();
-      return text("plan_employee", "phase")." ".$org." ".text("for")." ".$hours->edit($dummy)." ".text("hours");
+      return atktext("plan_employee", "phase")." ".$org." ".atktext("for")." ".$hours->edit($dummy)." ".atktext("hours");
 
     }
 
@@ -140,7 +159,7 @@
       if ($mode == "update")
       {
         // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)                
-        $hoursNode = &getNode("timereg.hours");
+        $hoursNode = &atkGetNode("timereg.hours");
         $db = &atkGetDb();
         atkimport('atk.db.atkquery');
         $query = &new atkQuery();

@@ -7,7 +7,7 @@
  * This class makes it possible to schedule a appointment.
  *
  * $Id$
- * @author L. Willems  <lineke@ibuildings.nl>
+ * @author L. Willems  <lineke@ibuildings.nl> 
  * @version $Revision$
  *
  */
@@ -26,6 +26,7 @@
   useattrib("atklistattribute");
   useattrib("atkdummyattribute");
   useattrib("calendar.dummyboolattribute");
+  useattrib("atknumberattribute");
   userelation("atkmanytoonerelation");
   userelation("atkonetomanyrelation");
   useattrib("atkfuzzysearchattribute");
@@ -38,8 +39,8 @@
 
     function schedule()
     {
-      $sessionManager = &atkGetSessionManager();      
-      
+      $sessionManager = &atkGetSessionManager();
+
       if(is_object($sessionManager))
       {
         $this->m_view     = $sessionManager->stackVar("view");
@@ -47,14 +48,14 @@
         $this->m_viewdate = $sessionManager->stackVar("viewdate");
         $time             = $sessionManager->stackVar("time");
       }
-      else 
+      else
       {
         $this->m_view     = "";
         $this->m_user     = "";
         $this->m_viewdate = "";
         $time = "";
-      }      
-      
+      }
+
       if ($time!="")
       {
         $default_start_time = $time; // passed from the url.
@@ -73,7 +74,7 @@
 
       $this->atkNode("schedule", NF_ADD_LINK|NF_EDITAFTERADD);
 
-      $this->add(new atkAttribute("id"              , AF_AUTOKEY));
+      $this->add(new atkNumberAttribute("id"              , AF_AUTOKEY));
       $this->add(new atkDateAttribute("startdate"  , "F d Y","d F Y", 0, 0 ,AF_OBLIGATORY));
       $this->add(new atkDateAttribute("enddate"    , "F d Y","d F Y", 0, 0 ,AF_OBLIGATORY));
       $this->add(new atkTimeAttribute("starttime"  , 8, 24, array("00","30"), $default_start_time, 0));
@@ -95,9 +96,9 @@
 
       $this->add(new atkOneToManyRelation("notes", "calendar.schedule_notes", "schedule_id", AF_HIDE_LIST|AF_CASCADE_DELETE));
       $this->add(new atkManyToOneRelation("owner", "employee.employee", AF_READONLY|AF_HIDE_ADD|AF_OBLIGATORY));
-      
+
       if (trim($this->m_view) == "") { $this->m_view = "dayview"; }
-      
+
       if ($this->m_user=="")
       {
         $user = getUser();
@@ -111,7 +112,7 @@
           $this->m_user = "all";
         }
       }
-      
+
       if ($this->m_viewdate=="") $this->m_viewdate = strftime("%Y-%m-%d");
 
       $this->addAllowedAction("view");
@@ -251,7 +252,13 @@
       {
         $funcname = $this->m_view;
               // link to weekview and monthview and employeeview
-        $result= href($_SERVER["PHP_SELF"]."?view=dayview&viewdate=$this->m_viewdate",atktext("dayview")) ."&nbsp;".href($_SERVER["PHP_SELF"]."?view=weekview&viewdate=$this->m_viewdate",atktext("weekview")) ."&nbsp;". href($_SERVER["PHP_SELF"]."?view=monthview&viewdate=$this->m_viewdate", atktext("monthview"))."&nbsp;".href($_SERVER["PHP_SELF"]."?view=employeeview&viewdate=$viewdate", atktext("employeeview"));
+        $result = href($_SERVER["PHP_SELF"]."?view=dayview&viewdate=$this->m_viewdate",atktext("dayview")) ."&nbsp;";
+        $result.= href($_SERVER["PHP_SELF"]."?view=weekview&viewdate=$this->m_viewdate",atktext("weekview")) ."&nbsp;";
+        $result.= href($_SERVER["PHP_SELF"]."?view=monthview&viewdate=$this->m_viewdate", atktext("monthview"))."&nbsp;";
+        // Employee view doens't work in postgresql cause this calendar uses 24:00 as time (which is invalid)
+        $dbconfig = atkconfig("db");
+        if($dbconfig["default"]["driver"]!="pgsql")
+          $result.= href($_SERVER["PHP_SELF"]."?view=employeeview&viewdate=$viewdate", atktext("employeeview"));
 
         $result.= $this->$funcname($this->m_viewdate);
       }
@@ -260,11 +267,12 @@
         $result = "Niet bestaande view (".$this->m_view.")";
       }
 
-      $layout->initGUI();
-      $layout->ui_top(atktext($this->m_type)." - ".atktext($this->m_view));
-      $layout->output($this->statusbar());
-      $layout->output($result);
-      $layout->ui_bottom();
+      $ui = &$this->getUi();
+      $page = &$this->getPage();
+      $this->addStyle("style.css");
+
+      $schedulerView = $ui->renderBox(array("title"=>atktext($this->m_type)." - ".atktext($this->m_view),"content"=>$this->statusbar().$result));
+      $page->addContent($schedulerView);
     }
 
     function monthview($viewdate)

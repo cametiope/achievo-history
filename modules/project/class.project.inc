@@ -13,6 +13,7 @@
   useattrib("graph.datagraphattribute");
   useattrib("atkfuzzysearchattribute");
   useattrib("atkdummyattribute");
+  useattrib("atknumberattribute");
 
   define("PRJ_TIMEREG_ALL_USERS", 0);
   define("PRJ_TIMEREG_MEMBERS_ONLY", 1);
@@ -25,7 +26,7 @@
 
       $this->atkNode($name,$flags|NF_EDITAFTERADD);
 
-      $this->add(new atkAttribute("id",AF_AUTOKEY));
+      $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
 
       $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 50));
       $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_HIDE_LIST, 10));
@@ -45,12 +46,11 @@
         $reportnodetype = "";
       if ($ATK_VARS["atknodetype"]=="project.project"&& in_array($ATK_VARS["atkaction"],array("admin","add","update","edit","search", "view")) || $reportnodetype=="hoursurvey")
       {
-        $this->add(new atkListAttribute("status",array("active","nonactive","archived"),array(),AF_HIDE_ADD|AF_HIDE_LIST, 15));
-        $this->addFilter("project.status<>'archived'");
+        $this->add(new atkListAttribute("status",array("active","nonactive","archived"),array(),AF_HIDE_ADD|AF_LIST_NO_NULL_ITEM|AF_HIDE_LIST, 15));
       }
       else
       {
-        $this->add(new atkListAttribute("status",array("active","nonactive","archived"),array(),AF_HIDE, 15));
+        $this->add(new atkListAttribute("status",array("active","nonactive","archived"),array(),AF_HIDE|AF_LIST_NO_NULL_ITEM, 15));
         $this->addFilter("project.status='active'");
       }
 
@@ -74,8 +74,8 @@
       $this->add(new atkBoolAttribute("alwaysvisibleintimereg", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
       $this->add(new atkDummyAttribute("separator", "<br><hr><br>", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
       $this->add(new atkDateAttribute("startdate","F d Y","d F Y",0,0,AF_HIDE_ADD), "planning");
-      $this->add(new atkDateAttribute("enddate","F d Y","d F Y",0,0,AF_HIDE_ADD|AF_HIDE_LIST), "planning");
-      
+      $this->add(new atkDateAttribute("enddate","F d Y","d F Y",0,0,AF_HIDE_ADD), "planning");
+
       $this->add(new atkOneToManyRelation("deliverables", "project.deliverable", "project_id", AF_HIDE_LIST), "planning");
 
       $this->add(new editableDummyAttribute("phaseediturl","text",(AF_HIDE-AF_HIDE_EDIT)),"planning");

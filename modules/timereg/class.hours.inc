@@ -1,9 +1,6 @@
 <?php
 
-include_once("achievotools.inc");
-//useattrib("project.projectphaseattrib");
-useattrib("timereg.taskattribute");
-useattrib("timereg.dummylistattribute");
+include_once("achievotools.inc");useattrib("timereg.taskattribute");useattrib("timereg.dummylistattribute");
 useattrib("project.projectattrib");
 useattrib("atkdateattribute");
 useattrib("atklistattribute");
@@ -12,6 +9,7 @@ useattrib("atkdurationattribute");
 useattrib("atkdummyattribute");
 useattrib("atktimeattribute");
 useattrib("timereg.taskattribute");
+useattrib("atknumberattribute");
 userelation("atkmanytoonerelation");
 
 function date_format($datestamp,$dateformat)
@@ -148,13 +146,11 @@ class hours extends atkNode
   var $m_viewdate = "";
   var $m_weekview = "";
   var $m_user = "";
-  var $m_insertmode = ""; // can be set to 'day' or 'multi'
-  
+  var $m_insertmode = ""; // can be set to 'day' or 'multi'  
   
   function hours($type="hours", $flags=0)
   {
-    $sessionManager = &atkGetSessionManager();
-    $user = &getUser();
+    $sessionManager = &atkGetSessionManager();    $user = &getUser();
     
     // weekview and viewdate are variables that we need to remember..
     $this->m_weekview = $sessionManager->pageVar("weekview");
@@ -178,7 +174,7 @@ class hours extends atkNode
       if (atkconfig("timereg_defaultview")=="week") $this->m_weekview=1;
     }
 
-    $this->add(new atkAttribute("id",AF_AUTOKEY));
+    $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
 
     $this->add(new atkDateAttribute("taskdate","F d Y","d F Y", 0, date("Ymd"), AF_OBLIGATORY|AF_FORCE_LOAD|($this->m_weekview?0:AF_HIDE_LIST)));
     $this->add(new to_date());
@@ -188,7 +184,6 @@ class hours extends atkNode
     $this->add(new atkManyToOneRelation("userid","employee.employee", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
 
     $this->addPhaseAndActivity();
-
     $this->add(new atkTextAttribute("remark", atkconfig("timereg_remark_lines", 1), 0));
     $this->addTime();
 
@@ -211,9 +206,9 @@ class hours extends atkNode
 
   function descriptor(&$record)
   {
-    $datestr = date("d-m-Y", dateutil::arr2stamp($record["taskdate"]));
-    $employeenode = &getNode("employee.employee");
-    $users = $employeenode->selectDb("`person`.`id`='{$record["userid"]["id"]}'");
+    $datestr = date("d-m-Y", dateutil::arr2stamp($record["activitydate"]));
+    $employeenode = &atkGetNode("employee.employee");
+    $users = $employeenode->selectDb("person.id='{$record["userid"]["id"]}'");
     return sprintf("%s, %s (%s)", $users[0]["lastname"], $users[0]["firstname"],$datestr);
   }
 
@@ -276,23 +271,13 @@ class hours extends atkNode
     return $result[0]['activitycount'];
   }  
 
-  
-//  function getActivitytypeCount()
-//  {
-//    $db = &atkGetDb();
-//    $result = $db->getrows("SELECT count(*) as activitycount FROM activitytype");
-//    return $result[0]['activitycount'];
-//  }
-
   /**
    * Adds the projectphase attribute and, if there are more than 1 activities, the activity attribute
    */
   function addPhaseAndActivity()
   {
-    // Determine wheter the activity attribute should be displayed or not.
-    //$displayactivityattribute = $this->getActivityCount() != 1;
-    // todo: we hebben nu activitytype. Moeten die nu geteld worden?
-    //$displayactivityattribute = $this->getActivitytypeCount() != 1;
+    //@todo: Determine wheter the activity attribute should be displayed or not.
+    //$displayactivityattribute = $this->getActivityCount() != 1;    
     $displayactivityattribute = true;
     $flags = (AF_HIDE - (AF_HIDE_ADD|AF_HIDE_EDIT|AF_HIDE_VIEW))|AF_FORCE_LOAD;
     $this->add(new taskAttribute("taskid",$flags|AF_OBLIGATORY|($displayactivityattribute ? AF_JS_UPDATEACTIVITY : 0)));
@@ -343,8 +328,10 @@ class hours extends atkNode
                     "todate"=>$this->getInitialDate()
                    );
 
-    // todo: initial activity setten kan niet meer gedaan worden op deze 
-    // manier.
+    // @todo: initial activity cannot be set in the old way (see comment below)
+    // because activities are now
+    // unique for each phase. 
+    // OLD WAY:
     // Set an initial activityid if there's exactly one activity
 //    if ($this->getActivityCount() == 1) {    
 //      $db = &atkGetDb();
@@ -364,6 +351,7 @@ class hours extends atkNode
 
   function action_edit(&$handler)
   {
+    $user = &getUser();
     $recs = $this->selectDb($this->m_postvars["atkselector"], "hours.id", "", "", array("userid", "taskdate"));
 
     $this->m_lock = $this->getLockType($recs[0]["userid"]["id"],
@@ -455,8 +443,11 @@ class hours extends atkNode
   {
     $page = &$this->getPage();
 
-    //global $g_user;
-    $user = &getUser();
+    if(!isset($this->m_user) || $this->m_user == "")
+    {
+      $user = &getUser();
+      $this->m_user = $user["id"];
+    }    
 
     $this->setLock();
 
@@ -520,7 +511,7 @@ class hours extends atkNode
   {
     if ($this->m_weekview!=1)
     {
-      $balancenode = &getNode("timereg.overtime_balance");
+      $balancenode = &atkGetNode("timereg.overtime_balance");
       $balance = $balancenode->getBalance(date("Y-m-d", adodb_mktime(0,0,0,substr($this->m_viewdate,5,2),substr($this->m_viewdate,8,2),substr($this->m_viewdate,0,4))), $this->m_user);
       $res ='<table border=0 cellpadding=0 cellspacing=0 width="100%" class="table">';
       $res.='<tr><td align="left" valign="top">';
@@ -753,7 +744,7 @@ class hours extends atkNode
 
   function calculateNewBalance($rec, $mode)
   {
-    $balancenode = &getNode("timereg.overtime_balance");
+    $balancenode = &atkGetNode("timereg.overtime_balance");
     $userid = $rec["userid"]["id"];
     $year  = $rec["taskdate"]["year"];
     $month = $rec["taskdate"]["month"];
@@ -819,7 +810,7 @@ class hours extends atkNode
                 FROM
                   hours_lock
                 WHERE
-                  (userid = '$userid' OR userid IS NULL OR userid='')
+                  (userid = '$userid' OR userid IS NULL)
                 AND
                   week = '$week'";
       $db = &atkGetDb();
@@ -869,7 +860,7 @@ class hours extends atkNode
                                    substr($viewdate,8,2),
                                    substr($viewdate,0,4)));
     $record["approved"] = $approved;
-    $locknode = &getNode("timereg.hours_lock");
+    $locknode = &atkGetNode("timereg.hours_lock");
     $locknode->addDb($record);
     $this->redirect();
   }
@@ -957,12 +948,11 @@ class hours extends atkNode
    * need to override validate.)
    */
   function validate(&$record, $mode)
-  {
-    atk_var_dump($record,"<h1>record</h1>");
-    
+  {    
     //get the phaseid from the taskid.    
     $phaseid = $record["taskid"]["phaseid"];
     
+    //@todo: trigger an error, if we cannot find the phase.
     if(!isset($phaseid) || $phaseid==0) $phaseid = "";
     
     // If no activities available, trigger an error:    
@@ -974,7 +964,7 @@ class hours extends atkNode
       $obj_activitytype = &atkGetNode("project.activitytype");
       $act  = $obj_activity->selectDb("activity.id=".$record['taskid']["activityid"]);
       $type = $obj_activitytype->selectDb("activitytype.id=".$act[0]["activitytype"]["id"]);
-      atk_var_dump($act);
+      
       if (count($act)==1)
       {
         if ($type[0]["remarkrequired"]==1)
@@ -1041,7 +1031,7 @@ class hours extends atkNode
   {
     $db = &atkGetDb();
 
-    $query = "SELECT sum(time) + $new_minutes minutes_in_day
+    $query = "SELECT (sum(time) + $new_minutes) as minutes_in_day
               FROM hours
               WHERE
                 userid = '$userid'
@@ -1246,9 +1236,9 @@ class hours extends atkNode
    */
   function _isThisTheFirstTimeRegForThisProject()
   {
-    $phasenode =   &getNode("project.phase");
-    $projectnode = &getNode("project.project");
-    $hoursnode =   &getNode("timereg.hours");
+    $phasenode =   &atkGetNode("project.phase");
+    $projectnode = &atkGetNode("project.project");
+    $hoursnode =   &atkGetNode("timereg.hours");
     $record = $this->updateRecord();
     $user = getUser();
 

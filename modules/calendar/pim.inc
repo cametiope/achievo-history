@@ -7,7 +7,7 @@
 
     $me = $g_user["id"];
 
-    $schedulenode = getNode("calendar.schedule");
+    $schedulenode = &atkGetNode("calendar.schedule");
     $schedulenode->m_flags |= NF_NO_SEARCH;
 
     $date = date('Y-m-d');
@@ -39,6 +39,7 @@
     $querystring = $query->buildSelect(TRUE);
     $recs = $db->getRows($querystring);
     $actions = array();
+    $actions["edit"] = "dispatch.php?atknodetype=calendar.schedule&atkaction=edit&atkselector=[pk]";
 
     for ($i=0;$i<count($recs);$i++)
     {

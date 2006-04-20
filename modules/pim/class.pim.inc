@@ -20,24 +20,43 @@
         $page->head(atktext("title_pim"));
         $page->body();
 
-        $res = '<br>';
-
-        $pimItems = atkHarvestModules("getPimItems", "", true);
-
-        foreach ($pimItems as $module => $pimItem)
+        $pimItems = atkHarvestModules("getPimItems","",true);
+        $userpimitems = &atknew("module.pim.userpimitems");
+        $user = getuser();
+        $userDbItems = $userpimitems->selectDb("userpimitems.userid='".$user["id"]."'","","",array("id","userid"));
+        if(count($userDbItems)==0)
         {
-          foreach ($pimItem as $name => $contents)
+           $res = $ui->renderBox(array("title"=>atktext("pim","pim"),"content"=>atkText("pim_nopimitems","pim")));
+        }
+        else
+        {
+          $userItems = array();
+          foreach($userDbItems as $key => $item)
           {
-            $res.= '<b>' . atktext('pim_' . $name, $module) . '</b><br><br>';
-            $res.= $contents;
-            $res.= '<br><br>';
+             $userItems[] = $item["pimitem"];
+          }
+          foreach($pimItems as $modname => $item)
+          {
+            foreach($item as $itemName => $itemContent)
+            {
+              atkdebug("Check: ".$modname.'_'.$itemName);
+              if(in_array($modname.'_'.$itemName,$userItems))
+              {
+                $module = &getModule($modname);
+                if (is_object($module))
+                {
+                  if (method_exists($module, $itemContent))
+                  {
+                    $itemContent = $module->$itemContent();
+                  }
+                  $res.= $ui->renderBox(array("title"=>atktext(array("pim_$itemName", $itemName), $modname),"content"=>$itemContent,"id"=>$modname.'_'.$itemName));
+                }
+              }
+            }
           }
         }
 
-        $res.='<br>';
-
-        $page->addContent($ui->renderBox(array("title"=>atktext("title_pim"),
-                                               "content"=>$res)));
+        $page->addContent($res);
       }
       else
       {

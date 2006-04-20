@@ -15,6 +15,7 @@
 
 useattrib("atktextattribute");
 useattrib("atkdummyattribute");
+useattrib("atknumberattribute");
 useattrib("atkparserattribute");
 useattrib("atkdocumentattribute");
 userelation("atkonetomanyrelation");
@@ -25,7 +26,7 @@ class organization extends atkNode
   {
     $this->atkNode("organization", NF_EDITAFTERADD);
 
-    $this->add(new atkAttribute("id" ,AF_AUTOKEY));
+    $this->add(new atkNumberAttribute("id" ,AF_AUTOKEY));
     $this->add(new atkAttribute("name",AF_SEARCHABLE|AF_OBLIGATORY, 100));
     $this->add(new atkDummyAttribute("visitheader", "<B>".atktext("organization_visitaddress", "organization")."<B>", AF_HIDE_LIST|AF_HIDE_ADD|AF_NO_LABEL));
 
@@ -62,9 +63,12 @@ class organization extends atkNode
     $this->add(new atkAttribute("bankaccount", AF_HIDE_LIST|AF_HIDE_ADD, 30));
     $this->add(new atkAttribute("vatnumber", AF_HIDE_LIST|AF_HIDE_ADD, 25));
     $this->add(new atkTextAttribute("remark", TEXT_LARGE, AF_HIDE_LIST|AF_HIDE_ADD));
-    $this->add(new atkOneToManyRelation("contactperson","organization.contact","company",AF_HIDE_LIST));
-    $this->add(new atkOneToManyRelation("contracts","organization.contracts","customer",AF_HIDE_LIST));
-    $this->add(new atkParserAttribute("projects", "see_below", AF_HIDE_LIST|AF_HIDE_ADD));
+    $this->add(new atkOneToManyRelation("contactperson","organization.contact","company",AF_HIDE_LIST),"contacts");
+    $this->add(new atkOneToManyRelation("contracts","organization.contracts","customer",AF_HIDE_LIST),"contracts");
+    $this->add(new atkParserAttribute("projects", "see_below", AF_HIDE_LIST|AF_HIDE_ADD),"active_projects");
+    $this->add(new atkParserAttribute("archivedprojects", "see_below", AF_HIDE_LIST|AF_HIDE_ADD),"archived_projects");
+
+
     $this->add(new atkParserAttribute("vcard", href("?atkaction=vcard&id=[id]", atktext("vcard"), SESSION_NESTED), AF_NO_LABEL|AF_HIDE_ADD), NULL, 10000);
 
     $this->add(new atkDocumentAttribute("document"));
@@ -90,6 +94,16 @@ class organization extends atkNode
     return "[name], [city]";
   }
 
+  function archivedprojects_edit($record)
+  {
+    return $this->showProjects($record,"relation","archived");
+  }
+
+  function archivedprojects_display($record)
+  {
+    return $this->showProjects($record,"view","archived");
+  }
+
   function projects_edit($record)
   {
     return $this->showProjects($record, "relation");
@@ -100,11 +114,12 @@ class organization extends atkNode
     return $this->showProjects($record, "view");
   }
 
-  function showProjects($record, $mode)
+  function showProjects($record, $mode,$status="active")
   {
-    $projectnode = getNode("project.project");
+    $projectnode = &atkGetNode("project.project");
     useattrib("project.filterprojectbyorganizationattrib");
     $projectnode->add(new filterProjectByOrganizationAttrib($record["id"]));
+    $projectnode->m_fuzzyFilters=array("project.status='$status'");
     $recs = $projectnode->selectDb("", "", "", $projectnode->m_listExcludes);
     if (count($recs)>0)
     {
@@ -115,8 +130,8 @@ class organization extends atkNode
   }
 
   function action_vcard(&$handler)
-  {  	
-    return $this->createVCard($this->m_postvars["id"]);    
+  {
+    return $this->createVCard($this->m_postvars["id"]);
   }
 
   function createVCard($id)
@@ -138,12 +153,12 @@ class organization extends atkNode
     $v->setEmail($record["email"]);
     $v->setURL($record["website"]);
     $v->setNote($record["remark"]);
-		
+
     $output = $v->getVCard();
-    
-    //$filename = $v->getFileName();        
+
+    //$filename = $v->getFileName();
     //Remove spaces that would break the vcard filename
-    $name = str_replace(" ", "_", $record['name'] );    
+    $name = str_replace(" ", "_", $record['name'] );
     $filename = $name.".vcf";
 
     Header("Content-Disposition: attachment; filename=$filename");

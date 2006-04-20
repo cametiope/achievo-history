@@ -25,22 +25,23 @@ class activity extends atkNode
 {
   function activity()
   {
-    $this->atkNode("activity");
-    //@todo: add config project_activity_activitynamereadonly to a config file.    
-    $this->add(new atkAttribute("id",AF_AUTOKEY));        
-    $this->add(new atkAttribute("name",AF_SEARCHABLE|(atkconfig("project_activity_activitynamereadonly",true) ? (AF_READONLY|AF_HIDE_ADD) : AF_OBLIGATORY), 50));    
-    $this->add(new atkManyToOneRelation("phaseid","project.phase", AF_HIDE));    
+    $this->atkNode("activity", NF_MRA);
+    $this->add(new atkAttribute("id",AF_AUTOKEY));
+    $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE, 50));
+    $this->add(new atkManyToOneRelation("phaseid","project.phase", AF_HIDE));
     //tasks with the tasktype 'activity' can be linked to an activity.
     $rel = &new atkOneToManyRelation("taskid","task.task","refid", AF_HIDE);
     $rel->setDestinationFilter("task.tasktype='activity'");
     $this->add($rel);
-        
     //this attribute is used when use the config activitynamereadonlyis  set to true, and there aren't any
     //activitytypes left that aren't already added to the current phase. In that case this attribute
     //contains a warning message. At default it is hidden.
-    $this->add(new atkDummyAttribute("noactivitypes",'<font style="color:red">'.atktext("noactivitytypes").'</font>',AF_HIDE));
+    $this->add(new atkDummyAttribute("noactivitypes",'<font style="color:red">'.atktext("noactivitytypes").'</font>',AF_HIDE));    
+    $this->add(new atkManyToOneRelation("activitytype","project.activitytype",AF_OBLIGATORY|AF_RELATION_AUTOLINK));
+    $this->add(new atkAttribute("description",AF_SEARCHABLE, 50));    
+    $this->add(new atkBoolAttribute("remarkrequired"));
+    $this->add(new atkBoolAttribute("overtimecompensation"));
     
-    $this->add(new atkManyToOneRelation("activitytype","project.activitytype",AF_OBLIGATORY|AF_RELATION_AUTOLINK));    
     $this->setTable("activity","activity");
     $this->setOrder("activity.name");
 
