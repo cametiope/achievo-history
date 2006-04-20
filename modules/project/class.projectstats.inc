@@ -54,20 +54,13 @@ class projectstats extends atkNode
   {
     include_once("achievotools.inc");
 
-    atkimport("atk.layout");
-    $layout = &layout::getInstance();
-
-    $content = "";
-    //$layout->initGui();
-    //$layout->ui_top(atktext("parameters", "projectstats", "project"));
+    $content = "";    
 
     $startdate  = $this->m_viewstart;
     $enddate    = $this->m_viewend;
     $projectid  = $this->m_projectid;
 
-    //$layout->output('<br>'.$this->navigator().'<br>');
     $content.= '<br>'.$this->navigator().'<br>';
-    //$layout->ui_bottom();
     $page = &$this->getPage();
     $page->addContent($this->genericPage(atktext("parameters", "projectstats", "project"),$content));
     
@@ -81,8 +74,6 @@ class projectstats extends atkNode
       $recs = $prjnode->selectDb("project.id=".$projectid, "", "", "", $prjnode->descriptorFields());
       $descriptor = " - ".$prjnode->descriptor($recs[0]);
     }
-
-    //$layout->ui_top(atktext("stats","projectstats","project").$descriptor);
 
     $backbtn = "";
     if (atkLevel()>0)
@@ -195,9 +186,7 @@ class projectstats extends atkNode
 
     $output.="<br>".$backbtn."<br>";
     $content.= $output;
-    //$layout->output($output);
     
-    //$layout->ui_bottom();
     $page->addContent($this->genericPage(atktext("stats","projectstats","project").$descriptor,$content));
   }
 
