@@ -71,17 +71,20 @@
       $layout = &layout::getInstance();
       
       include_once("achievotools.inc");
-      
-      $layout->initGui();
-      $layout->ui_top(text("parameters", "employeestats", "employee")); 
-      
+//      
+//      $layout->initGui();
+//      $layout->ui_top(text("parameters", "employeestats", "employee")); 
+            
       $startdate = $this->m_viewstart;
       $enddate = $this->m_viewend;
       $employeeid = $this->m_employeeid;
       
-      $layout->output('<br>'.$this->navigator().'<br>');
+      //$layout->output('<br>'.$this->navigator().'<br>');
+      $content = '<br>'.$this->navigator().'<br>';
       
-      $layout->ui_bottom();
+      $page = &$this->getPage();
+      $page->addContent($this->genericPage(text("parameters", "employeestats", "employee"),$content));
+      //ayout->ui_bottom();
       
       $empnode = &getNode("employee.employee");
       
@@ -92,9 +95,10 @@
         $recs = $empnode->selectDb("person.id=".$employeeid, "", "", "", $empnode->descriptorFields());
         $descriptor = $empnode->descriptor($recs[0]);
       }
-      
-      $layout->ui_top(text("stats").($descriptor!=""?" - ".$descriptor:""));
-         
+            
+      //$layout->ui_top(text("stats").($descriptor!=""?" - ".$descriptor:""));
+      //$content = "";
+        
       $backbtn = "";
       if (atkLevel()>0)
       {
@@ -154,10 +158,12 @@
       }
       
       $output.="<br>".$backbtn."<br>";
+      $content = $output;
+      $page->addContent($this->genericPage(text("stats").($descriptor!=""?" - ".$descriptor:""),$content));
+      //$layout->output($output);   
       
-      $layout->output($output);   
+      //$layout->ui_bottom();
       
-      $layout->ui_bottom();
     }
     
     function _paramForm($contents)
