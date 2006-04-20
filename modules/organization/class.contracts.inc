@@ -65,7 +65,7 @@ class contracts extends atkNode
     $this->addAllowedAction("linkproject");    
         
     $this->setTable("contract","contract");
-    $this->setOrder("startdate");    
+    $this->setOrder("contract.startdate");
   }
     
   /**
