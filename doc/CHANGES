@@ -4,6 +4,28 @@
 Bug numbers are references to bugs in http://www.achievo.org/bugzilla
 [names] are references to people in the AUTHORS file.
 
+Changes in chronos branch
+--------------------------
++ Added module task for task based achievo. [Dennis]
++ Added templates for activities. [Dennis]
++ Added activitytype for an activity. [Dennis]
++ Added multi-edit action for phases. [Dennis]
++ Added dummy list attribute in calendar that can be used by other atkNodes to
+  create a listbox of scheduletypes that does not try to store the type in the 
+  table of the atkNode. [Dennis]
+* Hour registrations are now based on tasks instead of phases and activities. [Dennis]
+* All modules (except reports) have been altered to work with hourregistrations
+  based on tasks instead of phases and activities. [Dennis, Yury]
+* Added option in calendar.schedule (dummyBoolAttribute) to choose if the currently 
+  signed-in user should be added to the schedule item as an attendee. [Dennis]
+* Activities are now unique for each phase. [Dennis] 
+* All modules (except reports) have been altered to work with activities being unique
+  for each phase. [Dennis, Yury]
+* Updated dutch and english language file. [Dennis]
+* Added atksession to runcron to access atkNodes that use session functions 
+  within their constructor. [Dennis]
+
+
 Changes in Achievo 1.2
 ---------------------------
 * Fixed bug with archived projects. [Sandy]
