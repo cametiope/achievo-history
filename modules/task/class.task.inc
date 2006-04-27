@@ -18,6 +18,7 @@
  */
 
 useattrib("atklistattribute");
+useattrib("atknumberattribute");
 useattrib("atkdateattribute");
 useattrib("atkdatetimeattribute");
 useattrib("atktimeattribute");
@@ -31,11 +32,11 @@ class task extends atkNode
   function task()
   {
     $this->atkNode("task");    
-    $this->add(new atkAttribute("id",AF_PRIMARY));
+    $this->add(new atkNumberAttribute("id",AF_PRIMARY));
     $this->add(new atkListAttribute("priority",array("higest","high","normal","low","lowest")));
     $this->add(new atkAttribute("name", AF_OBLIGATORY));
     $this->add(new atkListAttribute("tasktype",array("project","phase","activity","todo","agenda"),"",AF_OBLIGATORY));
-    $this->add(new atkAttribute("refid",AF_OBLIGATORY));
+    $this->add(new atkNumberAttribute("refid",AF_OBLIGATORY));
     $this->add(new atkDateAttribute("createdate", "d-m-Y","d-m-Y"));
     $this->add(new atkDateTimeAttribute("editdatetime"));
     $this->add(new atkDateAttribute("startdate", "d-m-Y","d-m-Y"));

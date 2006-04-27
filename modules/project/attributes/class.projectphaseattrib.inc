@@ -233,30 +233,33 @@ class atkProjectPhaseAttribute extends atkAttribute
     $user = &getUser();
 
     $reportnodetype = $g_sessionManager->stackVar("reportnodetype");
-
-    $query = "SELECT DISTINCT 
-                phase.id, 
-                phase.name, 
-                project.name as projectname                 
-              FROM 
-                project,phase
+    
+    $query = "SELECT DISTINCT
+                phase.id,
+                phase.name,
+                project.name as projectname
+              FROM
+                hours
+              LEFT JOIN
+                task ON hours.taskid=task.id  
               LEFT JOIN 
-                project_person ON project_person.projectid = project.id
+                activity ON task.refid=activity.id   
               LEFT JOIN 
-                activity ON activity.phaseid=phase.id 
+                phase ON activity.phaseid=phase.id 
               LEFT JOIN 
-                task ON task.refid=activity.id 
+                project ON phase.projectid=project.id
               LEFT JOIN 
-                hours ON hours.taskid=task.id 
+                project_person ON project_person.projectid = project.id              
               WHERE                 
-                phase.status='active'
+                hours.userid='".$user["id"]."'
+                AND phase.status='active'                 
                 AND ((phase.startdate IS NULL OR phase.startdate<= NOW())
                      AND (phase.enddate IS NULL OR phase.enddate>= NOW()))
                 AND project.status='active' 
                 AND ((project.startdate IS NULL OR project.startdate<= NOW())
                      AND (project.enddate IS NULL OR project.enddate>= NOW()))
-                AND task.tasktype='activity'
-                AND hours.userid='".$user["id"]."' ";
+                AND task.tasktype='activity'";
+    
     
     if (!$g_securityManager->allowed("timereg.hours", "any_project"))
     {

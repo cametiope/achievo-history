@@ -8,9 +8,9 @@
   //@todo: Patch userrights
 
   //we create another db connection to prevent that the resultlist from the first one is cleared
-  //when we execute another query.
-  $config_db["second"] = $config_db["default"];
+  //when we execute another query.  
   global $config_db;
+  $config_db["second"] = $config_db["default"];
   $db   = &atkGetDb();  
   $db2  = &atkGetDb("second",true);  
   
@@ -107,7 +107,6 @@
   {
     $rec = $db->m_record;       //retrieve record
     
-    $id         = $rec["id"];
     $userid     = $rec["userid"];
     $activityid = $rec["activityid"];
     $phaseid    = $rec["phaseid"];    

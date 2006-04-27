@@ -123,27 +123,29 @@
     $user = &getUser();
         
     $db = &atkGetDb();
-
-    $query = "SELECT DISTINCT 
+    
+    $query = "SELECT DISTINCT
                 project.name as projectname, 
-                project.id as projectid       
-              FROM 
-                project 
+                project.id as projectid  
+              FROM
+                hours
+              LEFT JOIN
+                task ON hours.taskid=task.id  
               LEFT JOIN 
-                phase ON phase.projectid=project.id 
+                activity ON task.refid=activity.id   
               LEFT JOIN 
-                activity ON activity.phaseid=phase.id 
+                phase ON activity.phaseid=phase.id 
               LEFT JOIN 
-                task ON task.refid=activity.id 
-              LEFT JOIN 
-                hours ON hours.taskid=task.id 
-              WHERE                 
-                phase.status='active' 
+                project ON phase.projectid=project.id              
+              WHERE                                 
+                phase.status='active'
+                AND ((phase.startdate IS NULL OR phase.startdate<= NOW())
+                     AND (phase.enddate IS NULL OR phase.enddate>= NOW()))
                 AND project.status='active' 
+                AND ((project.startdate IS NULL OR project.startdate<= NOW())
+                     AND (project.enddate IS NULL OR project.enddate>= NOW()))
                 AND task.tasktype='activity'
-                AND hours.userid='".$user["id"]."'
-              ORDER BY 
-                projectname";
+                AND hours.userid='".$user["id"]."' ";    
     
     $arr = $db->getrows($query,'0','100');
     $newarr = Array();
