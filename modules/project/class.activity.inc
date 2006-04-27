@@ -38,9 +38,6 @@ class activity extends atkNode
     //contains a warning message. At default it is hidden.
     $this->add(new atkDummyAttribute("noactivitypes",'<font style="color:red">'.atktext("noactivitytypes").'</font>',AF_HIDE));    
     $this->add(new atkManyToOneRelation("activitytype","project.activitytype",AF_OBLIGATORY|AF_RELATION_AUTOLINK));
-    $this->add(new atkAttribute("description",AF_SEARCHABLE, 50));    
-    $this->add(new atkBoolAttribute("remarkrequired"));
-    $this->add(new atkBoolAttribute("overtimecompensation"));
     
     $this->setTable("activity","activity");
     $this->setOrder("activity.name");
