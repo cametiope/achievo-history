@@ -35,6 +35,6 @@
   atkimport("test.achievowebtestcase");
 
   // Let the atktestsuite run all test files having a name starting with "class.test_"
-  $suite = &atknew("atk.test.atktestsuite");
-  $suite->run((!$_SERVER['PWD']) ? "html" : "text");
+  $suite = &atknew("atk.test.atktestsuite");/* @var $suite atkTestSuite */
+  $suite->run(((!$_SERVER['PWD']) ? "html" : "text"),$_REQUEST['atkmodule']);
 ?>
