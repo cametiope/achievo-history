@@ -21,7 +21,8 @@ if(!$setup->columnExists("employee_department", "id"))
     $db->query($sql);
     $department_lookup[$nrows[$i]["name"]]=$nextid;
   }
-  // Change primary key
+  // Change primary key  
+  $setup->alterColumn("employee_department","id","id","int(11)",false);
   $sql = "ALTER TABLE employee_department DROP PRIMARY KEY , ADD PRIMARY KEY ( id )";
   $db->query($sql);
 }

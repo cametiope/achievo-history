@@ -50,7 +50,7 @@
       //@todo: controleren of admin voor activitytype werkt
       $this->menuitem("activitytype_admin", dispatch_url("project.activitytype", "admin"), "setup", array("project.activitytype", "admin"));
       //@todo: werkt tpl_activity
-      $this->menuitem("tpl_activity", dispatch_url("project.tpl_activity", "admin"), "setup", array("project.tpl_activity", "admin"));
+      $this->menuitem("tpl_activity_admin", dispatch_url("project.tpl_activity", "admin"), "setup", array("project.tpl_activity", "admin"));
       $this->menuitem("tpl_phase_admin", dispatch_url("project.tpl_phase", "admin"), "setup", array("project.tpl_phase", "admin"));
       $this->menuitem("tpl_project_admin", dispatch_url("project.tpl_project", "admin"), "setup", array("project.tpl_project", "admin"));
       $this->menuitem("role_admin", dispatch_url("project.role", "admin"), "setup", array("project.role", "admin"));

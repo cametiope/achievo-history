@@ -13,6 +13,8 @@ Changes in chronos branch
 + Added dummy list attribute in calendar that can be used by other atkNodes to
   create a listbox of scheduletypes that does not try to store the type in the 
   table of the atkNode. [Dennis]
++ Added translations in dutch language file. [Dennis]
++ Added translations in english language file. [Dennis]
 * Hour registrations are now based on tasks instead of phases and activities. [Dennis]
 * All modules (except reports) have been altered to work with hourregistrations
   based on tasks instead of phases and activities. [Dennis, Yury]
@@ -24,6 +26,8 @@ Changes in chronos branch
 * Updated dutch and english language file. [Dennis]
 * Added atksession to runcron to access atkNodes that use session functions 
   within their constructor. [Dennis]
+* Improved patch13 of project node. [Dennis]
+* Bugfix in employee/patch-15.inc. [Dennis]
 
 
 Changes in Achievo 1.2

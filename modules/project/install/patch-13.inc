@@ -8,7 +8,7 @@
   //@todo: Patch userrights
 
   //we create another db connection to prevent that the resultlist from the first one is cleared
-  //when we execute another query.  
+  //when we execute another query.
   global $config_db;
   $config_db["second"] = $config_db["default"];
   $db   = &atkGetDb();  
@@ -38,6 +38,14 @@
   $db->query("DELETE FROM activity WHERE 1");
   atkdebug("Deleted all activity records");
   
+  //Create a LUT (Look Up Table) to access the activityrecords easy and FAST  
+  $LUTactivities = array();
+  foreach($activities as $act)
+  {
+    $LUTactivities[$act["id"]] = $act;
+  }
+  
+  
   $db->query("SELECT * FROM phase_activity");
   atkdebug("Retrieved all phase_activity records");
   
@@ -45,21 +53,12 @@
   while($db->next_record())
   {
     $item = $db->m_record;    
-    $activityrecord = "";
-    //search for the corresponding activity record
-    for($i=0,$_i=count($activities);$i<$_i;$i++)
-    {      
-      //if we find it, take it and get out of this loop.
-      if($activities[$i]["id"] == $item["activityid"])
-      {
-        $activityrecord = $activities[$i];
-        break;
-      }
-    }
+    //get the corresponding activity record
+    $activityrecord = $LUTactivities[$item["activityid"]];
 
     //if we found a corresponding activity record, use the
     //data to create a new activity record.
-    if($activityrecord !="")
+    if(isset($activityrecord))
     { 
       $name         = escapeSQL($activityrecord["name"]);
       $activitytype = escapeSQL($item["activityid"]);   //the old activityid, is now the activitytype id
@@ -82,16 +81,15 @@
   $now      = date("Ymd");    //Createdate for the tasks
   $tasktype = "activity";
 
-  //Create a LUT (Look Up Table) to acces the activitynames easy and FAST 
-  $activitynames = array();
-  foreach($activities as $act)  
-    $activitynames[$act["id"]] = $act["name"];
+  //Create a LUT (Look Up Table) to acces the activitynames easy and FAST
+//  $activitynames = array();
+//  foreach($activities as $act)  
+//    $activitynames[$act["id"]] = $act["name"];
   
   //Add an index on the phaseid,activityid and userid columns to make
   //the following queries run much much faster.
   $db->query("ALTER TABLE hours ADD INDEX (phaseid, activityid, userid)");  
   
-  //@todo: create a task for each phase-activity-person combination entry in hours table
   $query = $db->createQuery();      
   $query->addField("userid","","hours");
   $query->addField("activityid","","hours");
@@ -110,7 +108,8 @@
     $userid     = $rec["userid"];
     $activityid = $rec["activityid"];
     $phaseid    = $rec["phaseid"];    
-    $name       = escapeSQL($activitynames[$activityid]); //get activityname
+    //$name       = escapeSQL($activitynames[$activityid]); //get activityname
+    $name       = escapeSQL($LUTactivities[$activityid]["name"]); //get activityname
 
     //Get the new activity record that belongs to this phase.    
     //The activityid in the hours table used to be linked to the id of an activity.
