@@ -9,6 +9,8 @@ Changes in Aphrodite branch
 + Added ability for users to select their own language. [Boy]
 * Moved html from hours node to templates to make Achievo better 
   themable. [Boy]
+* Made top pass along centerpiece_links to top.tpl for those 
+  that want to style their own centerpiece links. [Boy]
 
 Changes in Achievo 1.2.2
 ------------------------
