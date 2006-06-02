@@ -43,12 +43,12 @@
   if (!$pda)
   {
   $output.='
-        <frameset rows="80,*" frameborder="0" border="0">
+        <frameset rows="113,*" frameborder="0" border="0">
           <frame name="top" scrolling="no" noresize src="top.php" marginwidth="0" marginheight="0">
        ';
 
   $output.='
-      <frameset cols="190,*" frameborder="0" border="0">
+      <frameset cols="210,*" frameborder="0" border="0">
         <frame name="menu" scrolling="no" noresize src="menu.php" marginwidth="0" marginheight="0">
         <frame name="main" scrolling="auto" noresize src="'.$default_url.'" marginwidth="0" marginheight="0">
     ';
