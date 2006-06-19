@@ -11,6 +11,7 @@
   // -------------------------------------------
 
   // The database to use. Default is MySQL. 
+  // PHP5 users can also use the mysql41 driver.
   // MySQL is currently the only officially supported database.
   // Experimental: If you want to use PostgreSQL, change this value to 
   // "pgsql". For Oracle, use "oci8".
@@ -20,7 +21,7 @@
   // the database to use and the user/password.
   //
   $config_db["default"]["host"] = "localhost";
-  $config_db["default"]["db"] = "achievo_2_0";
+  $config_db["default"]["db"] = "dennisluitwieler_achievo_local_25042006_test";
   $config_db["default"]["user"] = "demo";
   $config_db["default"]["password"] = "demo";
 
@@ -38,12 +39,16 @@
   // themes there are in the directory themes. Users can choose their own
   // theme in the user preferences section.
   //
-  $config_defaulttheme = "outlook";
+  $config_defaulttheme = "achievo_modern";
 
   // The language of the application. You can use any language for which
   // a language file is present in the languages directory.
   //
-  $config_language="en";
+  $config_language="nl";
+
+  // The menu to use (For older themes this is 'achievo', for newer this
+  //  is 'achievo_modern'
+  $config_menu_layout = "achievo_modern";
 
 
   // -------------------------------------------
@@ -133,6 +138,10 @@
   // that can be entered is unlimited.)
   $config_timereg_remark_lines = 1;
 
+  // Allow registration of time in the future. By default, this is false, so
+  // only time actually spent can be registered.
+  $config_timereg_allowfuture = false;
+
   // Resolution for time registration. By default, time can be registered in
   // steps of 15 minutes. You can increase or decrease this.
   // You can specify a resolution in minutes or in hours.
@@ -186,4 +195,5 @@
   // break Achievo.
   //
   include "atkconf.inc";  
+  $config_debug=2;
 ?>

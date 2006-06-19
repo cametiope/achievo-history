@@ -21,7 +21,6 @@ class employee extends person
     // In employee edit screen, we hide most fields in the add screen.
     foreach (array_keys($this->m_attribList) as $attribname)
     {
-      atkdebug("Attribute: $attribname");
       if (!in_array($attribname, array("userid","lastname", "firstname","email")))
       {
         $p_attrib = &$this->getAttribute($attribname);
@@ -50,12 +49,12 @@ class employee extends person
 
     // you can't be your own supervisor neither can a nonactive employee be a supervisor
     $preFilter = new atkManyToOneRelation("supervisor","employee.employee",AF_HIDE_ADD|AF_HIDE_LIST|AF_RELATION_AUTOLINK);
-    $preFilter->m_destinationFilter = "userid !='[userid]' AND status ='active'";
+    $preFilter->setDestinationFilter("userid !='[userid]' AND status ='active'");
 
     $this->add($preFilter);
     // If we are in employee administration mode, we show all users. Otherwise, we only show active users.
     $this->add(new atkListAttribute("status", array("active","nonactive"), array(), AF_HIDE_LIST|AF_HIDE_ADD|AF_FORCE_LOAD));
-    if ($ATK_VARS["atknodetype"]=="employee.employee"&& in_array($ATK_VARS["atkaction"],array("admin","add","update","edit")))
+    if ((atkArrayNvl($ATK_VARS, "atknodetype", "") == "employee.employee") && in_array(atkArrayNvl($ATK_VARS, "atkaction", ""), array("admin", "add", "update", "edit")))
     {
       $statusfilter = ($this->getView() == "active") ? "active" : "nonactive";
       $this->addFilter("person.status",$statusfilter);
@@ -67,7 +66,15 @@ class employee extends person
     if (atkconfig("authentication")=="db")
     {
       $this->add(new atkDummyAttribute("passwordexplanation", atktext("password_leaveblankifunchanged"), AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_SEARCH|AF_HIDE_VIEW));
-      $this->add(new atkPasswordAttribute("password", false, AF_HIDE_LIST|AF_PASSWORD_NOVALIDATE, 40));
+      $passwordrestrictions = array(
+        "minsize" => atkconfig("password_minsize", 0),
+        "minupperchars" => atkconfig("password_minupperchars", 0),
+        "minlowerchars" => atkconfig("password_minlowerchars", 0),
+        "minalphabeticchars" => atkconfig("password_minalphabeticchars", 0),
+        "minnumbers" => atkconfig("password_minnumbers", 0),
+        "minspecialchars" => atkconfig("password_minspecialchars", 0)
+      );
+      $this->add(new atkPasswordAttribute("password", false, AF_HIDE_LIST|AF_PASSWORD_NOVALIDATE, 40, $passwordrestrictions));
     }
     $this->add(new atkAttribute("role", AF_OBLIGATORY|AF_READONLY|AF_HIDE, 15)); // discriminator.
 
@@ -75,7 +82,6 @@ class employee extends person
 
     $this->setOrder("lastname");
   }
-
 
   function initial_values()
   {
@@ -132,24 +138,41 @@ class employee extends person
 
   function recordActions($rec, &$actions, &$mraactions)
   {
+    // Get the userid of the user currently logged in
     $user = getUser();
-    if ($rec["status"] == "active" && $rec["id"]!=$user["id"])
+    $userid = atkArrayNvl($user, "id", -1);
+
+    // Actve users may be deactivated, but not the logged in user.
+    if ($rec["status"] == "active" && $rec["id"]!=$userid)
     {
-      // Actve users may be deactivated, but not the logged in user.
       $actions["deactivate"] = session_url("dispatch.php?atknodetype=".$this->atkNodeType()."&atkaction=deactivate&atkselector=[pk]", SESSION_NESTED);
     }
 
     // Prevent users from deleting themselves when they are logged in.
-    if($rec["id"]==$user["id"]) unset($actions["delete"]);
+    if($rec["id"] == $userid)
+    {
+      unset($actions["delete"]);
+    }
   }
 
   function action_deactivate(&$handler)
   {
-    if ($this->m_postvars["atkselector"]!="")
+    $select = $this->m_postvars["atkselector"];
+    $query = "UPDATE person SET status='nonactive' WHERE $select";
+
+    // Verify that the selector or id were not tampered with before passing on to the db
+    if(preg_match("/person\.id='\d+'/i", $select) === 1)
     {
       $db = &atkGetDb();
-      $db->query("UPDATE person SET status='nonactive' WHERE ".$this->m_postvars["atkselector"]);
+      $db->query($query);
     }
+    else
+    {
+      // TODO: give the name of the module, the logged userid and the IP address
+      // of the offending user in the debug entry so it gets logged properly
+      atkdebug("SQL injection attack detected in 'action_deactivate', not executed. The selector was '$select' and the resulting query would have been '$query'", true);
+    }
+
     $this->redirect();
   }
 
@@ -270,7 +293,7 @@ class employee extends person
       {
         $contract = $contractnode->getMostRecentContract($record["id"]);
 
-        $enddate = dateutil::arr2str($contract["enddate"]);
+        $enddate = isset($contract["enddate"]) ? (dateutil::arr2str($contract["enddate"])) : "";
 
         if (!count($contract)||($enddate!=""&&$enddate<date("Ymd")))
         {

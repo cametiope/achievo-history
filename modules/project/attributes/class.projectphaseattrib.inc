@@ -32,16 +32,16 @@ class atkProjectPhaseAttribute extends atkAttribute
   function edit($record="")
   {
     global $ATK_VARS;
-    
-    $selectedphaseid  = $_REQUEST["selectedphaseid"];
-    $atkaction        = $_REQUEST["atkaction"];
-    
+
+    $selectedphaseid = atkArrayNvl($_REQUEST, "selectedphaseid", "");
+    $atkaction = atkArrayNvl($_REQUEST, "atkaction", "");
+
     // The current phase (in case of edit of an existing record)
-    $currentphaseid   = $record[$this->fieldName()]["phaseid"];
-    $currentactivity  = $record["activityid"];
-    
+    $currentphase = isset($record[$this->fieldName()]["phaseid"]) ? $record[$this->fieldName()]["phaseid"] : "";
+    $currentactivity = atkArrayNvl($record, "activityid");
+
     // The current value might be overriden by use of the 'search all phases' button
-    if (isset($selectedphaseid)&&$selectedphaseid!="")
+    if ($selectedphaseid != "")
     {
       $currentphaseid     = $selectedphaseid;
       $currentactivity    = 0;
@@ -52,9 +52,11 @@ class atkProjectPhaseAttribute extends atkAttribute
     
     $result = "";
     
+
+
     if(!$this->hasFlag(AF_JS_UPDATEACTIVITY))
     {
-      $result.= '<select name="phaseid">';
+      $result = '<select name="phaseid">';
     }
     else
     {
@@ -237,7 +239,8 @@ class atkProjectPhaseAttribute extends atkAttribute
     $query = "SELECT DISTINCT
                 phase.id,
                 phase.name,
-                project.name as projectname
+                project.name as projectname,
+                hours.entrydate
               FROM
                 hours
               LEFT JOIN
@@ -258,9 +261,8 @@ class atkProjectPhaseAttribute extends atkAttribute
                 AND project.status='active' 
                 AND ((project.startdate IS NULL OR project.startdate<= NOW())
                      AND (project.enddate IS NULL OR project.enddate>= NOW()))
-                AND task.tasktype='activity'";
-    
-    
+                AND task.tasktype='activity'";    
+ 
     if (!$g_securityManager->allowed("timereg.hours", "any_project"))
     {
       $query.= "AND (project_person.personid = ".$user["id"]." OR project.timereg_limit = ".PRJ_TIMEREG_ALL_USERS.")";
@@ -288,7 +290,7 @@ class atkProjectPhaseAttribute extends atkAttribute
     usort($newarr,array("atkProjectPhaseAttribute","cmp_projectname"));
     return $newarr;
   }
-  
+
   function cmp_projectname($a, $b)
   {
     return strcmp($a["projectname"], $b["projectname"]);

@@ -12,7 +12,7 @@
      * The field that contains the phaseid
      */
     var $m_phaseid_field = "";
-    
+
     /**
      * Constructor
      *
@@ -24,7 +24,7 @@
       $this->m_phaseid_field = $phaseid_field;
       $this->atkAttribute($name, $flags|AF_HIDE_SEARCH|AF_READONLY|AF_HIDE_ADD);
     }
-    
+
     /**
      * Load values
      *
@@ -35,7 +35,7 @@
     function load(&$db, $record, $mode="")
     {
       $phaseattrib = $this->m_ownerInstance->m_attribList[$this->m_phaseid_field];
-      
+
       $sql = "SELECT
                 sum(hours.time) as spend_minutes 
               FROM 
@@ -50,28 +50,28 @@
                 task.tasktype='activity'
                 AND phase.id=".$phaseattrib->value2db($record);
       
-      if(is_array($record["personid"])) $sql.=" AND userid='".$record["personid"]["id"]."'";
+      if(isset($record["personid"]["id"])) $sql.=" AND userid='".$record["personid"]["id"]."'";
       $nrow = $db->getrows($sql);
       return ($nrow[0]["spend_minutes"]/60);
     }
-    
+
     /**
      * Display override. If possible, displays a link to the hoursurvey to view details.
      */
     //@todo: link needs to be changed from referring to hour registrations with a specified phaseid
     //to hour registrations belonging to one or more specified taskids
     function display($record, $mode)
-    {      
+    {
       $value = $record[$this->fieldname()];
       $org = time_format(($value*60), true);
-      if ($value>0 && $record[$this->m_phaseid_field]!="")
+      if ($value>0 && atkArrayNvl($record, $this->m_phaseid_field, "")!="")
       {
         $phaseattrib = $this->m_ownerInstance->m_attribList[$this->m_phaseid_field];
         
         $params["phaseid"] = $phaseattrib->value2db($record);
         $params["startdate"] = "2000-01-01";
         $params["enddate"] = date("Y-m-d");
-        if(is_array($record["personid"]))
+        if(isset($record["personid"]["id"]))
         {
           $params["userid"] = $record["personid"]["id"];
         }
@@ -79,22 +79,22 @@
         {
           $params["userid"] = "all";
         }
-        
+
         $org = href(dispatch_url("reports.hoursurvey", "report", $params), $org, SESSION_NESTED, ($mode!="list"));
       }
       return $org;
     }
-    
+
     /**
-    * No function, but is neccesary
-    */
+     * No function, but is neccesary
+     */
     function store($a, $b)
     {
     }
 
     /**
-    * No function, but is neccesary
-    */
+     * No function, but is neccesary
+     */
     function addToQuery(&$query, $tablename="", $fieldaliasprefix="",$level)
     {
     }

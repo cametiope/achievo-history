@@ -8,10 +8,12 @@
   $config_identifier = "achievo";
   $config_top_frame = 1;
   $config_authorization = "db";
+  $config_auth_usernode = "employee.employee";
   $config_auth_usertable = "person";
   $config_auth_userfield = "userid";
-  $config_auth_accesstable = "accessright";
   $config_auth_passwordfield = "password";
+  $config_auth_emailfield = "email";
+  $config_auth_accesstable = "accessright";
   $config_auth_leveltable  = "employeerole";
   $config_auth_levelfield  = "role_id";
   $config_auth_userpk = "id";
@@ -29,7 +31,7 @@
   $config_durationformat = 0;
   $config_defaultfavico = "images/achievo.ico";
   $config_corporate_module_base = "modules.achievomodule";
-  $config_menu_layout = "achievo";
+  $config_supported_languages_module = 'langoverrides';  
 
 
   // -------------------------------------------

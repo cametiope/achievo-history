@@ -29,9 +29,101 @@ Changes in chronos branch
 * Improved patch13 of project node. [Dennis]
 * Bugfix in employee/patch-15.inc. [Dennis]
 
+Changes in Achievo 1.2.2
+------------------------
++ Added ability to set the following password restrictions: minimum length,
+  minimum number of uppercase characters, minimum number of lowercase
+  charactes, minimum number of uppercase and lowercase characters together,
+  number of numbers and the number of special characters. This can be done
+  by setting the $config_password_minsize, $config_password_minupperchars,
+  $config_password_minlowerchars, $config_password_minalphabeticchars,
+  $config_password_minnumbers, $config_password_minspecialchars variables.
+  [Guido]
++ Added translations for "alldepartments", "allfunctionlevels",
+  "private_appointment" and "example". [Guido]
++ Added ability for users to select their own language. [Boy]
++ Added achievo_modern theme. [Norman,Boy]
+- Removed duplicate Dayview link in the calendar Employeeview. [Guido]
+* Fixed PHP notices. [Guido]
+* Replaced deprecated text() calls by atktext(). [Guido]
+* Fixed session problem with master gantt which in some cases would not
+  display because it thought the session had expired. [Guido]
+* $config_auth_usernode and config_auth_emailfield are now set. The
+  password mailing feature can now be enabled by setting
+  $config_auth_enablepasswordmailer = true; in config.inc.php. [Guido]
+* Bugfix: When selecting a new contact in a project it shouldn't show
+  the userid field. [Sandy,Ivo]
+* Added dutch and english tranlations of the adminpim text. [Guido]
+* Fixed a rendering bug in the calendar dayview which caused appointments
+  to be drawn not as long as they should be. A workaround for this problem
+  was already implemented for netscape/mozilla based browsers by not
+  showing the border around an appointment (which was causing this
+  problem). Internet Explorer 6 however, also seemed to affected by this
+  rendering bug, which is the reason for this change. Now the border around
+  the appointment is implemented differently (using CSS) and the exception
+  for netscape/mozilla users is removed. [Guido]
+* Removed deprecated atklayout usage. [Guido]
+* Replaced "-" options by "No value" options in the orderby feature of
+  the Hours survey. [Guido]
+* The list of activities in the time registration should not be translated.
+  (also prevents translation not found warnings). [Guido]
+* Fixed the login problem where you would see a login box in the menu and
+  top frame after logging in. This was caused by the menu and top pages
+  not being requested through a session_url. [Guido]
+* Menuitem urls should be passed through session_url. [Guido]
+* Fixed the project selector list on top of the project menu not being
+  populated sometimes. [Guido]
+* Updated the session expired screen using a relogin button instead of a
+  relogin link. [Guido]
+* Index.php now uses atkoutput instead of an evil(tm)(r)(c) echo() call
+  to send the frameset document to the browser. [Guido]
+* Removed duplicate </html> tag. [Guido]
+* Moved html from hours node to templates to make Achievo better
+  themable. [Boy]
+* Made top pass along centerpiece_links to top.tpl for those
+  that want to style their own centerpiece links. [Boy]
+* Fixed some html errors in the achievo_modern theme login template.
+  [Guido]
+* Partially fixed a problem where the loginform would keep posting the same
+  username and password regardless of wat you enter in the username and
+  password fields after having submitted the loginform once and submitting
+  it again when the achievo_modern theme is set to default. [Guido]
+* Sorted the list of languages in the user preferences language selector.
+  [Guido]
+* If "language_nl"-like language identifiers cannot be translated,
+  fallback to "nl" instead in the user preferences language selector.
+  [Guido]
+* Moved page refresh code from the language selector attribute to the
+  userprefs node. [Guido]
+* Optimized the getThemes function a little bit and moved it into the
+  userprefs node class. [Guido]
+* Changed the page refresh code so the userprefs edit page is loaded, not
+  the pim after refreshing (like the adminlangselectattribute's page
+  refresh code did). [Guido]
+* The page refresh code will now only be executed when the theme or
+  language is changed. [Guido]
+
+Changes in Achievo 1.2.1
+------------------------
++ Added $config_timereg_allowfuture setting for allowing time registration
+  in the future (false by default). [Ivo]
+* Fixed fatal error in activity stats. [Sandy]
+* Fixed bug in project start/enddates when data was converted from an
+  earlier Achievo version. [Ivo]
+* Projects/phases whose end date has expired can now still be used in time
+  registration. [Ivo]
+* Bugfix: Users with 'any user' privilege in timereg could no longer edit
+  other peoples timereg. [Ivo]
+* Fixed quick add of planning employees in a phase. Time was saved in
+  minutes instead of converted to minutes first. (bug #522) [Sandy]
+* Fixed SQL injection in employees node. (bug #624) [ChristianN]
+* Fixed the search box in the top frame. (bug #648) [Ivo]
+* When adding a phase it will check if the enddate isn't before
+  the startdate. (bug #439) [Sandy]
+* Fixed department criteria in Time Survey Report. (bug #656) [Sandy]
 
 Changes in Achievo 1.2
----------------------------
+----------------------
 * Fixed bug with archived projects. [Sandy]
 * Updated dutch language file. [Guido]
 * Updated employee departments. [Sandy]
@@ -40,7 +132,7 @@ Changes in Achievo 1.2
   that used the deprecated layout class. [Sandy]
 
 Changes in Achievo 1.2RC1
----------------------------
+-------------------------
 + Added cronjob for checking expiration dates of usercontracts. [Dennis]
 + Added cronjob to check expired contracts and change their status.
   The status of active linked projects is also changed
@@ -283,7 +375,7 @@ Changes in Achievo 1.0.1
 * Added questions about extension modules to the FAQ. [Ivo]
 
 Changes in Achievo 1.0.0
--------------------------
+------------------------
 * Fixed bug #213. [Ivo]
 * Fixed a few untranslated strings. (bug #224) [MartinAc, Ivo]
 * Updated Danish language file. [Junaid]

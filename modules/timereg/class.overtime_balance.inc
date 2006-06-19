@@ -149,7 +149,7 @@
     function saveOvertimeBalance($userid, $day, $balance)
     {
       $db = &atkGetDb();
-      $sql = "UPDATE overtime_balance SET balance = $balance WHERE userid = ".$userid." AND day = '$day'";
+      $sql = "UPDATE overtime_balance SET balance = $balance WHERE userid = '$userid' AND day = '$day'";
       $db->query($sql);
     }
 
@@ -166,7 +166,7 @@
     function updateOvertimeBalance($userid, $day, $balance)
     {
       $db = &atkGetDb();
-      $recs = $db->getrows("SELECT id FROM overtime_balance WHERE userid = $userid AND day = '$day'");
+      $recs = $db->getrows("SELECT id FROM overtime_balance WHERE userid = '$userid' AND day = '$day'");
       if (!count($recs))
       {
         $newid = $db->nextid("overtime_balance");
@@ -176,7 +176,7 @@
       }
       else
       {
-        $db->query("UPDATE overtime_balance SET balance = $balance WHERE userid = $userid AND day = '$day'");
+        $db->query("UPDATE overtime_balance SET balance = $balance WHERE userid = '$userid' AND day = '$day'");
         return $recs[0]["id"];
       }
     }

@@ -64,11 +64,10 @@
       $this->add(new atkOneToManyRelation("phaseplanning", "project.phaseplanning", "phaseid", AF_HIDE_LIST));
 
       $this->add(new atkFuzzySearchAttribute("phaseplanning_add", "employee.employee", "storePhaseplanning", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL, 20));
-      
+
       $this->setOrder("phase.startdate, phase.name");
       $this->setTable("phase","phase");
-      
-      /* @var $securityManager atkSecurityManager */      
+      $this->addSecurityMap("view","project.admin"); 
       $this->addSecurityMap("multi_edit", "edit");
     }
     
@@ -77,9 +76,15 @@
       return "[name]";
     }
 
-    function name_display($record)
+    function name_display($record, $mode="list")
     {
-      return href(dispatch_url("project.phase", "edit", array("atkselector"=>"phase.id='".$record["id"]."'")), $record["name"], SESSION_NESTED);
+      $attr = &$this->getAttribute('name');
+      $result = $attr->display($record, $mode);
+      if ($this->allowed('edit', $record))
+      {
+        $result = href(dispatch_url("project.phase", "edit", array("atkselector"=>"phase.id='".$record["id"]."'")), $result, SESSION_NESTED);
+      }
+      return $result;
     }
 
     function initial_values()
@@ -121,9 +126,7 @@
     function action_select(&$handler)
     {
       // In select mode, we place a filter, because we may only select active phases.
-      $this->addFilter("phase.status='active'
-                        AND ((phase.startdate IS NULL OR phase.startdate<= NOW())
-                              AND (phase.enddate IS NULL OR phase.enddate>= NOW()))");
+      $this->addFilter("phase.status='active'");
 
       // Also, we hide the status field (we're showing only active phases,
       // so this column is not necessary.
@@ -136,8 +139,8 @@
     function phaseplanning_add_edit($record, $mode)
     {
       $org = $this->m_attribList["phaseplanning_add"]->edit($record, $mode);
-
-      $hours = new atkAttribute("phaseplanning_initial");
+      useattrib("atkDurationAttribute");
+      $hours = new atkDurationAttribute("phaseplanning_initial",'','',AF_DURATION_STRING);
 
       $dummy = array();
       return atktext("plan_employee", "phase")." ".$org." ".atktext("for")." ".$hours->edit($dummy)." ".atktext("hours");
@@ -193,14 +196,26 @@
           }
         }
       }
-      
+      // Check if the enddate isn't before the startdate
+      if(($record["startdate"]["day"]!=0 && $record["startdate"]["day"]!=0 && $record["startdate"]["year"]!='') &&
+         ($record["enddate"]["day"]!=0 && $record["enddate"]["day"]!=0 && $record["enddate"]["year"]!=''))
+      {
+        $startdate = sprintf("%04d-%02d-%02d",$record["startdate"]["year"],$record["startdate"]["month"],$record["startdate"]["day"]);
+        $enddate = sprintf("%04d-%02d-%02d",$record["enddate"]["year"],$record["enddate"]["month"],$record["enddate"]["day"]);
+        if($enddate<$startdate)
+        {
+          triggerError($record,"enddate","error_enddate_cannot_start_before_startdate");
+        }
+      }
       // Call the parents validate function to perform the default validation on the record
       atkNode::validate($record, $mode, $ignoreList);
     }
 
     function storePhaseplanning($rec, $people)
     {
-      $initial_planning = $this->m_postvars["phaseplanning_initial"];
+      useattrib("atkDurationAttribute");
+      $tmp_attrib = new atkDurationAttribute("phaseplanning_initial");
+      $initial_planning = $tmp_attrib->_string2minutes($this->m_postvars["phaseplanning_initial"]);
 
       if ($initial_planning>0)
       {
@@ -209,6 +224,7 @@
           $this->_addPlanningRecord($rec["id"], $people[$i]["id"], $initial_planning);
         }
       }
+      return true;
     }
 
     function _addPlanningRecord($phase_id, $person_id, $initial_planning)

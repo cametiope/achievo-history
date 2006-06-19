@@ -68,9 +68,9 @@
       $this->addStyle("style.css");
 
       // Manual sort config
-      $orderby =            $this->m_postvars["orderby"];
-      $orderdirection =     $this->m_postvars["orderdirection"];
-      $subtotal =           $this->m_postvars["subtotal"];
+      $orderby =            atkArrayNvl($this->m_postvars, "orderby", "");
+      $orderdirection =     atkArrayNvl($this->m_postvars, "orderdirection", "");
+      $subtotal =           atkArrayNvl($this->m_postvars, "subtotal", "");
 
       $activity_id =        $g_sessionManager->pageVar("activity_id");
       $projectid =          $g_sessionManager->pageVar("projectid");
@@ -84,12 +84,12 @@
       $startdate =          $g_sessionManager->pageVar("startdate");
       $enddate =            $g_sessionManager->pageVar("enddate");
       $col =                $g_sessionManager->pageVar("col");
-      // the selected customer_id is found as "customer.id='3'" in the postvars
-      $organizationarr =    decodeKeyValuePair($this->m_postvars["organizationid"]);
-      $organizationid =     $organizationarr["organization.id"];
+      // the selected customer_id is found as key=value pair ("customer.id='3'") in the postvars
+      $organizationpair =   atkArrayNvl($this->m_postvars, "organizationid", "");
+      $organizationid =     (!empty($organizationpair)) ? atkArrayNvl(decodeKeyValuePair($organizationpair), "organization.id", "") : "";
       $department_name =    $g_sessionManager->pageVar("departmentid");
       $functionlevelswitch =$g_sessionManager->pageVar("functionlevelswitch");
-      $outputType =         $this->m_postvars["outputType"];
+      $outputType =         atkArrayNvl($this->m_postvars, "outputType", "");
 
       $externalHourSurveyColumns = atkHarvestModules("getHourSurveyColumns", "", true);
 
@@ -253,7 +253,7 @@
           $dummyrec[$attr] = $$var;
         }
 
-        $projectatt = new atkProjectAttribute('projectid');
+        $projectatt = &new atkProjectAttribute('projectid');
 
         $sortfieldcount = max(3, $columnConfig->countSortAttribs());
 
@@ -400,13 +400,8 @@
 
         for ($i=0; $i<$sortfieldcount; $i++)
         {
-          if ($i==1)
-          {
-            // Add empty option after the first.
-            array_unshift($arr_col, "-");
-          }
-
-          $field = new atkListAttribute("orderby[$i]",$arr_col);
+          $orderbylistflags = ($i == 0) ? AF_LIST_NO_NULL_ITEM : 0;
+          $field = new atkListAttribute("orderby[$i]", $arr_col, $arr_col, $orderbylistflags);
           $direction =new atkListAttribute("orderdirection[$i]",array('column_asc', 'column_desc'), array('asc', 'desc'));
           $total = new atkBoolAttribute("subtotal[$i]",0);
           $orderstr.=($i+1).". ".$field->edit($dummyrec)." ".$direction->edit($dummyrec)." ".$total->edit($dummyrec)." ".atktext('subtotal')."<br>";
@@ -485,8 +480,8 @@
         {
           if ($itsOrderby && $itsOrderby != "-")
           {
-						//hack we need to add the tablename before the attribute. all attributes except for functionlevel has the table name hours
-						$itsOrderby = ($itsOrderby == "functionlevel") ? "person.".$itsOrderby : "hours.".$itsOrderby;
+            //hack we need to add the tablename before the attribute. all attributes except for functionlevel has the table name hours
+            $itsOrderby = ($itsOrderby == "functionlevel") ? "person.".$itsOrderby : "hours.".$itsOrderby;
 
             $orderbystatement[] = $itsOrderby . " " . $orderdirection[$key];
           }
@@ -554,11 +549,11 @@
       return $activity_code;
     }
 
-    function get_departments($depname)
+    function get_departments($depid)
     {
       $db = &atkGetDb();
 
-      $sql = "SELECT name
+      $sql = "SELECT id,name
               FROM employee_department
               ORDER BY name";
 
@@ -566,8 +561,8 @@
       $depcode = "<OPTION VALUE='all'>".atktext('alldepartments')."</OPTION>";
       foreach ($records as $onedep)
       {
-        $sel = $onedep['name'] == $depname ? " SELECTED" : "";
-        $depcode .= "<OPTION VALUE='".$onedep['name']."'$sel>".$onedep['name']."</OPTION>";
+        $sel = $onedep['id'] == $depid ? " SELECTED" : "";
+        $depcode .= "<OPTION VALUE='".$onedep['id']."'$sel>".$onedep['name']."</OPTION>";
       }
       return $depcode;
     }
@@ -583,7 +578,7 @@
              ";
 
       $records = $db->getrows($sql);
-      if ($user_id == "new" || !$user_id || $user_id=="") $sel = " SELECTED";
+      if ($user_id == "new" || !$user_id || $user_id=="") { $sel = " SELECTED"; } else { $sel = ""; }
       $employee_code='<OPTION VALUE="all"'.$sel.'>'.atktext("allusers");
       for($i=0,$_i=count($records);$i<$_i;$i++)
       {
