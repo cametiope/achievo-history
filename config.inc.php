@@ -21,7 +21,7 @@
   // the database to use and the user/password.
   //
   $config_db["default"]["host"] = "localhost";
-  $config_db["default"]["db"] = "dennisluitwieler_achievo_local_25042006_test";
+  $config_db["default"]["db"] = "achievo_chronos";
   $config_db["default"]["user"] = "demo";
   $config_db["default"]["password"] = "demo";
 
@@ -33,7 +33,7 @@
   // In admin pages, Achievo shows you a number of records with previous and
   // next buttons. You can specify the number of records to show on a page.
   //
-  $config_recordsperpage=25;
+  $config_recordsperpage=10;
 
   // The theme defines the layout of Achievo. You can see which
   // themes there are in the directory themes. Users can choose their own
@@ -44,7 +44,7 @@
   // The language of the application. You can use any language for which
   // a language file is present in the languages directory.
   //
-  $config_language="nl";
+  $config_language="en";
 
   // The menu to use (For older themes this is 'achievo', for newer this
   //  is 'achievo_modern'
@@ -195,5 +195,4 @@
   // break Achievo.
   //
   include "atkconf.inc";  
-  $config_debug=2;
 ?>
