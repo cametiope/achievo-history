@@ -20,10 +20,10 @@
         $query->addField("sum(hours.time)");
         $query->addJoin("phase","phase","phase.projectid = project.id",true);
         $query->addJoin("activity","activity","activity.phaseid=phase.id",true);
-        $query->addJoin("task","task","activitiy.taskid=task.refid",true);
+        $query->addJoin("task","task","activity.id=task.refid",true);
         $query->addJoin("hours","hours","hours.taskid = task.id",true);
-        $query->addCondition("task.tasktype='activity'");
-        
+        //we do not need to add the tasktype = 'activity' check,
+        //because we retrieve the taskids through the activity table                
         $query->addGroupBy("project.id");
       }
     }
