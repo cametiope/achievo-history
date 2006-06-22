@@ -218,14 +218,16 @@
     }
 
     // Dummy methods to prevent loading/storing of data.
-    function load() {}
-    function store() {}
-    function addToQuery() {}
-    function dbFieldType() {}
-    function hide() {}
-    function search() {}
-    function getSearchModes() {}
-    function searchCondition() {}
+    /**
+     * This attribute does not need to be stored.
+     * If we return NOSTORE at storageType and 0 (NOLOAD) at loadType, 
+     * we do not need to override other functions like store(), 
+     * addToQuery() etc.     
+     *
+     * @return int number
+     */
+    function storageType() { return NOSTORE; }
+    function loadType()    { return 0; }
   }
 
   /**
