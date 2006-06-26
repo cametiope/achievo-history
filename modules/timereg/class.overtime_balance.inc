@@ -222,7 +222,7 @@
     function getOvertimeCompensationActivities()
     {
       $db = &atkGetDb();
-      $res = $db->getrows("SELECT id FROM activity WHERE overtimecompensation = 1");
+      $res = $db->getrows("SELECT activity.id FROM activity LEFT JOIN activitytype ON activity.activitytype=activitytype.id WHERE activitytype.overtimecompensation = 1");
       return $res;
     }
 
