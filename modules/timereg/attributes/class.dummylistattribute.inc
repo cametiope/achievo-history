@@ -21,7 +21,6 @@ class dummyListAttribute extends atkListAttribute
 
   function db2value($record)
   {
-    atk_var_dump($record,"<h1>within the scheduleitemattrib</h1>");    
     return NULL;
   }
 
@@ -50,7 +49,7 @@ class dummyListAttribute extends atkListAttribute
   
   function fieldName()
   {
-    return "taskid[activityid]";    
+    return "taskid[".$this->m_name."]";    
   }
 }
 
