@@ -30,6 +30,7 @@ class hoursPDA extends hours
     $query->addField("count(phase.id) as phase");
     $query->addJoin("phase","", "phase.projectid=project.id", true);    
     $query->addGroupBy("project.id");    
+    $query->addCondition("project.status='active'");
     $projects = $db->getrows($query->buildSelect(true));
     $this->m_projects["EMPTY"] = $this->removeVarFromCurrentURL(array("g_project", "g_phase", "g_activity"));;
 
