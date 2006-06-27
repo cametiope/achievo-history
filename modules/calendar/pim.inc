@@ -41,7 +41,7 @@
     $actions = array();
     $actions["edit"] = "dispatch.php?atknodetype=calendar.schedule&atkaction=edit&atkselector=[pk]";
 
-    for ($i=0;$i<count($recs);$i++)
+    for ($i=0, $_i=count($recs);$i<$_i;$i++)
     {
       $attribute = &$schedulenode->m_attribList["startdate"];
       $recs[$i]["startdate"] = $attribute->db2value($recs[$i]);

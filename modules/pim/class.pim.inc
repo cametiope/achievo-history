@@ -11,7 +11,7 @@
     {
       $pimItems = atkHarvestModules("getPimItems","",true);
       $userpimitems = &atknew("module.pim.userpimitems");
-      $user = getuser();
+      $user = &getUser();
       $userDbItems = $userpimitems->selectDb("userpimitems.userid='".$user["id"]."'","","",array("id","userid"));
       $res = array();
       if(count($userDbItems)==0)
@@ -30,7 +30,7 @@
         {
           foreach($item as $itemName => $itemContent)
           {
-            atkdebug("Check: ".$modname.'_'.$itemName);
+            atkdebug("Check: ".$modname.'_'.$itemName);            
             if(in_array($modname.'_'.$itemName,$userItems))
             {
               $module = &getModule($modname);
