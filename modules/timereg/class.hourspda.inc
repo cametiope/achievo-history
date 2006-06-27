@@ -1,7 +1,8 @@
 <?php
 
 include("class.hours.inc");
-useattrib("atklistattribute");
+useattrib("timereg.pdataskattribute");
+useattrib("timereg.pdadummylistattribute");
 
 class hoursPDA extends hours
 {
@@ -20,14 +21,21 @@ class hoursPDA extends hours
   {
     global $g_project;
 
-    $projectnode = &atkGetNode("project.project");
-    $projects = $projectnode->selectDb(null,null,null,array("todos","notes","members","contacts"));
-
+    /* @var $db atkDb */
+    $db = &atkGetDb();
+    $query = $db->createQuery();
+    $query->addTable("project");
+    $query->addField("id","","project");
+    $query->addField("name","","project");
+    $query->addField("count(phase.id) as phase");
+    $query->addJoin("phase","", "phase.projectid=project.id", true);    
+    $query->addGroupBy("project.id");    
+    $projects = $db->getrows($query->buildSelect(true));
     $this->m_projects["EMPTY"] = $this->removeVarFromCurrentURL(array("g_project", "g_phase", "g_activity"));;
 
     foreach ($projects as $project)
     {
-      if (!empty($project["phase"]))
+      if ($project['phase'] != 0)
       {
         $this->m_textprojects[] = $project['name'];
         $addedurl = $this->addVarToCurrentURL(array("g_project"=>$project["id"]));
@@ -74,15 +82,16 @@ class hoursPDA extends hours
   {
     global $g_project, $g_phase, $g_activity;
 
-    $activitynode = &atkGetNode("project.phase_activity");
-    $activities = $activitynode->selectDb("phase_activity.phaseid='$g_phase'");
+    /* @var $activitynode atkNode */
+    $activitynode = &atkGetNode("project.activity");
+    $activities = $activitynode->selectDb("activity.phaseid='{$g_phase}'");
 
     $this->m_activityids["EMPTY"] = $this->removeVarFromCurrentURL(array("g_activity"));
 
     foreach ($activities as $activity)
     {
-      $this->m_textactivityids[] = $activity['activityid']['name'];
-      $addedurl = $this->addVarToCurrentURL(array("g_activity"=>$activity['activityid']["id"]));
+      $this->m_textactivityids[] = $activity['name'];
+      $addedurl = $this->addVarToCurrentURL(array("g_activity"=>$activity["id"]));
       $this->m_activityids[] = $addedurl;
     }
   }
@@ -158,7 +167,11 @@ class hoursPDA extends hours
   function addPhaseAndActivity()
   {
     global $ATK_VARS, $g_project, $g_phase, $g_activity, $g_sessionManager;
-
+    
+    $att = &$this->add(new pdaTaskAttribute("taskid"));
+    /* @var $att atkNumberAttribute */
+    $att->setForceInsert(true);
+    $att->setForceUpdate(true);
     if (($ATK_VARS["atkaction"]=="add" || $ATK_VARS["atkaction"]=="edit" || $ATK_VARS["atkaction"]=="admin"))
     $this->_addSpecialListAttribute("project","g_project", AF_OBLIGATORY);
     if ($g_project || ($ATK_VARS["atkaction"]!=="add" || $ATK_VARS["atkaction"]!=="edit"))
@@ -177,6 +190,7 @@ class hoursPDA extends hours
 
     if ($this->m_weekview!=1)
     {
+      //addpage is not visible when we have a pda.
       if ($this->m_lock=="" && !(browserInfo::detectPDA())) $this->addPage();
 
       // Set the viewnode up
@@ -206,10 +220,10 @@ class hoursPDA extends hours
     parent::preAdd($record);
 
     $url = $record['activityid'];
-    $this->_urlToDb($record, "project", "g_project");
-    $this->_urlToDb($record, "phaseid", "g_phase");
-    $this->_urlToDb($record, "activityid", "g_activity");
-
+    $this->_urlToDb($record, "project", "g_project", false, "");
+    $this->_urlToDb($record, "phaseid", "g_phase", false, "taskid");
+    $this->_urlToDb($record, "activityid", "g_activity", false, "taskid");        
+    
     if ($record["atkerror"])
     {
       sessionStore("atkerror",$record["atkerror"]);
@@ -233,11 +247,11 @@ class hoursPDA extends hours
     if (!$record['project']) $project = $g_sessionManager->stackVar("g_project");
     else $project = $record['project'];
 
-    if (!$record['phaseid']) $phase = $g_sessionManager->stackVar("g_phase");
-    else $phase = $record['phaseid'];
+    if (!$record['taskid']['phaseid']) $phase = $g_sessionManager->stackVar("g_phase");
+    else $phase = $record['taskid']['phaseid'];
 
-    if (!$record['activityid']) $activity = $g_sessionManager->stackVar("g_activity");
-    else $activity = $record['activityid'];
+    if (!$record['taskid']['activityid']) $activity = $g_sessionManager->stackVar("g_activity");
+    else $activity = $record['taskid']['activityid'];
 
     //    $g_otherone_session  = $g_sessionManager->stackVar("g_otherone");
     $atknodetype = $g_sessionManager->stackVar("atknodetype");
@@ -267,8 +281,8 @@ class hoursPDA extends hours
       }
     }
     return array();
-  }
-
+  }  
+  
   /////////////////// speciallist functions //////////////////////////////////////
   /*
   * To add a special list attribute, you must take the following steps:
@@ -308,7 +322,7 @@ class hoursPDA extends hours
     if(!$label)
     $label = $name;
 
-    $temp = new atkListAttribute($label, $this->{$vartexts}, $this->{$varids}, $flags);
+    $temp = new PDADummyListAttribute($label, $this->{$vartexts}, $this->{$varids}, $flags);
     if (!$removeonchange) $temp->addOnChangeHandler("self.location.href=newvalue;");
     $temp->setSelected($this->addVarToCurrentURL(array($globalvar => ${$globalvar})));
     $temp->setEmptyValue($emptyvalue);
@@ -473,16 +487,24 @@ class hoursPDA extends hours
 	* @param string $globalvar the variable name in the uri
 	* @param bool   $relation  wether or not the var is a relation
 	*/
-  function _urlToDb(&$record, $variable, $globalvar, $relation=false)
+  function _urlToDb(&$record, $variable, $globalvar, $relation=false, $destvar="")
   {
     $url = $record[$variable];
 
     $urlvars = substr($url, strpos($url, "?")+1);
     $urlvars = $this->_getURLVars($urlvars);
 
-    if ($relation) $record[$variable] = array('id'=>$urlvars[$globalvar]);
-    else $record[$variable] = $urlvars[$globalvar];
-  }
+    if($destvar!="")
+    {
+      if ($relation) $record[$destvar][$variable] = array('id'=>$urlvars[$globalvar]);
+      else $record[$destvar][$variable] = $urlvars[$globalvar];
+    }
+    else 
+    {    
+      if ($relation) $record[$variable] = array('id'=>$urlvars[$globalvar]);
+      else $record[$variable] = $urlvars[$globalvar];
+    }
+  }  
 
   ////////////////// end speciallist functions //////////////////
 }

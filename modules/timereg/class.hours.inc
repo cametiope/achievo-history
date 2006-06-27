@@ -945,12 +945,10 @@ class hours extends atkNode
    */
   function validate(&$record, $mode)
   {    
-    //get the phaseid from the taskid.    
     $phaseid = $record["taskid"]["phaseid"];
     
     //@todo: trigger an error, if we cannot find the phase.
     if(!isset($phaseid) || $phaseid==0) $phaseid = "";
-    
     // If no activities available, trigger an error:    
     if($this->getActivityCountByPhase($phaseid) == 0) {
       triggerError($record, "activityid", "Please add one or more activities first");
@@ -1000,11 +998,11 @@ class hours extends atkNode
       {
         triggerError($record, "taskdate", "error_startbiggerthanend");
       }
-    }
+    }    
     // continue with original validation
     atkNode::validate($record, $mode);
-  }
-
+  }  
+  
  /**
    * This method is called by the hoursurvey to get custom search fields.
    * Derived classes (for example in overloaders) can override this method and
