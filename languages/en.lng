@@ -27,6 +27,7 @@
   "activitytimedistribution" => "Per activity",
   "activity_select" => "First select an activity",
   "activitytype" => "Activity type",
+  "addme" => "Add me as an attendee",
   "addnewdependency" => "Add new dependency",
   "address" => "Address",
   "address2" => "Address 2",
