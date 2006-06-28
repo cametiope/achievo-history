@@ -43,6 +43,7 @@
   "pim_donations" => "Donations",
   "pim_becomeasponsor" => "If you like Achievo, consider becoming a sponsor for the project. Contributions keep the Achievo project alive. Click the button below for more information.",
   "pim_donate" => "Donate",
+  "projectandphase" => "Project\phase",
   "aftercalculation" => "Payment of arrears",
   "afternoon" => "Afternoon",
   "aggregate" => "Aggregate",
