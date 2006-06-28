@@ -19,6 +19,7 @@
   $en = array(
   "abbreviation" => "Abbreviation",
   "active" => "Active",
+  "activities" => "Activities",
   "activity" => "Activity",
   "activitydate" => "Date",
   "activityid" => "Activity",

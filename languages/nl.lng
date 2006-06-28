@@ -19,6 +19,7 @@
   $nl = array(
   "abbreviation" => "Afkorting",
   "active" => "Aktief",
+  "activities" => "Activiteiten",
   "activity" => "Activiteit",
   "activitydate" => "Datum",
   "activityid" => "Activiteit",
