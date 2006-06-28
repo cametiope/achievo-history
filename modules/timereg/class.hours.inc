@@ -1,6 +1,6 @@
 <?php
 
-include_once("achievotools.inc");useattrib("timereg.taskattribute");useattrib("timereg.dummylistattribute");
+include_once("achievotools.inc");
 useattrib("project.projectattrib");
 useattrib("atkdateattribute");
 useattrib("atklistattribute");
@@ -9,6 +9,7 @@ useattrib("atkdurationattribute");
 useattrib("atkdummyattribute");
 useattrib("atktimeattribute");
 useattrib("timereg.taskattribute");
+useattrib("timereg.dummylistattribute");
 useattrib("atknumberattribute");
 userelation("atkmanytoonerelation");
 
