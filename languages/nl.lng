@@ -190,6 +190,7 @@
   "hourlock_week_explanation" => "Vul 4 cijferig jaar gevolgd door 2 cijferig weeknummer in (bijv. 200548)",
   "hours" => "Uren",
   "hoursleft" => "Uren nog beschikbaar",
+  "hourspda" => "Uren",
   "hoursurvey" => "Uren overzicht",
   "hours_approve" => "Uren goedkeuren",
   "hours_approve_disapprovegivereason" => "Voer uw reden in om deze urenregistratie af te keuren",
@@ -280,7 +281,7 @@
   "menu_profile_admin" => "Beveiligings Profielen",
   "menu_projectactivityreport" => "Projectactiviteit",
   "menu_projectmanagement" => "Projecten",
-  "menu_projectstatus" => "Projectstatus",
+  "projectstatus" => "Projectstatus",
   "menu_project_admin" => "Projecten",
   "menu_project_edit" => "Bewerk project",
   "menu_project_notesview" => "Project notities",
@@ -507,6 +508,9 @@
   "timereg_hours_filterdays" => "Als je een periode selecteert, kun je hier aangeven op welke dagen de tijd geregistreerd moet worden:",
   "timereg_hours_insert_day" => "1 dag tegelijk",
   "timereg_hours_insert_multi" => "Selecteer periode",
+  "timereg_hourspda_filterdays" => "Als je een periode selecteert, kun je hier aangeven op welke dagen de tijd geregistreerd moet worden:",
+  "timereg_hourspda_insert_day" => "1 dag tegelijk",
+  "timereg_hourspda_insert_multi" => "Selecteer periode",
   "timespan" => "Periode",
   "title" => "Titel",
   "title_activitystats" => "Activiteit Statistieken",
@@ -611,9 +615,9 @@
   "yearly" => "Jaar",
   "youareinthearchive" => "Je bent in het archief.",
   "zipcode" => "Postcode",
-  
+
   "lng"=>'Taal',
-  
+
   'language_bp'=>'Braziliaans Portugees',
   'language_ca'=>'Cataloons',
   'language_cs'=>'Tsjechisch',

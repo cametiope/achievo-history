@@ -479,15 +479,15 @@ class hours extends atkNode
   {
     $res='';
     if ($this->m_weekview!=1)
-    {      
+    {
       $viewdatestamp = adodb_mktime(0,0,0,substr($this->m_viewdate,5,2),substr($this->m_viewdate,8,2),substr($this->m_viewdate,0,4));
 
       // we substract 3601 seconds to account for Daylight Savings Time
       $yesterday = date('Y-m-d',$viewdatestamp-(86400-3601));
       // we add 3601 seconds to account for Daylight Savings Time
       $tomorrow = date('Y-m-d',$viewdatestamp+86400+3601);
-      $today = date('Y-m-d');      
-      
+      $today = date('Y-m-d');
+
       $ui = &$this->getUi();
       $tplvars = array( 'yesterdayurl'=>session_url('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$yesterday),
                         'weekviewurl'=>session_url('dispatch.php?viewuser='.$this->m_user.'&viewdate='.$this->m_viewdate.'&weekview=1'),
@@ -497,7 +497,7 @@ class hours extends atkNode
                         'currentdate'=>atktext(strtolower(date("l", $viewdatestamp)))." ".atktext(strtolower(date("F", $viewdatestamp)))." ".date("d, Y", $viewdatestamp),
                         'lockicon'=>$this->getLockIcon(),
                        );
-      
+
       if ($this->m_viewdate<date('Y-m-d'))
       {
         // If current is not today we can also move forward
@@ -515,7 +515,7 @@ class hours extends atkNode
     {
       $balancenode = &atkGetNode("timereg.overtime_balance");
       $balance = $balancenode->getBalance(date("Y-m-d", adodb_mktime(0,0,0,substr($this->m_viewdate,5,2),substr($this->m_viewdate,8,2),substr($this->m_viewdate,0,4))), $this->m_user);
-      
+
       $ui = &$this->getUi();
       $tplvars = array( 'scheduleurl'=>session_url('dispatch.php?atknodetype=calendar.schedule&atkaction=admin&viewdate=',SESSION_NESTED),
                         'balance'=>time_format((60*$balance["balance"]),true),
@@ -540,7 +540,7 @@ class hours extends atkNode
     if ($this->allowed("any_user"))
     {
       $db = &atkGetDb();
-      $users = $db->getRows("SELECT id, lastname, firstname FROM person WHERE role = 'employee' AND status = 'active'");
+      $users = $db->getRows("SELECT id, lastname, firstname FROM person WHERE role = 'employee' AND status = 'active' ORDER BY lastname");
       $res = '<select name="viewuser">';
       for ($i=0;$i<count($users);$i++)
       {
