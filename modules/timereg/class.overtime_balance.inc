@@ -88,8 +88,6 @@
     {
       $node = &atkGetNode("timereg.overtime_balance");
       $result = $node->selectDb("day <= '$day' AND userid.id = '$userid'", "day DESC", 1);
-      atk_var_dump($day,"<h1>day</h1>");
-      atk_var_dump($result,"<h1>result</h1>");
       if (!count($result)) return $this->getDummyBalance($day, $userid);
       else
       {

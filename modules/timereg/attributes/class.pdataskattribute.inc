@@ -84,7 +84,7 @@ class pdaTaskAttribute extends atkNumberAttribute
     
     atkdebug("SAVING TASKID [$taskid]");
     
-    return $taskid;    
+    return $taskid;
   }
   
   function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level=0, $mode="")

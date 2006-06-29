@@ -26,7 +26,7 @@ class mod_task extends atkModule
   
   function getMenuItems()
   {
-    //no menuitems for tasks
+    //no menuitems for tasks (yet)
   }
 }
 ?>

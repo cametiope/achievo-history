@@ -35,7 +35,7 @@ class task extends atkNode
   function task()
   {
     $this->atkNode("task");    
-    $this->add(new atkNumberAttribute("id",AF_PRIMARY));
+    $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
     $this->add(new atkListAttribute("priority",array("higest","high","normal","low","lowest")));
     $this->add(new atkAttribute("name", AF_OBLIGATORY|AF_SEARCHABLE));
     $this->add(new atkListAttribute("tasktype",array("project","phase","activity","todo","agenda"),"",AF_OBLIGATORY|AF_SEARCHABLE));
@@ -109,5 +109,63 @@ class task extends atkNode
                   '&view=active', atktext('clicktoviewactiverecords', $this->m_module, $this->m_type))."<br>";
     }
   }  
+  
+  /**
+   * Search an existing task that belongs to the specified activity 
+   * or creates a new task and return the taskid.
+   * 
+   * @todo: Add support for other tasktypes.
+   * 
+   * @param int $activityid The id of the activity
+   * @param int $userid The id
+   * @return int The id of the new or existing taskid
+   */
+  function updateTask($activityid, $userid)
+  {    
+    //atk_var_dump($activityid, "<h1>Calling updateTask with</h1>");    
+    /* @var $db atkDb */
+    /* @var $taskNode atkNode */
+    /* @var $activityNode atkNode */
+    $db = &atkGetDb();
+    list($row) = $db->getRows(sprintf("SELECT t.id AS taskid FROM task t, activity a WHERE t.tasktype = 'activity' AND a.id = t.refid AND a.id = %d AND t.owner = %d", $activityid, $userid));
+    
+    // If we have no task yet, create one.
+    if ($row == NULL)
+    {
+      atkdebug("this user does not yet have a task related to this activity.");
+      $activityNode = &atkGetNode('project.activity');      
+      
+      //get activity name
+      $activityRecords    = $activityNode->selectDb("activity.id='$activityid'","","","",array("name"));
+      $activityname       = $activityRecords[0]["name"];
+      $dt                 = date("Y-m-d");
+      $datearr            = explode("-",date("Y-m-d-H-i-s"));    
+      $datetime           = array();    
+      $datetime["year"]   = $datearr[0];
+      $datetime["month"]  = $datearr[1];
+      $datetime["day"]    = $datearr[2];
+      $datetime["hours"]  = $datearr[3];
+      $datetime["minutes"]= $datearr[4];
+      $datetime["seconds"]= $datearr[5];
+      
+      /* Create a task */
+      $taskRecord = array();
+      $taskRecord["name"]              = $activityname;
+      $taskRecord["owner"]             = array("id"=>$userid);
+      $taskRecord["createdate"]        = $dt;      
+      $taskRecord["editdatetime"]      = $datetime;
+      $taskRecord["refid"]             = $activityid;
+      $taskRecord["tasktype"]          = 'activity';
+      $this->addDb($taskRecord, false);
+      //after adding the record the new primary key is stored in the atkprimkey field.
+      //in the format taskid => task.id='12'
+      $arr = explode("=",$taskRecord["atkprimkey"]);
+      $row = array('taskid' => stripQuotes($arr[1]));
+      
+      atkdebug("CREATED NEW TASK [ID: {$row['taskid']}]");
+    }
+    
+    return $row['taskid'];
+  }
 }
 ?>

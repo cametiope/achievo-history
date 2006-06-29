@@ -118,56 +118,23 @@ class taskAttribute extends atkNumberAttribute
                  );
   }
 
+  
   function value2db($rec)
-  {
-    $phaseid = $rec[$this->fieldName()]["phaseid"];    
-    $activityid = $rec[$this->fieldName()]["activityid"];    
-    $user = getUser();
+  { 
+    /* @var $taskNode task*/   
+    $taskNode     = &atkGetNode('task.task');
     
-    // search task or create task and set $taskid
-    $db = &$this->m_ownerInstance->getDb();
-    list($row) = $db->getRows(sprintf("SELECT t.id AS taskid FROM task t, activity a WHERE t.tasktype = 'activity' AND a.id = t.refid AND a.id = %d AND t.owner = %d", $activityid, $user['id']));
-    // If we have no task yet, create one.
-    if ($row == NULL)
+    $activityid = $rec[$this->fieldName()]["activityid"];   
+    $userid = 0;
+    if(isset($rec['userid']['id']))    
+      $userid = ($rec['userid']['id']);
+    else 
     {
-      atkdebug("this user does not yet have a task related to this activity.");            
-      /* @var $activityNode atkNode */
-      $taskNode     = &atkGetNode('task.task');
-      $activityNode = &atkGetNode('project.activity');      
-      
-      //get activity name
-      $activityRecords    = $activityNode->selectDb("activity.id='$activityid'","","","",array("name"));
-      $activityname       = $activityRecords[0]["name"];
-      $dt                 = date("Y-m-d");
-      $datearr            = explode("-",date("Y-m-d-H-i-s"));    
-      $datetime           = array();    
-      $datetime["year"]   = $datearr[0];
-      $datetime["month"]  = $datearr[1];
-      $datetime["day"]    = $datearr[2];
-      $datetime["hours"]  = $datearr[3];
-      $datetime["minutes"]= $datearr[4];
-      $datetime["seconds"]= $datearr[5];
-      
-      /* Create a task */
-      $newtask = array();
-      $taskid                       = $db->nextid('task');
-      $newtask["id"]                = $taskid;
-      $newtask["name"]              = $activityname;
-      $newtask["owner"]             = array("id"=>$user["id"]);
-      $newtask["createdate"]        = $dt;      
-      $newtask["editdatetime"]      = $datetime;
-      $newtask["refid"]             = $activityid;
-      $newtask["tasktype"]          = 'activity';
-      $taskNode->addDb($newtask, false);
-      
-      $row = array('taskid' => $taskid);
-    }
+      $user = &getUser();
+      $userid = $user['id'];
+    }       
     
-    $taskid = $row['taskid'];
-    
-    atkdebug("SAVING TASKID [$taskid]");
-    
-    return $taskid;    
+    return $taskNode->updateTask($activityid, $userid);
   }
   
   function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level=0, $mode="")
@@ -179,11 +146,6 @@ class taskAttribute extends atkNumberAttribute
     else
     {      
       /* @var $query atkQuery */
-//      $query->addField($this->fieldName(),"","E",$fieldaliasprefix,!$this->hasFlag(AF_NO_QUOTES));
-//      $query->addField("name","", "B", "proj_", false);
-//      $query->addField("name","", "A", "phase_", false);
-//      $query->addField("name","", "D", "activity_", false);
-      //$query->addField($this->fieldName(),"","hours",$fieldaliasprefix,!$this->hasFlag(AF_NO_QUOTES));
       $query->addField("id","", "A", "phase", false);
       $query->addField("id","", "C", "activity", false);
       $query->addField("name","", "B", "project", false);
@@ -218,8 +180,7 @@ class taskAttribute extends atkNumberAttribute
   {        
     //first get the recent phases
     $phases = $this->getRecentPhases();
-            
-    atk_var_dump($phases,"<h1>recentphases</h1>");
+    
     //check currentphaseid
     $validcurrentphaseid = (isset($currentphaseid) && $currentphaseid != "");      
     
@@ -302,26 +263,7 @@ class taskAttribute extends atkNumberAttribute
       $projectPhaseFilter = "phase.status<>'archived' AND project.status<>'archived'";
     else
       $projectPhaseFilter = "phase.status='active' AND project.status='active'";
-
-    $query = "SELECT DISTINCT 
-                phase.id, 
-                phase.name, 
-                project.name as projectname                 
-              FROM 
-                project,phase
-              LEFT JOIN 
-                project_person ON project_person.projectid = project.id
-              LEFT JOIN 
-                activity ON activity.phaseid=phase.id 
-              LEFT JOIN 
-                task ON task.refid=activity.id 
-              LEFT JOIN 
-                hours ON hours.taskid=task.id 
-              WHERE                 
-                phase.status='active' 
-                AND project.status='active' 
-                AND task.tasktype='activity'
-                AND hours.userid='".$user["id"]."' ";
+    
     /* @var $query atkQuery */
     $db = &atkGetDb();
     $query = $db->createQuery();

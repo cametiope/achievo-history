@@ -82,6 +82,44 @@
     }
 
     /**
+     * Retrieve the phaserecord that belongs to the given taskid.
+     * The taskid can have different formats, such as '12' and 12, or it can contain an
+     * array with at least the phaseid (i.e. array('activityid'=>2,'phaseid'=>31)).
+     * 
+     *
+     * @param mixed $taskid The field taskid containing a taskid number or an array with a phaseid field.
+     * @return phase record.
+     */
+    function getPhaseFromTask($taskid)
+    {            
+      if(is_array($taskid))
+        return (isset($taskid['phaseid']) && $taskid['phaseid']!='') ? $taskid['phaseid'] : -1;
+      
+      // Get the phase record from the database and throw an error if not found      
+      $db = &atkGetDb();
+      $query = $db->createQuery();
+      $query->addField("id", "", "phase");
+      $query->addTable("task");
+      $query->addJoin("activity", "", "activity.id=task.refid", true);
+      $query->addJoin("phase", "", "phase.id=activity.phaseid", true);
+      $query->addCondition("task.id=$taskid");
+      $phaserec = $db->getrows($query->buildSelect());
+       
+      if(count($phaserec) == 0)
+        return -1;
+      
+      $phaseid = $phaserec[0]['id'];
+      
+      $phaseNode = &atkGetNode("project.phase");      
+      $phaserecords = $phaseNode->selectDb("phase.id='$phaseid'");
+
+      if (count($phaserecords) == 0)        
+        return -1;
+      
+      return $phaserecords;
+    }
+    
+    /**
      * Notification handler function to be triggered when the action we're listening to is executed
      *
      * @param String $action Name of the action that was executed
@@ -95,14 +133,10 @@
         atkerror("Cannot call the hoursListener when performing a '$action' action on the '" . $this->m_node->m_type . "' node");
         return;
       }
-
-      // Get the phase record from the database and throw an error if not found
-      /* @var $phaseNode atkNode */
-      $phaseid = $record["taskid"]["phaseid"];      
-      $phaseNode = &atkGetNode("project.phase");      
-      $phaserecords = $phaseNode->selectDb("phase.id='$phaseid'");
-
-      if (count($phaserecords) == 0)
+      
+      $phaserecords= $this->getPhaseFromTask($record['taskid']);
+      
+      if($phaserecords == -1)
       {
         atkerror("Cannot find phase to which the hours were registered.");
         return;
