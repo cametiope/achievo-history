@@ -10,6 +10,7 @@ useattrib("atkdummyattribute");
 useattrib("atktimeattribute");
 useattrib("timereg.taskattribute");
 useattrib("timereg.dummylistattribute");
+useattrib("project.editabledummyattribute");
 useattrib("atknumberattribute");
 userelation("atkmanytoonerelation");
 
@@ -588,9 +589,9 @@ class hours extends atkNode
     $data = $this->selectDb("taskdate >= '".$weekdates[1]['date']."' AND taskdate <= '".$weekdates[7]['date']."' AND hours.userid = '$userid'","","",$this->m_listExcludes);
 
     for ($i=0;$i<count($data);$i++)
-    {
-      $rec = $data[$i];
-      $key = $rec["phaseid"]["projname"]."-".$rec["phaseid"]["phasename"];
+    {      
+      $rec = $data[$i];      
+      $key = $rec["taskid"]["projectname"]."-".$rec["taskid"]["phasename"];
       $date = $rec["taskdate"]["year"]."-".$rec["taskdate"]["month"]."-".$rec["taskdate"]["day"];
       $time = $rec["time"];
       $week[$key][$date] += $time;
@@ -650,7 +651,6 @@ class hours extends atkNode
       $weekdata[$row][] = '<font color="'.$color.'">'.time_format($daytotals[$weekdates[$i]['date']]).'</font>';
     }
     $weekdata[$row][] = time_format($total);
-
     $output.=$table->render($weekdata, TBL_FOOTER|TBL_DATA, "recordlist");
     $output.= $this->weekviewFooter($weekdates, $viewtime);
     $ui = &atknew("atk.ui.atkui");
