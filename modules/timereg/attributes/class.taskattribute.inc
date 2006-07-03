@@ -95,7 +95,7 @@ class taskAttribute extends atkNumberAttribute
   
   function display($rec)
   {
-    return $rec[$this->fieldName()]["projname"]." - ".$rec[$this->fieldName()]["phasename"];
+    return $rec[$this->fieldName()]["projectname"]." - ".$rec[$this->fieldName()]["phasename"];
   }
 
   /**
@@ -151,8 +151,8 @@ class taskAttribute extends atkNumberAttribute
       $query->addField("name","", "B", "project", false);
       $query->addField("name","", "A", "phase", false);
       $query->addField("name","", "C", "activity", false);
-      $query->addJoin("task", "D", "D.id=hours.taskid", false);
-      $query->addJoin("activity", "C", "C.id=D.refid", false);
+      $query->addJoin("task", "D", "D.id=hours.taskid", true);
+      $query->addJoin("activity", "C", "C.id=D.refid", true);
       $query->addJoin("phase", "A","A.id=C.phaseid", true);
       $query->addJoin("project", "B","B.id=A.projectid", true);
       $query->addCondition("D.tasktype='activity'");

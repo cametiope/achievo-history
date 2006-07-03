@@ -91,30 +91,42 @@
      * @return phase record.
      */
     function getPhaseFromTask($taskid)
-    {            
+    {
+      atkdebug("getPhaseFromTask() Called with argument taskid: ".var_export($taskid,true));
+      $phaseid = -1;
       if(is_array($taskid))
-        return (isset($taskid['phaseid']) && $taskid['phaseid']!='') ? $taskid['phaseid'] : -1;
-      
-      // Get the phase record from the database and throw an error if not found      
-      $db = &atkGetDb();
-      $query = $db->createQuery();
-      $query->addField("id", "", "phase");
-      $query->addTable("task");
-      $query->addJoin("activity", "", "activity.id=task.refid", true);
-      $query->addJoin("phase", "", "phase.id=activity.phaseid", true);
-      $query->addCondition("task.id=$taskid");
-      $phaserec = $db->getrows($query->buildSelect());
-       
-      if(count($phaserec) == 0)
-        return -1;
-      
-      $phaseid = $phaserec[0]['id'];
+      {
+        atkdebug("taskid is an array");
+        $phaseid = (isset($taskid['phaseid']) && $taskid['phaseid']!='') ? $taskid['phaseid'] : -1;
+      }
+      else 
+      {      
+        // Get the phase record from the database and throw an error if not found      
+        $db = &atkGetDb();
+        $query = $db->createQuery();
+        $query->addField("id", "", "phase");
+        $query->addTable("task");
+        $query->addJoin("activity", "", "activity.id=task.refid", true);
+        $query->addJoin("phase", "", "phase.id=activity.phaseid", true);
+        $query->addCondition("task.id=$taskid");
+        $phaserec = $db->getrows($query->buildSelect());
+         
+        if((count($phaserec) == 0) || !isset($phaserec[0]['id']) || $phaserec[0]['id']=='')
+        {
+          atkdebug("No phaseid found.");
+          return -1;
+        }
+        $phaseid = $phaserec[0]['id'];
+      }      
       
       $phaseNode = &atkGetNode("project.phase");      
       $phaserecords = $phaseNode->selectDb("phase.id='$phaseid'");
 
-      if (count($phaserecords) == 0)        
+      if (count($phaserecords) == 0)
+      {
+        atkdebug("No phaserecords were found, returning -1");
         return -1;
+      }
       
       return $phaserecords;
     }
