@@ -185,7 +185,7 @@ class hours extends atkNode
     $this->add(new atkManyToOneRelation("userid","employee.employee", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
 
     //phaseid must be added before the project id to make sure the join works
-    $phase = &new atkManyToOneRelation("phaseid","project.phase");
+    $phase = &new atkManyToOneRelation("phaseid","project.phase",AF_OBLIGATORY);
     $phase->setDestinationFilter("phase.projectid='[projectid.id]'");
     $oneActivity = ($this->getActivityCount() == 1);
     if(!$oneActivity)
