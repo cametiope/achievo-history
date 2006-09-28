@@ -21,7 +21,7 @@
   // the database to use and the user/password.
   //
   $config_db["default"]["host"] = "localhost";
-  $config_db["default"]["db"] = "achievo_1_2";
+  $config_db["default"]["db"] = "achievo_tomorrow";
   $config_db["default"]["user"] = "demo";
   $config_db["default"]["password"] = "demo";
 
@@ -110,7 +110,7 @@
   // If you leave out the @domain part, the domainname of the server is
   // appended automatically.
   //
-  $config_mail_sender = "achievo"; 
+  $config_mail_sender = "achievo_tomorrow"; 
 
 
   // -------------------------------------------
@@ -174,6 +174,15 @@
   // obligatory
   $config_project_contact_obligatory = true;
   
+  // This variable determines wether all manytoone dropdowns should have
+  // the autocompletion flag.
+  //
+  $config_manytoone_defaultautocomplete = true;
+  
+  // This variable determines how many characters a user must enter
+  // before an autocompletion search is performed.
+  //
+  $config_manytoone_autocomplete_minchars = 2;
   
   // -------------------------------------------
   //            EXTERNAL MODULES

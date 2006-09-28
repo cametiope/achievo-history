@@ -2,6 +2,7 @@
   include_once("achievotools.inc");
   userelation("atkmanytoonerelation");
   userelation("atkonetomanyrelation");
+  userelation("atkmanyboolrelation");  
   useattrib("atktextattribute");
   useattrib("atkdateattribute");
   useattrib("atklistattribute");
@@ -12,8 +13,8 @@
   useattrib("graph.datagraphattribute");
   useattrib("atkfuzzysearchattribute");
   useattrib("atkdummyattribute");
-  useattrib("atknumberattribute");
-
+  useattrib("atknumberattribute");  
+  
   define("PRJ_TIMEREG_ALL_USERS", 0);
   define("PRJ_TIMEREG_MEMBERS_ONLY", 1);
 
@@ -80,8 +81,18 @@
 
       $this->add(new atkOneToManyRelation("deliverables", "project.deliverable", "project_id", AF_HIDE_LIST), "planning");
 
-      $this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE), "planning");
-
+      //$this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE), "planning");
+      $tmp = &new atkManyBoolRelation("phasetemplatematrix","project.phase","project.tpl_phase", AF_HIDE_LIST|AF_HIDE_SEARCH);
+      $tmp->m_localKey = "projectid";
+      $tmp->m_remoteKey = "template";
+      $tmp->setStoreDeletionFilter("phase.template IS NOT NULL AND phase.template!='' AND phase.template!=0");      
+      //The phasetemplatematrix is in add mode visible on tab 'default' and in other modes on the 'planning' tab
+      $tab = ($ATK_VARS["atkaction"]=="edit"||$ATK_VARS["atkaction"]=="update"?"planning":"default");
+      $this->add($tmp, $tab);
+      
+      //all phases (including manyally added ones) are shown in this relation.
+      $this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE),"planning");      
+      
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW), "planning");
       $this->add(new projecttemplateAttribute("template","project.tpl_project", AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD|AF_HIDE_SEARCH|AF_HIDE_VIEW));
 
@@ -636,7 +647,42 @@
                     '&view=active', atktext('clicktoviewactiverecords', $this->m_module, $this->m_type))."<br>";
       }
     }
+    
+    /**
+     * Function removes double selected templates (which happens when
+     * using the projecttemplate and selecting additional phasetemplates.
+     *
+     * @param array() $record description
+     * @return boolean succeeded
+     */
+    function preAdd(&$record)
+    {
+      //get all tpl_project_phase combinations with the selected
+      //projecttemplate id.
+      $tpl_project_phase_Node = &atkGetNode("project.tpl_project_phase");
+      $selector = sprintf("projectid='%s'",$record["template"]["id"]);
+      $phase_tpls = $tpl_project_phase_Node->selectDb($selector);
 
+      //retrieve all the tpl_phase_ids
+      $ids = array();
+      foreach($phase_tpls as $tpl)
+        $ids[] = $tpl["phaseid"]["id"];
+
+      //Add the unique ones in a new array.
+      $newmatrix = array();
+      for($i=0,$_i=count($record["phasetemplatematrix"]);$i<$_i;$i++)
+      {
+        $matrix_tpl_id = $record["phasetemplatematrix"][$i]["template"];
+
+        if(!in_array($matrix_tpl_id,$ids))
+          $newmatrix[] = $record["phasetemplatematrix"][$i];
+      }
+      //replace the old array with a the new (filtered) array.
+      $record["phasetemplatematrix"] = $newmatrix;
+
+      return true;
+    }    
+    
     function contract_id_edit($record, $mode)
     {
       $fromdate = $this->m_attribList["startdate"]->value2db($record);
@@ -658,6 +704,91 @@
       return $this->m_attribList["contract_id"]->edit($record, $mode);
     }
 
+    function postAdd($record)
+    {
+      //when in add mode, if no phases were selected in the matrix, we do
+      //not need to update.
+      if(count($record["phasetemplatematrix"])==0)
+      {
+        atkdebug("no matrix template items selected in mode add.");
+        return true;
+      }
+
+      $this->updatePhaseFields($record, "add");
+      return true;
+    }
+
+    function postUpdate($record)
+    {
+      $this->updatePhaseFields($record, "update");
+      return true;
+    }
+    
+    /**
+    * This function updates the templates that are added using
+    * the atkManyBoolRelation.
+    *
+    * Function copies the name field from the phase-templates to
+    * the corresponding phases.
+    *
+    * @param array $record the added record.
+    * @return type description
+    */
+    function updatePhaseFields($record, $mode)
+    {
+     $phaseTplNode = &atkGetNode("project.tpl_phase");
+     $phaseNode = &atkGetNode("project.phase");
+    
+     foreach($record["phasetemplatematrix"] as $tpl)
+     {
+       //get the template
+       $template_id = $tpl["template"];
+       $selector = sprintf("tpl_phase.id='%s'",$template_id);
+       $template = $phaseTplNode->selectDb($selector);
+    
+       //get the corresponding phases for this project
+       $selector = sprintf("phase.template='%s' AND phase.projectid='%s'",$template_id,$record["id"]);
+       $phases = $phaseNode->selectDb($selector);
+    
+       //update each phase with the name and description fields.
+       //and add the activities
+       foreach($phases as $phase)
+       {
+         $template_id = $phase["template"]["id"];
+         $selector = "tpl_phase.id='$template_id'";
+         $template = $phaseTplNode->selectDb($selector);
+    
+         $newphase["id"]           = $phase["id"];
+         $newphase["atkprimkey"]   = $phase["atkprimkey"];
+         $newphase["status"]       = 'active';
+    
+         //if we are updating a project, we cannot overwrite existing phase data
+         if($mode != "update")
+         {
+           atkdebug("updating name and description fields");
+           $newphase["name"]         = $template[0]["name"];
+           $newphase["description"]  = $template[0]["description"];
+           $phaseNode->updateDb($newphase,false,"",array("name","description", "status"));
+         }
+    
+         $this->addActivitiesPerPhase($template_id, $newphase["id"]);
+       }
+     }
+    }
+
+    function addActivitiesPerPhase($tpl_phase_id, $phaseid)
+    {
+      atkdebug("Adding activities per phase");
+      //activities per phase
+      $db = &atkGetDb();
+      $query = "INSERT INTO phase_activity (activityid, phaseid)
+                SELECT activityid, ".$phaseid."
+                FROM tpl_phase_activity
+                WHERE phaseid = ".$tpl_phase_id;
+
+      $db->query($query);
+    }
+    
   }
 
 ?>

@@ -48,7 +48,7 @@
 
       // template *must* come after phase_activity, because phase_activity does a delete of all
       // records on store, so template must be stored after phase_activity.
-      $this->add(new phasetemplateAttribute("template","project.tpl_phase", AF_HIDE_LIST|AF_HIDE_EDIT));
+      $this->add(new atkManyToOneRelation("template","project.tpl_phase", AF_HIDE_LIST|AF_FORCE_LOAD));
 
       $this->add(new atkDateAttribute("startdate", "", ""));
       $this->add(new atkDateAttribute("enddate", "", ""));
@@ -320,6 +320,15 @@
         {
           return COLOR_WARNING;
         }
+      }
+    }
+    
+    function recordActions($record, &$actions, &$mraactions)
+    {
+      //when we have a phase that belongs to a template, the records cannot be deleted in an admin screen.
+      if(isset($record["template"]["id"]) && ($record["template"]["id"]!="") && $record["template"]["id"]!=0)
+      {
+        unset($actions["delete"]);
       }
     }
   }

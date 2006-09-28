@@ -32,11 +32,11 @@
       if (!$g_securityManager->allowed("timereg.hours", "any_project"))
       {
         $user = getUser();
-        $query->addJoin("project_person", "members", "members.projectid = project.id", true);      
+        $query->addJoin("project_person", "members", "members.projectid = $tablename.id", true);      
         $query->addGroupBy("project.id");
-        $query->addCondition("(members.personid = ".$user["id"]." OR project.timereg_limit=".PRJ_TIMEREG_ALL_USERS.")");
+        $query->addCondition("(members.personid = ".$user["id"]." OR $tablename.timereg_limit=".PRJ_TIMEREG_ALL_USERS.")");
       }
-      $query->addCondition("project.status='active'");
+      $query->addCondition("$tablename.status='active'");
     }
   }
 

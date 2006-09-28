@@ -1,7 +1,8 @@
 <?php
 
 include_once("achievotools.inc");
-useattrib("project.projectphaseattrib");
+useattrib("project.projectmanytoonerelation");
+//useattrib("project.projectphaseattrib");
 useattrib("project.projectattrib");
 useattrib("atkdateattribute");
 useattrib("atklistattribute");
@@ -176,14 +177,33 @@ class hours extends atkNode
 
     $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
 
-    $this->add(new atkDateAttribute("activitydate","","", 0, (atkconfig("timereg_allowfuture", false)?0:date("Ymd")), AF_OBLIGATORY|AF_FORCE_LOAD|($this->m_weekview?0:AF_HIDE_LIST)));
+    $this->add(new atkDateAttribute("activitydate","","", 0, (atkconfig("timereg_allowfuture", false)?0:date("Ymd")), AF_OBLIGATORY|AF_FORCE_LOAD|($this->m_weekview?0:AF_HIDE_LIST)),null,10);
     $this->add(new to_date());
 
     // force_load flag is set for userid, since several features rely on the
     // userid, even if it's not displayed on screen.
     $this->add(new atkManyToOneRelation("userid","employee.employee", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
 
-    $this->addPhaseAndActivity();
+    //phaseid must be added before the project id to make sure the join works
+    $phase = &new atkManyToOneRelation("phaseid","project.phase");
+    $phase->setDestinationFilter("phase.projectid='[projectid.id]'");
+    $oneActivity = ($this->getActivityCount() == 1);
+    if(!$oneActivity)
+      $phase->addDependee("activityid");
+    $this->add($phase,null, 30);
+
+    $project = &new projectManyToOneRelation("projectid","project.projectselector");
+    $project->addDependee("phaseid");
+    $this->add($project,null,20);
+
+    if($oneActivity)
+      $activity_flag = AF_HIDE|AF_FORCE_LOAD;
+    else
+      $activity_flag = AF_LIST_OBLIGATORY_NULL_ITEM;
+    $activity = &new atkManyToOneRelation("activityid","project.activity",AF_OBLIGATORY|$activity_flag);
+    $this->add($activity);
+
+
     $this->add(new atkTextAttribute("remark", atkconfig("timereg_remark_lines", 1), 0));
     $this->addTime();
 
@@ -197,9 +217,8 @@ class hours extends atkNode
     }
 
     $this->add(new atkDateAttribute("entrydate",AF_HIDE|AF_OBLIGATORY));
-    $this->add(new atkDummyAttribute("javascript", "seebelow", AF_NO_LABEL|AF_HIDE_LIST));
 
-    $this->setOrder("B.abbreviation"); // Sort by project abbreviation
+    $this->setOrder("projectid.abbreviation");
 
     $this->setTable("hours","hours");
     $this->addSecurityMap("mra_move", "edit");
@@ -211,6 +230,68 @@ class hours extends atkNode
     $this->redirect(session_url(dispatch_url("timereg.movehours", "add", array("atkselector"=>$selector)), SESSION_REPLACE));
   }
 
+/**
+   * @todo: adding dependees again must be fixed in tomorrow branch. Dirty workaround!
+   *
+   * @todo: this function isn't called when phaseid is autocomplete
+   * 
+   * When phase id is updated, the new generated phaseid attribute lacks the onchange
+   * handler, thus activityid cannot refreshed by this attribute.
+   *
+   * @param unknown_type $record
+   * @param unknown_type $mode
+   * @return unknown
+   */
+  function phaseid_selection($record,$mode="")
+  {
+    $filter = "";    
+    if ($mode == 'add' || $mode == 'edit')
+    {
+      $filter = "phase.projectid='[projectid.id]'";      
+    }
+
+    $att = &$this->getAttribute("phaseid");    
+    $att->addDependee('activityid');
+    $att->addDestinationFilter($filter);
+    $att->_registerDependees($mode,"");    
+    return $att->getSelectableRecords($record, $mode);
+  }  
+  
+  function activityid_selection($record, $mode="")
+  {
+    $filter = "";
+    if ($mode == 'add' || $mode == 'edit')
+    {
+      $activityids = $this->getAvailableActivityIds($record["phaseid"]["id"]);
+      if(count($activityids))
+        $filter = "activity.id IN (".implode(",",$activityids).")";
+      else
+        $filter = "activity.id IN (NULL)";
+    }
+
+    $attr = &$this->getAttribute('activityid');
+    $attr->addDestinationFilter($filter);
+    return $attr->getSelectableRecords($record, $mode);
+  }
+
+  function getAvailableActivityIds($phaseid)
+  {
+    if(!isset($phaseid))
+      return array();
+
+    $phaseactivityNode = &atkGetNode("project.phase_activity");
+    $selector = sprintf("phaseid='%s'",$phaseid);
+    $recs = $phaseactivityNode->selectDb($selector);
+
+    //get the ids
+    $ids = array();
+    foreach ($recs as $rec)
+    {
+      $ids[]= $rec["activityid"]["id"];
+    }
+    return $ids;
+  }  
+  
   function processGlobalVar($name, $value="")
   {
     global $g_sessionManager;
@@ -257,18 +338,6 @@ class hours extends atkNode
     return $result[0]['activitycount'];
   }
 
-  /**
-   * Adds the projectphase attribute and, if there are more than 1 activities, the activity attribute
-   */
-  function addPhaseAndActivity()
-  {
-    // Determine wheter the activity attribute should be displayed or not.
-    $displayactivityattribute = $this->getActivityCount() != 1;
-
-    $this->add(new atkProjectPhaseAttribute("phaseid",AF_OBLIGATORY|AF_FORCE_LOAD|($displayactivityattribute ? AF_JS_UPDATEACTIVITY : 0)));
-    $this->add(new atkListAttribute("activityid",array("dummy","dummy","dummy","dummy","dummy"),array(0,0,0,0,0),AF_OBLIGATORY|AF_NO_TRANSLATION|($displayactivityattribute ? 0 : AF_HIDE), 10));
-  }
-
   function setLock()
   {
     $this->m_lock = $this->getLockType(strtolower($this->m_user),$this->m_viewdate);
@@ -313,17 +382,11 @@ class hours extends atkNode
     if ($this->getActivityCount() == 1) {
       $db = &atkGetDb();
       $result = $db->getrows("SELECT id FROM activity");
-      $values["activityid"] = $result[0]["id"];
+      $values["activityid"]["id"] = $result[0]["id"];
     }
 
     // Return the initial values
     return $values;
-  }
-
-  function activityid_display($rec)
-  {
-    // activityname is loaded in the phaseid join, so we get the info from there..
-    return $rec["phaseid"]["activityname"];
   }
 
   function action_edit(&$handler)
@@ -383,17 +446,6 @@ class hours extends atkNode
   function confirmSaveText()
   {
     return atkconfig("hours_confirm_save");
-  }
-
-  function javascript_edit($rec)
-  {
-    global $currentphase, $currentactivity;
-
-    if (!isset($currentphase)||$currentphase=="") $currentphase=0;
-    if (!isset($currentactivity)||$currentactivity=="") $currentactivity =0;
-    $result = '<script language="javascript"> set_activities('.$currentphase.','.$currentactivity.'); </script>';
-
-    return $result;
   }
 
   /**
@@ -562,7 +614,7 @@ class hours extends atkNode
     for ($i=0;$i<count($data);$i++)
     {
       $rec = $data[$i];
-      $key = $rec["phaseid"]["projname"]."-".$rec["phaseid"]["phasename"];
+      $key = $rec["projectid"]["name"]." - ".$rec["phaseid"]["name"];
       $date = $rec["activitydate"]["year"]."-".$rec["activitydate"]["month"]."-".$rec["activitydate"]["day"];
       $time = $rec["time"];
       $week[$key][$date] += $time;
@@ -577,7 +629,7 @@ class hours extends atkNode
 
     $table = &atknew("atk.utils.atktablerenderer");
 
-    $weekdata[0][] = atktext("project")."/".atktext("phase");
+    $weekdata[0][] = atktext("project")." - ".atktext("phase");
     for ($i=1;$i<=7;$i++)
     {
       if ($weekdates[$i]['date'] <= date("Y-m-d"))
@@ -916,30 +968,8 @@ class hours extends atkNode
    */
   function validate(&$record, $mode)
   {
-    // If no activities available, trigger an error:
-    if ($this->getActivityCount() == 0) {
-      triggerError($record, "activityid", "Please add one or more activities first");
-    }
-    else {
-      $obj = &atkGetNode("project.activity");
-      $act = $obj->selectDb("id='".$record["activityid"]."'");
-      if (count($act)==1)
-      {
-        if ($act[0]["remarkrequired"]==1)
-        {
-          // Specification is required. So we set the obligatory flag.
-          // The validation of this flag is done later on by the default
-          // ::validate() method of the base class.
-          $this->m_attribList["remark"]->m_flags |= AF_OBLIGATORY;
-        }
-      }
-      else // something is wrong with the chosen activity if we can't find
-           // a record for it.
-      {
-        triggerError($record, "activityid", "error_obligatoryfield");
-      }
-    }
-
+    $this->validateActivityId($record);
+    
     // when inserting multiple days at once, we don't break on invalid days
     // (we will just skip them later on).
     if ($record["activitydate"]["multi"]!=1)
@@ -967,6 +997,33 @@ class hours extends atkNode
     atkNode::validate($record, $mode);
   }
 
+  function validateActivityId(&$record)
+  {
+    // If no activities available, trigger an error:
+    if ($this->getActivityCount() == 0) {
+      triggerError($record, "activityid", "Please add one or more activities first");
+    }
+    else {
+      $obj = &atkGetNode("project.activity");
+      $act = $obj->selectDb("id='".$record["activityid"]["id"]."'");
+      if (count($act)==1)
+      {
+        if ($act[0]["remarkrequired"]==1)
+        {
+          // Specification is required. So we set the obligatory flag.
+          // The validation of this flag is done later on by the default
+          // ::validate() method of the base class.
+          $this->m_attribList["remark"]->m_flags |= AF_OBLIGATORY;
+        }
+      }
+      else // something is wrong with the chosen activity if we can't find
+           // a record for it.
+      {
+        triggerError($record, "activityid", "error_obligatoryfield");
+      }
+    }
+  }
+  
   /**
    * This method is called by the hoursurvey to get custom search fields.
    * Derived classes (for example in overloaders) can override this method and
@@ -979,7 +1036,7 @@ class hours extends atkNode
 
   function getHourSurveyColumns()
   {
-    $defaultcolumns = array("activitydate","userid","phaseid","activityid","remark","time","functionlevel", "creditor_id");
+    $defaultcolumns = array("activitydate","userid","phaseid","projectid","activityid","remark","time","functionlevel", "creditor_id");
     if (moduleExists("billing")) $defaultcolumns[] = "billing_projecttypeid";
     $additionalcolumns = atkHarvestModules("getHourSurveyColumns");
     return array_merge($defaultcolumns, $additionalcolumns);
@@ -1202,18 +1259,16 @@ class hours extends atkNode
    */
   function _isThisTheFirstTimeRegForThisProject()
   {
-    $phasenode =   &atkGetNode("project.phase");
-    $projectnode = &atkGetNode("project.project");
+    $phasenode =   &atkGetNode("project.phase");    
     $hoursnode =   &atkGetNode("timereg.hours");
     $record = $this->updateRecord();
     $user = getUser();
 
-    $excludelist = $this->_getExcludeListForNode($phasenode, array("projectid"));
-    $phaserecs = $phasenode->selectDb($phasenode->m_table.".id='{$record['phaseid']['phaseid']}'",null,null, $excludelist);
-
     $excludelist = $this->_getExcludeListForNode($phasenode, array("id", "projectid"));
 
-    $phases = $phasenode->selectDb($phasenode->m_table.".projectid='{$phaserecs[0]['projectid']['id']}'",null,null,$excludelist);
+    $projectid = (int)$record["projectid"]["id"];
+
+    $phases = $phasenode->selectDb($phasenode->m_table.".projectid='$projectid'",null,null,$excludelist);
 
     $inphase = array();
     foreach ($phases as $phase)
@@ -1251,6 +1306,7 @@ class hours extends atkNode
   function preUpdate(&$record)
   {
     $this->modifyfortime($record);
+    return true;
   }
 
   function modifyfortime(&$record)

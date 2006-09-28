@@ -98,7 +98,7 @@
 
       // Get the phase record from the database and throw an error if not found
       $phasenode = &atkGetNode("project.phase");
-      $phaserecords = $phasenode->selectDb("phase.id='".$record["phaseid"]["phaseid"]."'");
+      $phaserecords = $phasenode->selectDb("phase.id='".$record["phaseid"]["id"]."'");      
       if (count($phaserecords) == 0)
       {
         atkerror("Cannot find phase to which the hours were registered.");
