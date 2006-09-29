@@ -217,8 +217,12 @@ class hours extends atkNode
     }
 
     $this->add(new atkDateAttribute("entrydate",AF_HIDE|AF_OBLIGATORY));
-
-    $this->setOrder("projectid.abbreviation");
+/**
+ * @todo: we need to order by project.abbreviation or projectid.abbreviation,
+ * but since Achievo crashes when editing or deleting hour registrations,
+ * I've removed it.
+ */
+//    $this->setOrder("project.abbreviation");
 
     $this->setTable("hours","hours");
     $this->addSecurityMap("mra_move", "edit");
@@ -230,47 +234,21 @@ class hours extends atkNode
     $this->redirect(session_url(dispatch_url("timereg.movehours", "add", array("atkselector"=>$selector)), SESSION_REPLACE));
   }
 
-/**
-   * @todo: adding dependees again must be fixed in tomorrow branch. Dirty workaround!
-   *
-   * @todo: this function isn't called when phaseid is autocomplete
-   * 
-   * When phase id is updated, the new generated phaseid attribute lacks the onchange
-   * handler, thus activityid cannot refreshed by this attribute.
-   *
-   * @param unknown_type $record
-   * @param unknown_type $mode
-   * @return unknown
-   */
-  function phaseid_selection($record,$mode="")
-  {
-    $filter = "";    
-    if ($mode == 'add' || $mode == 'edit')
-    {
-      $filter = "phase.projectid='[projectid.id]'";      
-    }
-
-    $att = &$this->getAttribute("phaseid");    
-    $att->addDependee('activityid');
-    $att->addDestinationFilter($filter);
-    $att->_registerDependees($mode,"");    
-    return $att->getSelectableRecords($record, $mode);
-  }  
-  
   function activityid_selection($record, $mode="")
   {
     $filter = "";
+    $attr = &$this->getAttribute('activityid');
     if ($mode == 'add' || $mode == 'edit')
     {
       $activityids = $this->getAvailableActivityIds($record["phaseid"]["id"]);
-      if(count($activityids))
+      if(count($activityids)>0)
         $filter = "activity.id IN (".implode(",",$activityids).")";
       else
         $filter = "activity.id IN (NULL)";
-    }
-
-    $attr = &$this->getAttribute('activityid');
-    $attr->addDestinationFilter($filter);
+      
+      $attr->addDestinationFilter($filter);
+    }    
+    
     return $attr->getSelectableRecords($record, $mode);
   }
 
@@ -282,12 +260,12 @@ class hours extends atkNode
     $phaseactivityNode = &atkGetNode("project.phase_activity");
     $selector = sprintf("phaseid='%s'",$phaseid);
     $recs = $phaseactivityNode->selectDb($selector);
-
     //get the ids
     $ids = array();
     foreach ($recs as $rec)
     {
-      $ids[]= $rec["activityid"]["id"];
+      if(isset($rec["activityid"]["id"]) && $rec["activityid"]["id"]!='' && $rec["activityid"]["id"]!=0)
+        $ids[]= $rec["activityid"]["id"];
     }
     return $ids;
   }  
@@ -390,7 +368,7 @@ class hours extends atkNode
   }
 
   function action_edit(&$handler)
-  {
+  { 
     global $g_user;
     $recs = $this->selectDb($this->m_postvars["atkselector"], "hours.id", "", "", array("userid", "activitydate"));
 
@@ -469,10 +447,11 @@ class hours extends atkNode
     if (isset($this->m_postvars["atkformdata"]["activitydate"]))
       $this->m_postvars["atkformdata"]["activitydate"] = $this->getInitialDate();
   }
-
+  
   // override the admin action, because we have the weekview/dayview switch..
   function action_admin(&$handler)
   {
+atk_var_dump($this->m_postvars,"<h1>PSTVARS</h1>");    
     $page = &$this->getPage();
 
     global $g_user;
