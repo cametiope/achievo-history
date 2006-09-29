@@ -154,7 +154,7 @@
 
       if (moduleExists("billing"))
       {
-        $billing_projecttypepair = $g_sessionManager->pageVar("billing_projecttypeid");
+        $billing_projecttypepair = $g_sessionManager->pageVar("billing_projecttype_id");
         $billing_projecttypeid = (!empty($billing_projecttypepair)) ? atkArrayNvl(decodeKeyValuePair($billing_projecttypepair), "billing_projecttype.id", "") : "";
       }
       $phasepair =          explode("=",$g_sessionManager->pageVar("phaseid"));
@@ -163,7 +163,7 @@
       $userid =             $g_sessionManager->pageVar("userid");
       $nameswitch =         $g_sessionManager->pageVar("nameswitch");
       $roleid =             $g_sessionManager->pageVar("roleid");
-      $remark =             $g_sessionManager->pageVar("remark");
+      $remark =             $g_sessionManager->pageVar("remark");      
       $aggregate =          $g_sessionManager->pageVar("aggregate");
       $startdate =          $g_sessionManager->pageVar("startdate");
       $enddate =            $g_sessionManager->pageVar("enddate");
@@ -199,13 +199,12 @@
       }
 
       $hoursnode = &atkGetNode("reports.surveyhours");
-      $hoursnode->m_default_order = ""; //at default we do not sort.
-
+      
       $hoursnode->m_postvars = $this->m_postvars; // Share postvars.
 
       $hoursnode->add(new functionLevelAttribute("functionlevel",AF_FORCE_LOAD));
-      $attbilling_projecttypeid = &$hoursnode->add(new billingTypeViewAttribute("billing_projecttypeid"));
-      $attbilling_projecttypeid->m_ownerInstance = &$hoursnode;
+      $attbilling_projecttypeid = &$hoursnode->add(new billingTypeViewAttribute("billing_projecttype_id"));
+      $attbilling_projecttypeid->m_ownerInstance = &$hoursnode;      
       $hoursnode->add(new creditorViewAttribute("creditor_id", AF_FORCE_LOAD));
 
       $columnConfig = &$hoursnode->getColumnConfig();
@@ -339,7 +338,7 @@
          );
 
         if (moduleExists("billing"))
-          $dummyrec["billing_projecttypeid"] = array("id"=>$billing_projecttypeid);
+          $dummyrec["billing_projecttype_id"] = array("id"=>$billing_projecttypeid);
 
         foreach ($externalHourSurveyColumns as $module => $attrlist)
         {
@@ -373,10 +372,10 @@
 
         if (moduleExists("billing"))
         {
-          $projecttypeatt = &new atkManyToOneRelation('billing_projecttypeid', "billing.projecttype");
-          $this->add($projecttypeatt);
-          $projecttypeatt->m_ownerInstance = &$this;
-
+          $billingRateNode = &atkGetNode("billing.rate");          
+          $projecttypeatt = &new atkManyToOneRelation('billing_projecttype_id', "billing.projecttype");
+          $projecttypeatt->m_ownerInstance = &$billingRateNode;
+          $projecttypeatt->removeFlag(AF_RELATION_AUTOCOMPLETE);
           $data[] = array(atktext('billing_type','billing').':',$projecttypeatt->edit($dummyrec));
           $this->_addOr($data);
         }
@@ -391,7 +390,7 @@
         //to make the atkTableRenderer render the id in the TD of this attribute.
         $data[] = array(atktext('phase','project').':',
                     array('value'=>$phaseatt->edit($dummyrec),
-                          'id'=>"timereg_hours_".$phaseatt->m_name)
+                          'id'=>"reports_surveyhours_".$phaseatt->m_name)
                   );
 
         $this->_addOr($data);
@@ -529,7 +528,7 @@
               $translatewithmodule = $module;
           }
           $label = atkText($arr_col[$i], $translatewithmodule);
-          if ($arr_col[$i]=="billing_projecttypeid") $label = atkText("billing_type", "billing");
+          if ($arr_col[$i]=="billing_projecttype_id") $label = atkText("billing_type", "billing");
           $arr_collabel[] = $label;
         }
 
@@ -599,7 +598,7 @@
         $filterarray[] = $this->_addFilterArrayItem("billing_type","='$billing_projecttypeid'","projectid");
         
       if(!empty($remark)&&$remark!="")
-        $filterarray[] = $this->_addFilterArrayItem("remark","LIKE lower('%$remark%')","hours");
+        $filterarray[] = $this->_addFilterArrayItem("remark","LIKE lower('%".escapeSQL($remark)."%')","hours");
         
       if($department_name && $department_name != "all") 
         $filterarray[] = $this->_addFilterArrayItem("department","='".escapeSQL($department_name)."'","userid");
@@ -733,11 +732,12 @@
         {
           $actions = $hoursnode->defaultActions("list");
         }
-
+      
         $rl = &atknew("atk.recordlist.atkrecordlist");
 
+        
         // make the recordlist think its operating on reports node.
-        $rl->setMasterNode($this);
+        $rl->setMasterNode($this);        
         $content.=$rl->render($hoursnode, $data, $actions, RL_EXT_SORT|RL_MRA, $suppress);
         $content.='<br>'.(atkLevel()>0?atkButton('<< '.atktext("back"), "", SESSION_BACK)."<br>":"").'<br>';
         $page->addContent('<div class="contentblock">'.$ui->renderBox(array("title"=>$title, "content"=>'<div class="content">'.$content.'</div>')).'</div>');
