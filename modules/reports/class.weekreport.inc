@@ -210,10 +210,13 @@ class weekreport extends atkNode
 
     //@todo: addToWeekReportQuery() for each harvestedModule.
     $this->getHarvestedModuleObjects();
-    foreach($this->m_harvestedModules as $modulename=>$obj)
-    {        
-      if (method_exists($obj, "weekreport_addToQuery"))
-        $obj->weekreport_addToQuery($query);
+    if($this->m_harvestedModules!=null)
+    {
+      foreach($this->m_harvestedModules as $modulename=>$obj)
+      {        
+        if (method_exists($obj, "weekreport_addToQuery"))
+          $obj->weekreport_addToQuery($query);
+      }
     }
         
     return $db->getrows($query->buildSelect());
