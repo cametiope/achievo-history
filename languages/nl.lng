@@ -80,6 +80,7 @@
   "calendar_defaultuserview" => "Standaard gebruiker in agenda overzichten",
   "cancelled" => "Geannuleerd",
   "cellular" => "Mobiel",
+  "changeabbreviation" => "Afkorting aanpassen",
   "city" => "Woonplaats",
   "clicktoviewactiverecords" => "Klik hier om actieve records te bekijken.",
   "clicktoviewarchive" => "Klik hier om het archief te bekijken.",
