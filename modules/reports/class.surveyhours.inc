@@ -19,7 +19,24 @@ class surveyhours extends hours
         $attr->removeFlag(AF_OBLIGATORY);
       }        
     }
-    $this->setSecurityAlias('timereg.hours');
+    $this->setOrder("");    
+    $this->setSecurityAlias('timereg.hours');    
   }
+  
+  /**
+   * This filter is only needed in the hoursnode, where activityid
+   * depends on the phaseid.
+   *
+   * @param array $record The record
+   * @param String $mode The mode
+   * @return result of function getSelectableRecords
+   */
+  function activityid_selection($record, $mode="")
+  {
+    $attr = &$this->getAttribute('activityid');
+    return $attr->getSelectableRecords($record, $mode);    
+  }
+  
+  
 }
 ?>
