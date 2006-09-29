@@ -95,6 +95,7 @@
   "contacts" => "Contactpersons",
   "continue" => "Continue",
   "contract" => "Contract",
+  "contractname" => "Contract name",
   "contractnumber" => "Contract number",
   "contracts" => "Organization contracts",
   "contracts_fuzzyprojectaddhint" => "Enter keywords (comma separated) of projects that are covered this contract.",

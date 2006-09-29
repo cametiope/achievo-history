@@ -94,6 +94,7 @@
   "contacts" => "Contactpersonen",
   "continue" => "Doorgaan",
   "contract" => "Overeenkomst",
+  "contractname" => "Contract naam",
   "contractnumber" => "Overeenkomst nummer",
   "contracts" => "Klanten overeenkomsten",
   "contracts_fuzzyprojectaddhint" => "Vul trefwoorden in (komma-gescheiden) van projecten die gedekt worden door deze overeenkomst.",
