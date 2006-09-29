@@ -477,6 +477,7 @@
 	  	$g_sessionManager->pageVar("reason");
 
       $page = &$this->getPage();
+      atkimport("atk.ui.atktheme");
       $theme = &atkTheme::getInstance();
 
       if (!isset($this->m_postvars["reason"]))
