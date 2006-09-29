@@ -327,6 +327,7 @@
   "or" => "of",
   "orderby" => "Sorteren op",
   "organization" => "Organisatie",
+  "organizationcode" => "Organisatie code",
   "organizationid" => "Organisatie",
   "organizations" => "Organisaties",
   "organization_invoiceaddress" => "Factuur adres",

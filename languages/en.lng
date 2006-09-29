@@ -328,6 +328,7 @@
   "or" => "or",
   "orderby" => "Order by",
   "organization" => "Organization",
+  "organizationcode" => "Organization code",
   "organizationid" => "Organization",
   "organizations" => "Organizations",
   "organization_invoiceaddress" => "Billing address",
