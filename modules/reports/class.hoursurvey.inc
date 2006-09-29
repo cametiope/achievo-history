@@ -528,7 +528,7 @@
               $translatewithmodule = $module;
           }
           $label = atkText($arr_col[$i], $translatewithmodule);
-          if ($arr_col[$i]=="billing_projecttype_id") $label = atkText("billing_type", "billing");
+          if ($arr_col[$i]=="billing_projecttypeid") $label = atkText("billing_type", "billing");
           $arr_collabel[] = $label;
         }
 
