@@ -9,19 +9,17 @@ class surveyhours extends hours
     {
       $attr = &$this->getAttribute($attrName);
       if (is_a($attr, 'atkmanytoonerelation'))
+      {
         $attr->removeFlag(AF_RELATION_AUTOCOMPLETE);
+      }
         
       if($attrName == "phaseid")
+      {
         $attr->m_dependees = array();
-        
+        $attr->removeFlag(AF_OBLIGATORY);
+      }        
     }
     $this->setSecurityAlias('timereg.hours');
-  }  
-
-//  function phaseid_selection($record,$mode="")
-//  {
-//    $att = &$this->getAttribute("phaseid");
-//    return $att->getSelectableRecords($record, $mode);
-//  }  
+  }
 }
 ?>
