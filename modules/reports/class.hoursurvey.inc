@@ -665,7 +665,7 @@
         {
           if ($itsOrderby && $itsOrderby != "-")
           {
-                        //We need to add the tablename before the attribute. 
+            //We need to add the tablename before the attribute. 
             switch($itsOrderby)
             {
               //functionlevel has another table- AND fieldname
@@ -703,7 +703,23 @@
             //do nothing
             break;        
         }
-      }       
+      }
+
+      //Check if we need to add additional columns because of the selected order-by.
+      foreach($orderby as $key =>$itsOrderby)
+      {
+        if ($itsOrderby && $itsOrderby != "-")
+        {
+          switch($itsOrderby)
+          {
+            case "phaseid":
+              if(!in_array("phaseid",$col)) $col[] = "phaseid";
+            default:
+              //do nothing
+              break;
+          }
+        }
+      }
 
       //The id field needs to be added too, or else the dispatch url doesn't know which record to edit.
       if(!in_array("id",$col))
