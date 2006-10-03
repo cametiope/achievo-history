@@ -181,7 +181,7 @@
       //The orderby postvar is only filled when clicking on the refresh button.
       //Atk uses the postvar atkorderby when a user clicks on a column to sort on it. Powers combined
       if(!isset($orderby) && isset($this->m_postvars["atkorderby"])) $orderby[] = $this->m_postvars["atkorderby"];
-
+      
       foreach(array_keys($externalHourSurveyColumns) as $module)
       {
         $attrlist = $externalHourSurveyColumns[$module];
@@ -223,6 +223,10 @@
             $columnConfig->setSubTotal($orderby[$i], ($subtotal[$i]==1));
           }
         }
+      }
+      else 
+      {
+        $orderby = array();
       }
 
       // Determine collumn suppresslist:
