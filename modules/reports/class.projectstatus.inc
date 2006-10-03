@@ -176,8 +176,17 @@
                               WHERE
                                 p.id = ph.projectid
                                 AND h.phaseid = ph.id
-                                AND ph.startdate < '$strto'
-                                AND ph.enddate > '$strfrom'
+                                AND 
+                                (
+                                  (ph.startdate < '$strto' AND ph.enddate > '$strfrom')
+                                  OR
+                                  (ph.startdate < '$strto' AND ph.enddate IS NULL)
+                                  OR
+                                  (ph.startdate IS NULL AND ph.enddate > '$strfrom')
+                                  OR
+                                  (ph.startdate IS NULL AND ph.enddate IS NULL)
+                                )
+                                
                                 AND ph.status = 'active'
                                 AND p.status = 'active'
                                 $empfilter

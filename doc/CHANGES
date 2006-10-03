@@ -9,7 +9,8 @@ Changes in achievo_tomorrow
 + Added support for atkpartials in dispatch.php. [Dennis]
 + Added Ajax functionality in hours node. [Dennis]
 * Fixed descriptor of organization.contracts node [Dennis]
-
+* Fixed: projectstatus now also shows phases without a startdate 
+  and/or enddate. [Dennis]
 
 Changes in Achievo 1.3
 ----------------------
