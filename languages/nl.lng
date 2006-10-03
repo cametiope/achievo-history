@@ -304,6 +304,7 @@
   "monthview" => "Maandoverzicht",
   "morning" => "Ochtend",
   "mra_move" => "Verplaats",
+  "mra_complete" => "Instellen op afgerond",
   "mustbecompletedbeforephase" => "moet afgerond zijn voor fase",
   "name" => "Naam",
   "new" => "Nieuw",

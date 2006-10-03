@@ -305,6 +305,7 @@
   "monthview" => "Monthview",
   "morning" => "Morning",
   "mra_move" => "Move",
+  "mra_complete" => "Set to completed",
   "mustbecompletedbeforephase" => "must be completed before phase",
   "name" => "Name",
   "new" => "New",
