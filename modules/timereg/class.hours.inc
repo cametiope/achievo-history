@@ -185,14 +185,15 @@ class hours extends atkNode
     $this->add(new atkManyToOneRelation("userid","employee.employee", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
 
     //phaseid must be added before the project id to make sure the join works
-    $phase = &new atkManyToOneRelation("phaseid","project.phase",AF_OBLIGATORY);
+    //we need the projectid to sort on
+    $phase = &new atkManyToOneRelation("phaseid","project.phase",AF_OBLIGATORY|AF_FORCE_LOAD);
     $phase->setDestinationFilter("phase.projectid='[projectid.id]'");
     $oneActivity = ($this->getActivityCount() == 1);
     if(!$oneActivity)
       $phase->addDependee("activityid");
     $this->add($phase,null, 30);
 
-    $project = &new projectManyToOneRelation("projectid","project.projectselector");
+    $project = &new projectManyToOneRelation("projectid","project.projectselector",AF_FORCE_LOAD);
     $project->addDependee("phaseid");
     $this->add($project,null,20);
 
@@ -218,11 +219,11 @@ class hours extends atkNode
 
     $this->add(new atkDateAttribute("entrydate",AF_HIDE|AF_OBLIGATORY));
 /**
- * @todo: we need to order by project.abbreviation or projectid.abbreviation,
- * but since Achievo crashes when editing or deleting hour registrations,
- * I've removed it.
+ * @todo: we need to order by projectid.abbreviation, ATK does not include the 
+ * projectid and phaseid in the selectDb so we FORCE_LOAD the projectid 
+ * and phaseid. This should actually be fixed in atk somehow. 
  */
-//    $this->setOrder("project.abbreviation");
+    $this->setOrder("projectid.abbreviation");
 
     $this->setTable("hours","hours");
     $this->addSecurityMap("mra_move", "edit");
