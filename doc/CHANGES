@@ -8,11 +8,14 @@ Changes in achievo_tomorrow
 ----------------------------
 + Added support for atkpartials in dispatch.php. [Dennis]
 + Added Ajax functionality in hours node. [Dennis]
++ Added translations of active_projects and archived projects
+  in organization node. [Dennis]
++ Added dutch and english translation of mra_complete. [Dennis]
 * Fixed descriptor of organization.contracts node [Dennis]
 * Fixed: projectstatus now also shows phases without a startdate 
   and/or enddate. [Dennis]
-* Added dutch and english translation of mra_complete. [Dennis]
 * Fixed: fatal error in class.project.inc. [Dennis]
+
 
 Changes in Achievo 1.3
 ----------------------
