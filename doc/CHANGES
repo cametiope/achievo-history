@@ -12,6 +12,7 @@ Changes in achievo_tomorrow
 * Fixed: projectstatus now also shows phases without a startdate 
   and/or enddate. [Dennis]
 * Added dutch and english translation of mra_complete. [Dennis]
+* Fixed: fatal error in class.project.inc. [Dennis]
 
 Changes in Achievo 1.3
 ----------------------

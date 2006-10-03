@@ -236,6 +236,7 @@
      */
     function action_planning(&$handler)
     {
+      atkimport("atk.ui.atktheme");
       // Get a singleton reference to the page, theme and ui
       $page = &$this->getPage();
       $theme = &atkTheme::getInstance();
