@@ -273,13 +273,13 @@ class contracts extends atkNode
     return $this->m_attribList["period_price"]->edit($rec)." ".atkconfig("currency_symbol");
   }
 
-  function descriptor_dev()
+  function descriptor_commit()
   {
     return "[description]";
   }
+  
   function descriptor($rec)
   {
-    atk_var_dump($rec);
     $ret = "";
     if(isset($rec["contractnumber"]) && $rec["contractnumber"]!="") $ret.=$rec["contractnumber"];
     if(isset($rec["contractname"]) && $rec["contractname"]!="")

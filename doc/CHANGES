@@ -4,6 +4,13 @@
 Bug numbers are references to bugs in http://www.achievo.org/bugzilla
 [names] are references to people in the AUTHORS file.
 
+Changes in achievo_tomorrow
+----------------------------
++ Added support for atkpartials in dispatch.php. [Dennis]
++ Added Ajax functionality in hours node. [Dennis]
+* Fixed descriptor of organization.contracts node [Dennis]
+
+
 Changes in Achievo 1.3
 ----------------------
 + Added CSV import possibility to projects and employees.
