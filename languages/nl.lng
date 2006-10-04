@@ -74,6 +74,7 @@
   "bgcolor" => "Achtergrondkleur",
   "bill" => "Factuur",
   "billing_period" => "Facturatie per",
+  "billing_type" => "Facturatie type",
   "birthdate" => "Geboortedatum",
   "booked" => "Geboekt",
   "both" => "Beide",

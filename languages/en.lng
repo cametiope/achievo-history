@@ -75,6 +75,7 @@
   "bgcolor" => "Backgroundcolor",
   "bill" => "Bill",
   "billing_period" => "Billing per",
+  "billing_type" => "Billing type",
   "birthdate" => "Date of birth",
   "booked" => "Booked",
   "both" => "Both",

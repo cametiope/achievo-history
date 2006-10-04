@@ -13,6 +13,7 @@ Changes in achievo_tomorrow
 + Added dutch and english translation of mra_complete. [Dennis]
 + Added dutch and english translation of autocomplete-select link for 
   organization.contracts. [Dennis]
++ Added dutch and english translation of billing_type. [Dennis]  
 * Fixed descriptor of organization.contracts node [Dennis]
 * Fixed: projectstatus now also shows phases without a startdate 
   and/or enddate. [Dennis]
