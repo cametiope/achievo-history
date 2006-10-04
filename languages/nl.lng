@@ -217,6 +217,7 @@
   "link_phase_add" => "Fase toevoegen",
   "link_project_add" => "Project toevoegen",
   "link_project_notes_add" => "Notitie toevoegen",
+  "link_select_contracts" => "Selecteer een overeenkomst",
   "link_project_personcontact_add" => "Contactpersoon toevoegen",
   "link_project_personemployee_add" => "Medewerker toevoegen",
   "link_select_schedule_person" => "Selecteer een genodigde",

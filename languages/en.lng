@@ -220,6 +220,7 @@
   "link_project_notes_add" => "Add a new note",
   "link_project_personcontact_add" => "Add contact",
   "link_project_personemployee_add" => "Add employee",
+  "link_select_contracts" => "Select a contract",
   "link_select_schedule_person" => "Select a attendee",
   "link_select_select_contact" => "Select a contact",
   "link_select_select_person" => "Select a person",
