@@ -19,6 +19,8 @@ Changes in achievo_tomorrow
 * Fixed: fatal error in class.project.inc. [Dennis]
 * Fixed: Removed border from atkboolattribute in Internet Explorer. 
   [Dennis]
+* Fixed: javascript error when clicking on a column in the 
+  weekreport. [dennis]
 
 Changes in Achievo 1.3
 ----------------------

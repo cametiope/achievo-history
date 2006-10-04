@@ -328,7 +328,7 @@ class weekreport extends atkNode
 
     if ($outputType==0)
     {
-      $output='<form action="dispatch.php" method="get" name="entryform">';
+      $output='<form action="dispatch.php" method="get" id="entryform" name="entryform">';
 
       $output.='<input type="hidden" name="atknodetype" value="reports.weekreport">';
       $output.='<input type="hidden" name="atkaction" value="'.$this->m_action.'">';
@@ -660,9 +660,7 @@ class weekreport extends atkNode
         $tbl = &atknew("atk.utils.atktablerenderer");
         $output = $tbl->render($data);
         $rl = &atknew("atk.recordlist.atkrecordlist");
-
-        $output.='<br>'.$rl->render($this, $rldata, array(),false,$suppress);
-
+        $output.='<br>'.$rl->render($this, $rldata, array(),false,$suppress,"rlform",array(),"","rlform");
         $weekreport = $ui->renderBox(array("title"=>atktext("weekreport")." ".atktext("report_intimespan")." ".$startdate." t/m ".$enddate,"content"=>$output));
         $page->addContent($weekreport);
 
