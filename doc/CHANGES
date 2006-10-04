@@ -21,6 +21,8 @@ Changes in achievo_tomorrow
   [Dennis]
 * Fixed: javascript error when clicking on a column in the 
   weekreport. [dennis]
+* Fixed: startdate and enddate were not correctly determined in
+  the weekreport node. [Dennis]
 
 Changes in Achievo 1.3
 ----------------------

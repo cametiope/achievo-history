@@ -299,25 +299,25 @@ class weekreport extends atkNode
     if (!isset($atkorderby)||$atkorderby=="") $atkorderby = "week";
 
     $view_all = $g_securityManager->allowed('reports.weekreport','view_all');
-
     $startdate = $g_sessionManager->pageVar("startdate");
     $enddate = $g_sessionManager->pageVar("enddate");
 
-    if (is_array($startdate))
-    {
+    if (is_array($startdate) && !empty($startdate["day"]) && !empty($startdate["month"]) && !empty($startdate["year"]) && isset($startdate) && $startdate!="")
+    {      
       $startdate = $startdate["year"]."-".sprintf("%02d",$startdate["month"])."-".sprintf("%02d",$startdate["day"]);
     }
     else
     {
-      if (!isset($startdate)||$startdate=="")	$startdate =  date("Y-m-d" ,time()-(86400*7));
+      $startdate =  date("Y-m-d" ,time()-(86400*7));
     }
-    if (is_array($enddate))
+    
+    if (is_array($enddate) && !empty($enddate["day"]) && !empty($enddate["month"]) && !empty($enddate["year"]) && isset($enddate) && $enddate!="")
     {
       $enddate = $enddate["year"]."-".sprintf("%02d",$enddate["month"])."-".sprintf("%02d",$enddate["day"]);
     }
     else
     {
-      if (!isset($enddate)||$enddate=="")			$enddate = date('Y-m-d');
+      $enddate = date('Y-m-d');
     }
 
     if (!isset($userid)||$userid=="")   			$userid=$g_user["id"];
