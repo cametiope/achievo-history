@@ -177,7 +177,7 @@
       $outputType =         atkArrayNvl($this->m_postvars, "outputType", "");
 
       $externalHourSurveyColumns = atkHarvestModules("getHourSurveyColumns", "", true);
-
+      
       //The orderby postvar is only filled when clicking on the refresh button.
       //Atk uses the postvar atkorderby when a user clicks on a column to sort on it. Powers combined
       if(!isset($orderby) && isset($this->m_postvars["atkorderby"])) $orderby[] = $this->m_postvars["atkorderby"];
@@ -758,7 +758,12 @@
         
         // make the recordlist think its operating on reports node.
         $rl->setMasterNode($this);        
-        $content.=$rl->render($hoursnode, $data, $actions, RL_EXT_SORT|RL_MRA|RL_NO_SORT, $suppress);
+        //$content.=$rl->render($hoursnode, $data, $actions, RL_EXT_SORT|RL_MRA|RL_NO_SORT, $suppress);
+/** 
+ * @todo: sorting does not work, removed flag RL_EXT_SORT, this should be fixed before merging 
+ * the achievo_tomorrow branch to the achievo head branch.
+ */
+        $content.=$rl->render($hoursnode, $data, $actions, RL_MRA|RL_NO_SORT, $suppress);
         $content.='<br>'.(atkLevel()>0?atkButton('<< '.atktext("back"), "", SESSION_BACK)."<br>":"").'<br>';
         $page->addContent('<div class="contentblock">'.$ui->renderBox(array("title"=>$title, "content"=>'<div class="content">'.$content.'</div>')).'</div>');
       }
