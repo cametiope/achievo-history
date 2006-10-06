@@ -624,7 +624,9 @@ class weekreport extends atkNode
       // sorting..
       if ($atkorderby=="") $atkorderby = "week";
 
-      usort($rldata,$atkorderby."_cmp");
+      $func = $atkorderby."_cmp";
+      if (function_exists($func))
+        usort($rldata, $func);
 
       if ($showdetails==1)
       {

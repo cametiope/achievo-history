@@ -132,7 +132,7 @@
         // Parse it using the record
         atkimport("atk.utils.atkstringparser");
         $parser = new atkStringParser($url);
-        $url = $parser->parse($record);
+        $url = $parser->parse($record, true);
 
         // Return a link
         return href($url, $record["name"], SESSION_NESTED);

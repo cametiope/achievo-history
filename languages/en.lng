@@ -620,7 +620,8 @@
   "yearly" => "Year",
   "youareinthearchive" => "You are viewing the archive.",
   "zipcode" => "Zipcode",
-
+  "projectselector" => "Project",
+  
   'lng'=>'Language',
   'language_bp'=>'Brazilian Portugese',
   'language_ca'=>'Catalan',
