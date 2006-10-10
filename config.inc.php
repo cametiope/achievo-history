@@ -177,7 +177,7 @@
   // This variable determines wether all manytoone dropdowns should have
   // the autocompletion flag.
   //
-  $config_manytoone_defaultautocomplete = true;
+  $config_manytoone_autocomplete_default = false;
   
   // This variable determines how many characters a user must enter
   // before an autocompletion search is performed.
