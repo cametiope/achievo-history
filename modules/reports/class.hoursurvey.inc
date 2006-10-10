@@ -153,7 +153,7 @@
       $projectid =          stripQuotes($projectpair[1]);
       if (moduleExists("billing"))
       {
-        $billing_projecttypepair = $g_sessionManager->pageVar("billing_projecttype_id");
+        $billing_projecttypepair = $g_sessionManager->pageVar("billing_projecttypeid");
         $billing_projecttypeid = (!empty($billing_projecttypepair)) ? atkArrayNvl(decodeKeyValuePair($billing_projecttypepair), "billing_projecttype.id", "") : "";
       }
       $phasepair =          explode("=",$g_sessionManager->pageVar("phaseid"));
@@ -202,7 +202,7 @@
       $hoursnode->m_postvars = $this->m_postvars; // Share postvars.
 
       $hoursnode->add(new functionLevelAttribute("functionlevel",AF_FORCE_LOAD));
-      $attbilling_projecttypeid = &$hoursnode->add(new billingTypeViewAttribute("billing_projecttype_id"));
+      $attbilling_projecttypeid = &$hoursnode->add(new billingTypeViewAttribute("billing_projecttypeid"));
       $attbilling_projecttypeid->m_ownerInstance = &$hoursnode;      
       $hoursnode->add(new creditorViewAttribute("creditor_id", AF_FORCE_LOAD));
 
@@ -341,7 +341,7 @@
          );
 
         if (moduleExists("billing"))
-          $dummyrec["billing_projecttype_id"] = array("id"=>$billing_projecttypeid);
+          $dummyrec["billing_projecttypeid"] = array("id"=>$billing_projecttypeid);
 
         foreach ($externalHourSurveyColumns as $module => $attrlist)
         {
@@ -376,7 +376,7 @@
         if (moduleExists("billing"))
         {
           $billingRateNode = &atkGetNode("billing.rate");          
-          $projecttypeatt = &new atkManyToOneRelation('billing_projecttype_id', "billing.projecttype");
+          $projecttypeatt = &new atkManyToOneRelation('billing_projecttypeid', "billing.projecttype");
           $projecttypeatt->m_ownerInstance = &$billingRateNode;
           $projecttypeatt->removeFlag(AF_RELATION_AUTOCOMPLETE);
           $data[] = array(atktext('billing_type','billing').':',$projecttypeatt->edit($dummyrec));
@@ -531,6 +531,7 @@
               $translatewithmodule = $module;
           }
           $label = atkText($arr_col[$i], $translatewithmodule);
+atk_var_dump($arr_col,"<h1>ARR_COL</h1>");
           if ($arr_col[$i]=="billing_projecttypeid") $label = atkText("billing_type", "billing");
           $arr_collabel[] = $label;
         }
