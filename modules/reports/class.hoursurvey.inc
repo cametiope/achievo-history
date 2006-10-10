@@ -151,7 +151,7 @@
       $activity_id =        stripQuotes($activitypair[1]);
       $projectpair =        explode("=",$g_sessionManager->pageVar("projectid"));
       $projectid =          stripQuotes($projectpair[1]);
-
+      $selectedproject  = $g_sessionManager->pageVar("selectedprojectid");
       if (moduleExists("billing"))
       {
         $billing_projecttypepair = $g_sessionManager->pageVar("billing_projecttype_id");
