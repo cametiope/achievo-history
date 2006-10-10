@@ -18,10 +18,6 @@ class timeDisplayAttribute extends atkAttribute
   }
 }
 
-function status_cmp($a, $b) { return compare_by_field($a, $b, "status"); }
-function week_cmp($a, $b) { return compare_by_field($a, $b, "week"); }
-function userid_cmp($a, $b) { return compare_by_field($a, $b, "userid"); }
-
 function compare_by_field($a, $b, $field)
 {
   if ($a[$field]==$b[$field])
@@ -624,7 +620,9 @@ class weekreport extends atkNode
       // sorting..
       if ($atkorderby=="") $atkorderby = "week";
 
-      $func = $atkorderby."_cmp";
+      list($field, $desc) = explode(' ', $atkorderby);
+      $func = create_function('$a, $b', 'return compare_by_field('.($desc != null ? '$b, $a' : '$a, $b').', "'.$field.'");');
+
       if (function_exists($func))
         usort($rldata, $func);
 
