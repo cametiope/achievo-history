@@ -219,9 +219,9 @@ class hours extends atkNode
 
     $this->add(new atkDateAttribute("entrydate",AF_HIDE|AF_OBLIGATORY));
 /**
- * @todo: we need to order by projectid.abbreviation, ATK does not include the 
- * projectid and phaseid in the selectDb so we FORCE_LOAD the projectid 
- * and phaseid. This should actually be fixed in atk somehow. 
+ * @todo: we need to order by projectid.abbreviation, ATK does not include the
+ * projectid and phaseid in the selectDb so we FORCE_LOAD the projectid
+ * and phaseid. This should actually be fixed in atk somehow.
  */
     $this->setOrder("projectid.abbreviation");
 
@@ -246,10 +246,10 @@ class hours extends atkNode
         $filter = "activity.id IN (".implode(",",$activityids).")";
       else
         $filter = "activity.id IN (NULL)";
-      
+
       $attr->addDestinationFilter($filter);
-    }    
-    
+    }
+
     return $attr->getSelectableRecords($record, $mode);
   }
 
@@ -269,8 +269,8 @@ class hours extends atkNode
         $ids[]= $rec["activityid"]["id"];
     }
     return $ids;
-  }  
-  
+  }
+
   function processGlobalVar($name, $value="")
   {
     global $g_sessionManager;
@@ -369,7 +369,7 @@ class hours extends atkNode
   }
 
   function action_edit(&$handler)
-  { 
+  {
     global $g_user;
     $recs = $this->selectDb($this->m_postvars["atkselector"], "hours.id", "", "", array("userid", "activitydate"));
 
@@ -448,11 +448,10 @@ class hours extends atkNode
     if (isset($this->m_postvars["atkformdata"]["activitydate"]))
       $this->m_postvars["atkformdata"]["activitydate"] = $this->getInitialDate();
   }
-  
+
   // override the admin action, because we have the weekview/dayview switch..
   function action_admin(&$handler)
   {
-atk_var_dump($this->m_postvars,"<h1>PSTVARS</h1>");    
     $page = &$this->getPage();
 
     global $g_user;
@@ -949,7 +948,7 @@ atk_var_dump($this->m_postvars,"<h1>PSTVARS</h1>");
   function validate(&$record, $mode)
   {
     $this->validateActivityId($record);
-    
+
     // when inserting multiple days at once, we don't break on invalid days
     // (we will just skip them later on).
     if ($record["activitydate"]["multi"]!=1)
@@ -1003,7 +1002,7 @@ atk_var_dump($this->m_postvars,"<h1>PSTVARS</h1>");
       }
     }
   }
-  
+
   /**
    * This method is called by the hoursurvey to get custom search fields.
    * Derived classes (for example in overloaders) can override this method and
@@ -1194,33 +1193,29 @@ atk_var_dump($this->m_postvars,"<h1>PSTVARS</h1>");
     $locktype = $this->getLockType($rec["userid"]["id"], sprintf("%02d-%02d-%02d", $rec["activitydate"]["year"], $rec["activitydate"]["month"], $rec["activitydate"]["day"]));
 
     // If the record doesn't belong to me or is locked
-    if (empty($userid) || ($rec["userid"]["id"] != $userid) || ($locktype != ""))
+    if ($this->recordIsReadonly($rec, $userid, $locktype))
     {
-
-      // If not allowed to edit someone elses records, unset the actions
-      if (!$this->allowed("any_user"))
+      unset($actions["edit"]);
+      unset($actions["delete"]);
+      $idx = array_search("delete", $mraactions);
+      if ($idx!==false)
       {
-        unset($actions["edit"]);
-        unset($actions["delete"]);
-        $idx = array_search("delete", $mraactions);
-        if ($idx!==false)
-        {
-          unset($mraactions[$idx]);
-        }
-      }
-      else
-      {
-        $actionbase = dispatch_url($this->atknodetype(), "[atkaction]", array("atkselector" => "[pk]", "viewuser" => $this->m_user));
-        $actions = array();
-        $actions["edit"] = str_replace("[atkaction]", "edit", $actionbase);
-        $actions["delete"] = str_replace("[atkaction]", "delete", $actionbase);
-        $mraactions["mra_move"] = "mra_move";
+        unset($mraactions[$idx]);
       }
     }
     else
     {
+      $actionbase = dispatch_url($this->atknodetype(), "[atkaction]", array("atkselector" => "[pk]", "viewuser" => $this->m_user));
+      $actions = array();
+      $actions["edit"] = str_replace("[atkaction]", "edit", $actionbase);
+      $actions["delete"] = str_replace("[atkaction]", "delete", $actionbase);
       $mraactions["mra_move"] = "mra_move";
     }
+  }
+
+  function recordIsReadonly($rec, $userid, $locktype)
+  {
+    return (empty($userid) || (($rec["userid"]["id"] != $userid) && !$this->allowed("any_user")) || ($locktype != ""));
   }
 
   function getLockIcon()
@@ -1239,7 +1234,7 @@ atk_var_dump($this->m_postvars,"<h1>PSTVARS</h1>");
    */
   function _isThisTheFirstTimeRegForThisProject()
   {
-    $phasenode =   &atkGetNode("project.phase");    
+    $phasenode =   &atkGetNode("project.phase");
     $hoursnode =   &atkGetNode("timereg.hours");
     $record = $this->updateRecord();
     $user = getUser();
