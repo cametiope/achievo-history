@@ -364,10 +364,33 @@ class hours extends atkNode
       $values["activityid"]["id"] = $result[0]["id"];
     }
 
+    
+    //Set an initial workperiod if we can find one that has the defaultrate
+    // set to true.
+    $default = $this->getDefaultWorkPeriod();
+    if($default > 0)
+    {
+      $values["workperiod"]["id"] = $default;
+    }
+    
     // Return the initial values
     return $values;
   }
-
+  
+  /**
+   * Retrieve the default workperiod.
+   *
+   * @return id of default workperiod or 0 if none was found.
+   */
+  function getDefaultWorkPeriod()
+  {
+    $node = &atkGetNode("timereg.workperiod");
+    /* @var $node atkNode */
+    $records = $node->selectDb("defaultrate='1'","","","",array("id"));
+    
+    return (count($records)>0) ? $records[0]["id"] : 0;
+  }
+  
   function action_edit(&$handler)
   {
     global $g_user;

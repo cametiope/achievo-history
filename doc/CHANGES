@@ -24,6 +24,8 @@ Changes in achievo_tomorrow
   weekreport. [dennis]
 * Fixed: startdate and enddate were not correctly determined in
   the weekreport node. [Dennis]
++ Added initial value for workperiod in hours node for autocompletion
+  fields. [Dennis]
 
 Changes in Achievo 1.3
 ----------------------
