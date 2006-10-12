@@ -25,7 +25,8 @@ class surveyhours extends hours
   
   /**
    * This filter is only needed in the hoursnode, where activityid
-   * depends on the phaseid.
+   * depends on the phaseid. So we override the function here to disable the
+   * filter.
    *
    * @param array $record The record
    * @param String $mode The mode
@@ -36,7 +37,14 @@ class surveyhours extends hours
     $attr = &$this->getAttribute('activityid');
     return $attr->getSelectableRecords($record, $mode);    
   }
-  
-  
+
+  /**
+   * The original action_edit function of the hoursnode conflicts with the functionality
+   * the hoursurvey needs.
+   */
+  function action_edit(&$handler)
+  {
+    return $handler->action_edit();
+  }
 }
 ?>

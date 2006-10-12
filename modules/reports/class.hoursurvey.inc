@@ -156,8 +156,26 @@
         $billing_projecttypepair = $g_sessionManager->pageVar("billing_projecttypeid");
         $billing_projecttypeid = (!empty($billing_projecttypepair)) ? atkArrayNvl(decodeKeyValuePair($billing_projecttypepair), "billing_projecttype.id", "") : "";
       }
-      $phasepair =          explode("=",$g_sessionManager->pageVar("phaseid"));
+      
+      $phasepair =          explode("=",$g_sessionManager->pageVar("phaseid"));      
       $phaseid =            stripQuotes($phasepair[1]);
+
+      //if we only have a phaseid, retrieve the projectid.
+      if(!empty($phaseid) && empty($projectid))
+      {
+        $node = &atkGetNode("project.phase");        
+        /* @var $node atkNode */
+        $records = $node->selectDb(sprintf("phase.id='%d'",$phaseid),"","","",array("id","projectid"));
+
+        if(count($records))        
+          $projectid= $records[0]["projectid"]["id"];
+        else //We have an incorrect phaseid, we clear the phaseid
+        {          
+          $g_sessionManager->pageVar("phaseid","");
+          $phaseid = "";
+        }
+        
+      }
 
       $userid =             $g_sessionManager->pageVar("userid");
       $nameswitch =         $g_sessionManager->pageVar("nameswitch");
@@ -531,7 +549,7 @@
               $translatewithmodule = $module;
           }
           $label = atkText($arr_col[$i], $translatewithmodule);
-atk_var_dump($arr_col,"<h1>ARR_COL</h1>");
+
           if ($arr_col[$i]=="billing_projecttypeid") $label = atkText("billing_type", "billing");
           $arr_collabel[] = $label;
         }
@@ -919,6 +937,7 @@ atk_var_dump($arr_col,"<h1>ARR_COL</h1>");
       $content.='<input type="hidden" name="atknodetype" value="'.$this->atkNodeType().'">';
       $content.='<input type="hidden" name="atkaction" value="report">';
     }
+
   }
 
 ?>
