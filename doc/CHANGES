@@ -24,8 +24,17 @@ Changes in achievo_tomorrow
   weekreport. [dennis]
 * Fixed: startdate and enddate were not correctly determined in
   the weekreport node. [Dennis]
+* Fixed: When using a graphAttribute on a page, the submit buttons did
+  not work in IE due to a subform added by the graphAttribute. 
+  [Peter,Dennis]
+* Fixed: The stats tab in project node wasn't visible in the view action.
+  [Peter, Dennis]  
+* Fixed: When using the graph module, PHP errors and deprecated messages 
+  were visible to the user. Configured jpg-config.inc to hide these
+  messages. [Peter, Dennis]  
 + Added initial value for workperiod in hours node for autocompletion
   fields. [Dennis]
+  
 
 Changes in Achievo 1.3
 ----------------------
