@@ -32,6 +32,8 @@ Changes in achievo_tomorrow
 * Fixed: When using the graph module, PHP errors and deprecated messages 
   were visible to the user. Configured jpg-config.inc to hide these
   messages. [Peter, Dennis]  
+* Fixed: Link-Name of phase on select-page of the phasenode was broken and
+  caused a 'session expired' notice. [Dennis]
 + Added initial value for workperiod in hours node for autocompletion
   fields. [Dennis]
   
