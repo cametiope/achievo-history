@@ -175,7 +175,11 @@
 
       // Render a box around all elements and put them in an array
       $boxedblocks = array();
-      $boxedblocks[] = '<div class="contentblock">'.$ui->renderBox(array("title"=>$this->text('parameters'), "content"=>'<div class="content">'.$parameterbar.'</div>')).'</div>';
+      if (atkConfig("report_hide_parameters", false))
+        $boxedblocks[] = '<div class="displaynone">'.$ui->renderBox(array("title"=>$this->text('parameters'), "content"=>$parameterbar)).'</div>';
+      else
+        $boxedblocks[] = '<div class="contentblock">'.$ui->renderBox(array("title"=>$this->text('parameters'), "content"=>'<div class="content">'.$parameterbar.'</div>')).'</div>';
+
       foreach ($contentelements as $titlekey => $content)
       {
         $boxedblocks[] = '<div class="contentblock">'.$ui->renderBox(array("title"=>$titlekey, "content"=>'<div class="content">'.$content.'</div>')).'</div>';

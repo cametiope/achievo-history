@@ -141,6 +141,43 @@
       $this->atkNode("hoursurvey");
     }
 
+    function getOrderByStatement($orderby, $orderdirection)
+    {
+      $orderbystatement = array();
+      if ($orderby)
+      {
+        foreach($orderby as $key => $itsOrderby)
+        {
+          if ($itsOrderby && $itsOrderby != "-")
+          {
+            //We need to add the tablename before the attribute.
+            switch($itsOrderby)
+            {
+              //functionlevel has another table- AND fieldname
+              case "functionlevel":
+                $itsOrderby = "functionlevelid.name";
+                break;
+              //creditor_id has another table- AND fieldname
+              case "creditor_id":
+                $itsOrderby = "creditor_id.name";
+                break;
+              //projectid has the table phaseid
+              case "projectid":
+                $itsOrderby = "phaseid.".$itsOrderby;
+                break;
+              //Other attributes have the table hours
+              default:
+                $itsOrderby = "hours.".$itsOrderby;
+                break;
+            }
+
+            $orderbystatement[] = $itsOrderby . " " . $orderdirection[$key];
+          }
+        }
+      }
+      return $orderbystatement;
+    }
+
     function action_report(&$handler)
     {
       global $g_user, $g_sessionManager;
@@ -612,7 +649,10 @@
 
         $content.=$tbl->render($data);
         $content.='</form><br>';
-        $page->addContent('<div class="contentblock">'.$ui->renderBox(array("title"=>$title, "content"=>'<div class="content">'.$content.'</div>')).'</div>');
+        if (atkConfig("report_hide_parameters", false))
+          $page->addContent('<div class="displaynone">'.$ui->renderBox(array("title"=>$title, "content"=>$content)).'</div>');
+        else
+          $page->addContent('<div class="contentblock">'.$ui->renderBox(array("title"=>$title, "content"=>'<div class="content">'.$content.'</div>')).'</div>');
       }
 
       /** Create filter array **/
@@ -693,39 +733,7 @@
           $filterarray[] = $this->_addFilterArrayItem("userid","='$userid'","hours");
       }
 
-      $orderbystatement = array();
-      if ($orderby)
-      {
-        foreach($orderby as $key => $itsOrderby)
-        {
-          if ($itsOrderby && $itsOrderby != "-")
-          {
-            //We need to add the tablename before the attribute.
-            switch($itsOrderby)
-            {
-              //functionlevel has another table- AND fieldname
-              case "functionlevel":
-                $itsOrderby = "functionlevelid.name";
-                break;
-              //creditor_id has another table- AND fieldname
-              case "creditor_id":
-                $itsOrderby = "creditor_id.name";
-                break;
-              //projectid has the table phaseid
-              case "projectid":
-                $itsOrderby = "phaseid.".$itsOrderby;
-                break;
-              //Other attributes have the table hours
-              default:
-                $itsOrderby = "hours.".$itsOrderby;
-                break;
-            }
-
-            $orderbystatement[] = $itsOrderby . " " . $orderdirection[$key];
-          }
-        }
-      }
-
+      $orderbystatement = $this->getOrderByStatement($orderby, $orderdirection);
 
       //Check if we need to add additional columns because of the selected filter.
       foreach($filterarray as $item)
