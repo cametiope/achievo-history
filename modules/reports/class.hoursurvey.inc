@@ -19,13 +19,21 @@
 
     function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
     {
+      // Both grouping and summarising one column is useless and would give an error, so just don't do it.
+      if ((count($this->m_groupbyfields) == 1) &&($this->fieldName() == $this->m_groupbyfields[0]))
+        return;
+
       $query->addField("SUM(".$tablename.".".$this->fieldName().")","","",$fieldaliasprefix,!$this->hasFlag(AF_NO_QUOTES));
 
       foreach($this->m_groupbyfields as $field)
       {
         if ($field!=$this->fieldName()) // can't aggregate on ourselves
         {
-          $query->addGroupBy($tablename.".".$field);
+          $groupby = $tablename.".".$field;
+          if ($groupby == "hours.projectid") { $groupby = "phaseid.projectid"; }
+          if ($groupby == "hours.functionlevel") { $groupby = "userid.functionlevel"; }
+          if ($groupby == "hours.creditor_id") { $groupby = "userid.creditor_id"; }
+          $query->addGroupBy($groupby);
         }
       }
     }
@@ -156,31 +164,31 @@
         $billing_projecttypepair = $g_sessionManager->pageVar("billing_projecttypeid");
         $billing_projecttypeid = (!empty($billing_projecttypepair)) ? atkArrayNvl(decodeKeyValuePair($billing_projecttypepair), "billing_projecttype.id", "") : "";
       }
-      
-      $phasepair =          explode("=",$g_sessionManager->pageVar("phaseid"));      
+
+      $phasepair =          explode("=",$g_sessionManager->pageVar("phaseid"));
       $phaseid =            stripQuotes($phasepair[1]);
 
       //if we only have a phaseid, retrieve the projectid.
       if(!empty($phaseid) && empty($projectid))
       {
-        $node = &atkGetNode("project.phase");        
+        $node = &atkGetNode("project.phase");
         /* @var $node atkNode */
         $records = $node->selectDb(sprintf("phase.id='%d'",$phaseid),"","","",array("id","projectid"));
 
-        if(count($records))        
+        if(count($records))
           $projectid= $records[0]["projectid"]["id"];
         else //We have an incorrect phaseid, we clear the phaseid
-        {          
+        {
           $g_sessionManager->pageVar("phaseid","");
           $phaseid = "";
         }
-        
+
       }
 
       $userid =             $g_sessionManager->pageVar("userid");
       $nameswitch =         $g_sessionManager->pageVar("nameswitch");
       $roleid =             $g_sessionManager->pageVar("roleid");
-      $remark =             $g_sessionManager->pageVar("remark");      
+      $remark =             $g_sessionManager->pageVar("remark");
       $aggregate =          $g_sessionManager->pageVar("aggregate");
       $startdate =          $g_sessionManager->pageVar("startdate");
       $enddate =            $g_sessionManager->pageVar("enddate");
@@ -194,11 +202,11 @@
       $outputType =         atkArrayNvl($this->m_postvars, "outputType", "");
 
       $externalHourSurveyColumns = atkHarvestModules("getHourSurveyColumns", "", true);
-      
+
       //The orderby postvar is only filled when clicking on the refresh button.
       //Atk uses the postvar atkorderby when a user clicks on a column to sort on it. Powers combined
       if(!isset($orderby) && isset($this->m_postvars["atkorderby"])) $orderby[] = $this->m_postvars["atkorderby"];
-      
+
       foreach(array_keys($externalHourSurveyColumns) as $module)
       {
         $attrlist = $externalHourSurveyColumns[$module];
@@ -216,12 +224,12 @@
       }
 
       $hoursnode = &atkGetNode("reports.surveyhours");
-      
+
       $hoursnode->m_postvars = $this->m_postvars; // Share postvars.
 
       $hoursnode->add(new functionLevelAttribute("functionlevel",AF_FORCE_LOAD));
       $attbilling_projecttypeid = &$hoursnode->add(new billingTypeViewAttribute("billing_projecttypeid"));
-      $attbilling_projecttypeid->m_ownerInstance = &$hoursnode;      
+      $attbilling_projecttypeid->m_ownerInstance = &$hoursnode;
       $hoursnode->add(new creditorViewAttribute("creditor_id", AF_FORCE_LOAD));
 
       $columnConfig = &$hoursnode->getColumnConfig();
@@ -241,7 +249,7 @@
           }
         }
       }
-      else 
+      else
       {
         $orderby = array();
       }
@@ -343,9 +351,9 @@
         $data[] = array('<hr>'.atktext('searchbyprojectorphase','project').':');
 
         // we have to pass a 'dummy' record to the attributes to set their default value.
-        $dummyrec = array(        
+        $dummyrec = array(
           "projectid"     =>array("id"=>$projectid),
-          "organizationid"=>array("id"=>$organizationid), // manytoonerelation needs subarray        
+          "organizationid"=>array("id"=>$organizationid), // manytoonerelation needs subarray
           "phaseid"       =>array("id"=>$phaseid),
           "activityid"    =>array("id"=>$activity_id),
           "startdate"     =>array("year"=>substr($startdate,0,4),
@@ -393,7 +401,7 @@
 
         if (moduleExists("billing"))
         {
-          $billingRateNode = &atkGetNode("billing.rate");          
+          $billingRateNode = &atkGetNode("billing.rate");
           $projecttypeatt = &new atkManyToOneRelation('billing_projecttypeid', "billing.projecttype");
           $projecttypeatt->m_ownerInstance = &$billingRateNode;
           $projecttypeatt->removeFlag(AF_RELATION_AUTOCOMPLETE);
@@ -554,14 +562,6 @@
           $arr_collabel[] = $label;
         }
 
-        $cell="";
-        for($i=0,$_i=count($arr_col);$i<$_i;$i++)
-        {
-          $checked = (in_array($arr_col[$i],$col) ? "checked" : "");
-          $cell.='<input type="checkbox" name="col[]" value="'.$arr_col[$i].'" '.$checked.'>'.$arr_collabel[$i].'&nbsp;';
-        }
-        $data[] = array(atktext('report_output_showcollumns','project'),$cell);
-
         $orderattrs = array();
         $orderattrlabels = array();
         $orderstr = "";
@@ -574,6 +574,19 @@
             $orderattrlabels[] = $arr_collabel[$i];
           }
         }
+
+        $cell="";
+        $showcolumnstbl = &atknew("atk.utils.atktablerenderer");
+        $showcolumnsdata = array(array());
+        for($i=0,$_i=count($arr_col);$i<$_i;$i++)
+        {
+          $checked = (in_array($arr_col[$i],$col) ? "checked" : "");
+          $cell ='<input type="checkbox" name="col[]" value="'.$arr_col[$i].'" '.$checked.'>'.$arr_collabel[$i].'&nbsp;';
+          if (count($showcolumnsdata[count($showcolumnsdata)-1]) == 4)
+            $showcolumnsdata[] = array();
+          $showcolumnsdata[count($showcolumnsdata)-1][] = $cell;
+        }
+        $data[] = array(atktext('report_output_showcollumns','project'),$showcolumnstbl->render($showcolumnsdata));
 
         for ($i=0; $i<$sortfieldcount; $i++)
         {
@@ -603,34 +616,34 @@
       }
 
       /** Create filter array **/
-      $filterarray = array();      
+      $filterarray = array();
       $filterarray[] = $this->_addFilterArrayItem("activitydate", ">='$startdate'", "hours");
       $filterarray[] = $this->_addFilterArrayItem("activitydate", "<='$enddate'", "hours");
-      
+
       if(!empty($activity_id)&&$activity_id!="")
         $filterarray[] = $this->_addFilterArrayItem("activityid","='$activity_id'","hours");
-      
-      if(!empty($phaseid)&&$phaseid!="") 
+
+      if(!empty($phaseid)&&$phaseid!="")
         $filterarray[] = $this->_addFilterArrayItem("phaseid","='$phaseid'","hours");
-        
-      if(!empty($projectid)&&$projectid!="") 
+
+      if(!empty($projectid)&&$projectid!="")
         $filterarray[] = $this->_addFilterArrayItem("projectid","='$projectid'","phaseid");
-        
-      if(moduleExists("billing") && !empty($billing_projecttypeid) && ($billing_projecttypeid!=""))       
+
+      if(moduleExists("billing") && !empty($billing_projecttypeid) && ($billing_projecttypeid!=""))
         $filterarray[] = $this->_addFilterArrayItem("billing_type","='$billing_projecttypeid'","projectid");
-        
+
       if(!empty($remark)&&$remark!="")
         $filterarray[] = $this->_addFilterArrayItem("remark","LIKE lower('%".escapeSQL($remark)."%')","hours");
-        
-      if($department_name && $department_name != "all") 
+
+      if($department_name && $department_name != "all")
         $filterarray[] = $this->_addFilterArrayItem("department","='".escapeSQL($department_name)."'","userid");
-      
+
       if($functionlevelswitch && $functionlevelswitch != "all")
         $filterarray[] = $this->_addFilterArrayItem("functionlevel","='$functionlevelswitch'","userid");
 
-      if(!empty($creditor_id) && $creditor_id != "all") 
+      if(!empty($creditor_id) && $creditor_id != "all")
         $filterarray[] = $this->_addFilterArrayItem("id","='$creditor_id'","creditor_id");
-      
+
       //Add external columns to the filterarray
       foreach ($externalHourSurveyColumns as $module => $attrlist)
       {
@@ -665,18 +678,18 @@
           $col[] = "projectid";
 
         if(!in_array("phaseid",$col))
-          $col[] = "phaseid";        
+          $col[] = "phaseid";
       }
 
 
       if ($nameswitch=="supervisor")
       {
-        if ($userid!="all")       
-          $filterarray[] = $this->_addFilterArrayItem("supervisor","='$userid'","userid");       
+        if ($userid!="all")
+          $filterarray[] = $this->_addFilterArrayItem("supervisor","='$userid'","userid");
       }
       else
       {
-        if ($userid!="all")        
+        if ($userid!="all")
           $filterarray[] = $this->_addFilterArrayItem("userid","='$userid'","hours");
       }
 
@@ -687,12 +700,16 @@
         {
           if ($itsOrderby && $itsOrderby != "-")
           {
-            //We need to add the tablename before the attribute. 
+            //We need to add the tablename before the attribute.
             switch($itsOrderby)
             {
               //functionlevel has another table- AND fieldname
               case "functionlevel":
-                $itsOrderby = "functionlevelid.name";             
+                $itsOrderby = "functionlevelid.name";
+                break;
+              //creditor_id has another table- AND fieldname
+              case "creditor_id":
+                $itsOrderby = "creditor_id.name";
                 break;
               //projectid has the table phaseid
               case "projectid":
@@ -708,7 +725,7 @@
           }
         }
       }
-      
+
 
       //Check if we need to add additional columns because of the selected filter.
       foreach($filterarray as $item)
@@ -718,12 +735,12 @@
           case "phaseid.projectid":
             if(!in_array("phaseid",$col))   $col[] = "phaseid";
             break;
-          case "projectid.billing_type":           
-            if(!in_array("projectid",$col)) $col[] = "projectid";            
+          case "projectid.billing_type":
+            if(!in_array("projectid",$col)) $col[] = "projectid";
             break;
           default:
             //do nothing
-            break;        
+            break;
         }
       }
 
@@ -748,16 +765,16 @@
         $col[] = "id";
 
       //render filter
-      $filter = "";      
+      $filter = "";
       for($i=0,$_i=count($filterarray);$i<$_i;$i++)
       {
-        if($i!=0) 
+        if($i!=0)
           $filter.= " AND ";
-          
+
         $filter.= ($filterarray[$i]["table"]!="") ? $filterarray[$i]["table"]."." : "";
         $filter.= $filterarray[$i]["columnname"]." ".$filterarray[$i]["condition"];
-      }          
-        
+      }
+
       $data = $hoursnode->selectDb($filter,implode(",",$orderbystatement), "", "", $col);
       if ($outputType=="0")
       {
@@ -770,12 +787,12 @@
         {
           $actions = $hoursnode->defaultActions("list");
         }
-      
+
         $rl = &atknew("atk.recordlist.atkrecordlist");
 
-        
+
         // make the recordlist think its operating on reports node.
-        $rl->setMasterNode($this);        
+        $rl->setMasterNode($this);
         $content.=$rl->render($hoursnode, $data, $actions, RL_EXT_SORT|RL_MRA|RL_NO_SORT, $suppress);
         $content.='<br>'.(atkLevel()>0?atkButton('<< '.atktext("back"), "", SESSION_BACK)."<br>":"").'<br>';
         $page->addContent('<div class="contentblock">'.$ui->renderBox(array("title"=>$title, "content"=>'<div class="content">'.$content.'</div>')).'</div>');
@@ -807,7 +824,7 @@
       }
       return $activity_code;
     }
-    
+
     function _addFilterArrayItem($columnname, $condition, $tablename="")
     {
       return array(
@@ -816,7 +833,7 @@
                 "condition"   => $condition
               );
     }
-    
+
     function get_departments($depid)
     {
       $db = &atkGetDb();
