@@ -162,7 +162,16 @@ class hours extends atkNode
     {
       $this->m_viewdate = sprintf("%04d-%02d-%02d", $this->m_viewdate["year"], $this->m_viewdate["month"],$this->m_viewdate["day"]);
     }
-    if ($this->m_viewdate=="") $this->m_viewdate = strftime("%Y-%m-%d");
+    
+    //If the datejumper was not set, try the initial date.
+    if ($this->m_viewdate=="") 
+    {
+      $this->m_viewdate = $this->getInitialDate();
+      $this->m_viewdate = sprintf("%04d-%02d-%02d", $this->m_viewdate["year"], $this->m_viewdate["month"],$this->m_viewdate["day"]);
+    }
+    
+    if ($this->m_viewdate=="") $this->m_viewdate = strftime("%Y-%m-%d");    
+    
     if ($this->m_user == "") $this->m_user = $g_user["id"];
 
     $flags|=NF_NO_VIEW|NF_TRACK_CHANGES|NF_NO_IMPORT;
@@ -328,6 +337,15 @@ class hours extends atkNode
     }
   }
 
+  /**
+   * Get the initial date of the hours node.
+   * 
+   * The function can be overwritten to start with a different date 
+   * than today. This date will be used in the add form AND in the
+   * week- or dayview datejumper.
+   * 
+   * @return array initial_date
+   */
   function getInitialDate()
   {
     if ($this->m_viewdate!="")
@@ -343,7 +361,6 @@ class hours extends atkNode
                             "day"=>date("d"));
     }
     return $initial_date;
-
   }
 
   function initial_values()
