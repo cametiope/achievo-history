@@ -184,6 +184,10 @@
   //
   $config_manytoone_autocomplete_minchars = 2;
   
+  // This variable configures the visibility of the parameters in printed
+  // reports such as the hoursurvey.
+  $config_report_hide_parameters = false;
+  
   // -------------------------------------------
   //            EXTERNAL MODULES
   // -------------------------------------------
