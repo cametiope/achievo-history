@@ -19,6 +19,9 @@ class surveyhours extends hours
         $attr->removeFlag(AF_OBLIGATORY);
       }        
     }
+    
+    $projectAtt = &$this->getAttribute("projectid");
+    $projectAtt->removeFlag(AF_OBLIGATORY);
     $this->setOrder("");    
     $this->setSecurityAlias('timereg.hours');    
   }

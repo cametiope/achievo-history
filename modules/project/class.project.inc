@@ -81,7 +81,6 @@
 
       $this->add(new atkOneToManyRelation("deliverables", "project.deliverable", "project_id", AF_HIDE_LIST), "planning");
 
-      //$this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE), "planning");
       $tmp = &new atkManyBoolRelation("phasetemplatematrix","project.phase","project.tpl_phase", AF_HIDE_LIST|AF_HIDE_SEARCH);
       $tmp->m_localKey = "projectid";
       $tmp->m_remoteKey = "template";
