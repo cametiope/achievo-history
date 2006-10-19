@@ -148,7 +148,7 @@ class hours extends atkNode
   var $m_weekview = "";
   var $m_user = "";
   var $m_insertmode = ""; // can be set to 'day' or 'multi'
-
+  
   function hours($type="hours", $flags=0)
   {
     global $g_sessionManager,$g_user;
@@ -172,8 +172,8 @@ class hours extends atkNode
     
     if ($this->m_viewdate=="") $this->m_viewdate = strftime("%Y-%m-%d");    
     
-    if ($this->m_user == "") $this->m_user = $g_user["id"];
-
+    if($this->m_user="") $this->m_user=$this->getInitialUser();
+    
     $flags|=NF_NO_VIEW|NF_TRACK_CHANGES|NF_NO_IMPORT;
 
     $this->atkNode($type,$flags|NF_MRA|NF_NO_ADD); // node() constructor is *not* called automatically!
@@ -202,7 +202,7 @@ class hours extends atkNode
       $phase->addDependee("activityid");
     $this->add($phase,null, 30);
 
-    $project = &new projectManyToOneRelation("projectid","project.projectselector",AF_FORCE_LOAD);
+    $project = &new projectManyToOneRelation("projectid","project.projectselector",AF_OBLIGATORY|AF_FORCE_LOAD);
     $project->addDependee("phaseid");
     $this->add($project,null,20);
 
@@ -237,7 +237,7 @@ class hours extends atkNode
     $this->setTable("hours","hours");
     $this->addSecurityMap("mra_move", "edit");
   }
-
+  
   function action_mra_move(&$handler)
   {
     $selector = atkArrayNvl($this->m_postvars, "atkselector", array());
@@ -363,6 +363,20 @@ class hours extends atkNode
     return $initial_date;
   }
 
+  /**
+   * Get the initial user of the hours node.
+   * 
+   * The function can be overwritten to start with a different user
+   * than today.
+   * 
+   * @return array initial_date
+   */
+  function getInitialUser()
+  {
+    global $g_user;
+    return $g_user["id"];
+  }
+  
   function initial_values()
   {
     // Setup the initial values array
@@ -578,8 +592,13 @@ class hours extends atkNode
     return $datebox->edit($dummy_rec);
   }
 
+  /**
+   * Function can be overridden to create a different user selection.   
+   * @param none
+   * @return String html
+   */
   function getUserSelect()
-  {
+  {  
     if ($this->allowed("any_user"))
     {      
       // Init filter
@@ -599,6 +618,7 @@ class hours extends atkNode
       $db = &atkGetDb();
       $users = $db->getRows("SELECT $fields FROM person WHERE $filter ORDER BY $orderby");            
       $res = '<select name="viewuser">';      
+      
       for ($i=0;$i<count($users);$i++)
       {
         $descriptor = $empNode->descriptor($users[$i]);
@@ -757,7 +777,7 @@ class hours extends atkNode
                       'datejumper'=>$this->getDateJumper(),
                       'curuser'=>$g_user,
                       'curdate'=>adodb_date('W, Y',$viewtime),
-                      'lockicon'=>$this->getLockIcon(),
+                      'lockicon'=>$this->getLockIcon()
                      );
     if ($weekdates[8]['date'] <= date("Y-m-d"))
     {
