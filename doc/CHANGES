@@ -34,6 +34,9 @@ Changes in achievo_tomorrow
   messages. [Peter, Dennis]  
 * Fixed: Link-Name of phase on select-page of the phasenode was broken and
   caused a 'session expired' notice. [Dennis]
+* In the hours node, the viewuser dropdown can be configered by overriding
+  the functions viewuserFilter and viewuserOrderBy and uses the descriptor 
+  template of the employee node. [Dennis]  
 + Added initial value for workperiod in hours node for autocompletion
   fields. [Dennis]
   

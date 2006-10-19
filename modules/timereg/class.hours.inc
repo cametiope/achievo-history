@@ -581,19 +581,57 @@ class hours extends atkNode
   function getUserSelect()
   {
     if ($this->allowed("any_user"))
-    {
+    {      
+      // Init filter
+      $filterArr = $this->viewuserFilter();
+      $filterArr[] = "role='employee'";
+      $filter = implode(" AND ",$filterArr);
+      
+      //Init order by
+      $orderby = $this->viewuserOrderBy();
+      
+      //Init desc fields      
+      $empNode = &atkGetNode("employee.employee");      
+      $fieldsArr = $empNode->descriptorFields();
+      if(!in_array("id", $fieldsArr)) $fieldsArr[] = "id";
+      $fields = implode(", ",$fieldsArr);
+      
       $db = &atkGetDb();
-      $users = $db->getRows("SELECT id, lastname, firstname FROM person WHERE role = 'employee' AND status = 'active' ORDER BY lastname");
-      $res = '<select name="viewuser">';
+      $users = $db->getRows("SELECT $fields FROM person WHERE $filter ORDER BY $orderby");            
+      $res = '<select name="viewuser">';      
       for ($i=0;$i<count($users);$i++)
       {
-        $res .= '<option value="'.$users[$i]["id"].'" '.($this->m_user == $users[$i]["id"] ? 'selected' : '').'>'.$users[$i]["lastname"].', '.$users[$i]["firstname"];
+        $descriptor = $empNode->descriptor($users[$i]);
+        $res .= '<option value="'.$users[$i]["id"].'" '.($this->m_user == $users[$i]["id"] ? 'selected' : '').'>'.$descriptor;
       }
       $res .= '</select>';
     }
     return $res;
   }
-
+  
+  /**
+    * Function returns an array with filter-options that are used
+    * to filter the list of selectable employees.
+    * Function can be overridden to change the filter.
+    *
+    * @return array with filter items (WHERE clause of SQL)
+    */
+   function viewuserFilter()
+   {
+     return array("status='active'");
+   }
+   
+   /**
+    * Function returns the orderby clause that is used when retrieving employees.
+    * Function can be overridden to change the orderby.
+    * 
+    * @return String ORDER BY clause of SQL
+   */
+   function viewuserOrderBy()
+   {
+     return "lastname";
+   }  
+  
   function weekview()
   {
     if ($this->m_viewdate!="")
