@@ -37,6 +37,8 @@ Changes in achievo_tomorrow
 * In the hours node, the viewuser dropdown can be configered by overriding
   the functions viewuserFilter and viewuserOrderBy and uses the descriptor 
   template of the employee node. [Dennis]  
+* The hoursnode that is used by the hoursurvey can be set to a different node
+  by overriding the function getHoursNodeName(). [Dennis]  
 + Added initial value for workperiod in hours node for autocompletion
   fields. [Dennis]
   

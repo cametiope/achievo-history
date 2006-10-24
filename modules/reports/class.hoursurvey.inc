@@ -260,8 +260,8 @@
         $outputType=0;   //default=standard
       }
 
-      $hoursnode = &atkGetNode("reports.surveyhours");
-
+      $hoursnode = &atkGetNode($this->getHoursNodeName());
+      
       $hoursnode->m_postvars = $this->m_postvars; // Share postvars.
 
       $hoursnode->add(new functionLevelAttribute("functionlevel",AF_FORCE_LOAD));
@@ -456,7 +456,7 @@
         //to make the atkTableRenderer render the id in the TD of this attribute.
         $data[] = array(atktext('phase','project').':',
                     array('value'=>$phaseatt->edit($dummyrec),
-                          'id'=>"reports_surveyhours_".$phaseatt->m_name)
+                          'id'=>"{$this->getHoursNodeName()}_".$phaseatt->m_name)
                   );
 
         $this->_addOr($data);
@@ -546,7 +546,7 @@
               $currentattr = &$hoursnode->getAttribute($attr);
               if (is_object($currentattr) && !$currentattr->hasFlag(AF_HIDE_SEARCH))
               {
-                if (get_class($currentattr) == "atkboolattribute")
+                if (strtolower(get_class($currentattr)) == "atkboolattribute")
                 {
                   $output = '<select name="'.$attr.'">';
                   $output.= '<option value=""'.($dummyrec[$attr]===""?' selected':'').'>---</option>';
@@ -797,8 +797,6 @@
         }
 
         $rl = &atknew("atk.recordlist.atkrecordlist");
-
-
         // make the recordlist think its operating on reports node.
         $rl->setMasterNode($this);
         $content.=$rl->render($hoursnode, $data, $actions, RL_EXT_SORT|RL_MRA|RL_NO_SORT, $suppress);
@@ -812,6 +810,11 @@
         $rl = &atknew("atk.recordlist.atkcustomrecordlist");
         $rl->render($hoursnode, $data, "", '"', '";', "\r\n", "1", "",$suppress);
       }
+    }
+    
+    function getHoursNodeName()
+    {
+      return "reports.surveyhours";
     }
 
     function get_activities($act_id)
