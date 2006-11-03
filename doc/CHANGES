@@ -40,6 +40,7 @@ Changes in achievo_tomorrow
 * The hoursnode that is used by the hoursurvey can be set to a different node
   by overriding the function getHoursNodeName(). [Dennis]  
 * Basereport now also supports autocompletion. [Dennis, Guido, Peter]  
+* Fixed: initial user was always reset in the hoursnode. [Dennis]
 + Added initial value for workperiod in hours node for autocompletion
   fields. [Dennis]
   
