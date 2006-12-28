@@ -12,18 +12,9 @@ useattrib("atktimeattribute");
 useattrib("atknumberattribute");
 userelation("atkmanytoonerelation");
 
-function date_format($datestamp,$dateformat)
-{
-  if($dateformat!="")
-  {
-    return date($dateformat,$datestamp);
-  }
-  return date("m-d",$datestamp)." (".atktext(strtolower(date("D",$datestamp))).")";
-}
-
 /**
-* Converts the starttime - endtime notation to a duration notation
-*/
+ * Converts the starttime - endtime notation to a duration notation
+ */
 function convertHoursToDuration(&$record)
 {
   $starttime  += $record["starttime"]["hours"]   *  60;
@@ -762,10 +753,10 @@ class hours extends atkNode
     }
     else $manualdate = $yesterday;
 
-    if ($manualdate < $day) 
-    {      
+    if ($manualdate < $day)
+    {
       $balancenode->deleteBalance($rec["userid"]["id"], $day);
-    }    
+    }
   }
 
   // Check if this week may be booked..
