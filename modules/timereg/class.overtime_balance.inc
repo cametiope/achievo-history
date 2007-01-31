@@ -158,6 +158,7 @@
 
     function addOvertimeBalance($userid, $day, $balance)
     {
+$this->debuglog(array("function"=>"addOvertimeBalance","userid"=>$userid, "day"=>$day, "balance"=>$balance));
       $db = &atkGetDb();
       $newid = $db->nextid("overtime_balance");
       $db->query("INSERT INTO overtime_balance (id, userid, day, balance, manual)
@@ -166,6 +167,7 @@
 
     function saveOvertimeBalance($userid, $day, $balance)
     {
+$this->debuglog(array("function"=>"saveOvertimeBalance","userid"=>$userid, "day"=>$day, "balance"=>$balance));
       $db = &atkGetDb();
       $sql = "UPDATE overtime_balance SET balance = $balance WHERE userid = '$userid' AND day = '$day'";
       $db->query($sql);
@@ -183,6 +185,7 @@
 
     function updateOvertimeBalance($userid, $day, $balance)
     {
+$this->debuglog(array("function"=>"updateOvertimeBalance","userid"=>$userid, "day"=>$day, "balance"=>$balance));
       $db = &atkGetDb();
       $recs = $db->getrows("SELECT id FROM overtime_balance WHERE userid = '$userid' AND day = '$day'");
       if (!count($recs))
@@ -337,6 +340,22 @@
         return array();
 
       return explode("|",$strWorkingdays);
+    }
+
+    function debuglog($params)
+    {
+      $logarr = $params;
+      foreach(array("atknodetype", "atkaction", "atkselector") as $item)
+        $logarr[$item]=$this->m_postvars[$item];
+      foreach($logarr as $key=>$value)
+        $log .= "$key=$value ";
+      $log = "\n".trim($log)."\n".atk_get_trace()."\n\n\n";
+      $fp = @fopen("achievotmp/overtime.log", "a");
+      if ($fp)
+      {
+        fwrite($fp,$log);
+        fclose($fp);
+      }
     }
   }
 
