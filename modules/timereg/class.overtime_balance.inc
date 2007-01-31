@@ -344,6 +344,7 @@ $this->debuglog(array("function"=>"updateOvertimeBalance","userid"=>$userid, "da
 
     function debuglog($params)
     {
+      if (!atkconfig("overtimebalancedebugging", false)) return;
       $logarr = $params;
       foreach(array("atknodetype", "atkaction", "atkselector") as $item)
         $logarr[$item]=$this->m_postvars[$item];
