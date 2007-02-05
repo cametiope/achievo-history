@@ -123,6 +123,7 @@
         atkimport("atk.utils.atkstringparser");
         $parser = new atkStringParser($url);
         $url = $parser->parse($record);
+        $url = str_replace("'", '"', $url);
 
         // Return a link
         return href($url, $record["name"], SESSION_NESTED);
