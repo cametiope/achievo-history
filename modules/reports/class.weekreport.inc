@@ -365,7 +365,7 @@ class weekreport extends atkNode
       }    */
 
       $startdateatt = new atkDateAttribute("startdate","","", 0, date("Ymd"));
-      $enddateatt = new atkDateAttribute("enddate","","", 0, date("Ymd"));
+      $enddateatt = new atkDateAttribute("enddate","","", 0, atkConfig("timereg_allowfuture", false) ? 0 : date("Ymd"));
 
       $data[]= array(atktext("timespan"),$startdateatt->edit($dummyrec).' &nbsp;'.
                       atktext("until").
