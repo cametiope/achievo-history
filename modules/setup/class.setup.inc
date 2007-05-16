@@ -918,11 +918,9 @@
     function dropNode($node)
     {
       $node = &atkGetNode($node);
-      $table = $node->m_table;
-      $seg = $node->m_seg;
 
-      $this->dropTable($table);
-      if($seg>"") $this->dropSequence($seg);
+      $this->dropTable($node->m_table);
+      if($node->m_seq!="") $this->dropSequence($node->m_seq);
     }
 
     function action_legacyupgrade(&$handler)
