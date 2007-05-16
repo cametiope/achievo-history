@@ -10,7 +10,6 @@ class userpimitems extends atkNode
   function userpimitems()
   {
     $this->atkNode("userpimitems");
-    $this->setTable("userpimitems");
     $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
     $this->add(new atkManyToOneRelation("userid","employee.userprefs",AF_HIDE));
     $this->add(new pimItemAttribute("pimitem",AF_OBLIGATORY|AF_NO_TRANSLATION));
