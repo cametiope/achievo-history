@@ -343,19 +343,19 @@ class weekreport extends atkNode
                         "enddate"=>array("year"=>substr($enddate,0,4),
                                          "month"=>substr($enddate,5,2),
                                         "day"=>substr($enddate,8,2)));
-
-      $nameswitch = '<SELECT name="nameswitch"><OPTION VALUE="name">'.atktext("name").': <OPTION VALUE="supervisor" '.($nameswitch=="supervisor"?"selected":"").'>'.atktext("supervisor").': </SELECT>';
+      $userfield = array();
+      $userfield[] = '<SELECT name="nameswitch"><OPTION VALUE="name">'.atktext("name").': <OPTION VALUE="supervisor" '.($nameswitch=="supervisor"?"selected":"").'>'.atktext("supervisor").': </SELECT>';
 
       if($view_all)
       {
-        $users='<SELECT name="userid">'.$this->get_employees($userid).'</SELECT>';
+        $userfield[] = '<SELECT name="userid">'.$this->get_employees($userid).'</SELECT>';
       }
       else
       {
         $userid = $g_user["id"];
-        $users = $g_user["name"].'<input type="hidden" name="userid" value="'.$g_user["id"].'">';
+        $userfield[] = $g_user["name"].'<input type="hidden" name="userid" value="'.$g_user["id"].'">';
       }
-      $data[] = array($nameswitch,$users);
+      $data[] = $userfield;
 
       /*// TODO: Even if you don't have view_all right, you should still be able to view employees
       // that you supervise.
@@ -641,7 +641,34 @@ class weekreport extends atkNode
       }
       if ($nameswitch=="name" && $userid!="all") $suppress[] = "userid";
 
-
+//OVERTIMEBALANCEDEBUGGING START
+if ($nameswitch=="name" && $userid!="all" && atkConfig("overtimebalancedebugging"))
+{
+  atk_var_dump($rldata);
+  $totalhours = 0;
+  $totalcontract = 0;
+  foreach($rldata as $rec)
+  {
+    $totalhours += $rec["total"];
+    $totalcontract += $rec["contract"];
+    $week = $rec["week"];
+    $shouldhaveovertime = $rec["total"] - $rec["contract"];
+    if ($shouldhaveovertime != $rec["overtime"])
+    {
+      atkerror("In week $week, overtime should be $shouldhaveovertime");
+    }
+    if (isset($prevbalance))
+    {
+      $diff = ($rec["balance"]["balance"] - $prevbalance) * 60;
+      if ($shouldhaveovertime != $diff)
+      {
+        atkerror("In week $week, the balance should be " . ($prevbalance * 60) . " + " . $shouldhaveovertime . " = " . (($prevbalance * 60) + $shouldhaveovertime) . " but it is calculated to be " . ($rec["balance"]["balance"] * 60));
+      }
+    }
+    $prevbalance = $rec["balance"]["balance"];
+  }
+}
+//OVERTIMEBALANCEDEBUGGING END
       if ($outputType=="0")
       {
         if ($userid!="all")
@@ -658,7 +685,7 @@ class weekreport extends atkNode
           }
           $data = array();
           $data[] = array($label.": ",$emprec["lastname"].", ".$emprec["firstname"]);
-          $data[] = array(atktext("email"),$emprec["email"]);
+          $data[] = array(atktext("email").": ",$emprec["email"]);
         }
         $tbl = &atknew("atk.utils.atktablerenderer");
         $output = $tbl->render($data);
