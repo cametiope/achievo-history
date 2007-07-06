@@ -662,6 +662,10 @@ if ($nameswitch=="name" && $userid!="all" && atkConfig("overtimebalancedebugging
       $diff = ($rec["balance"]["balance"] - $prevbalance) * 60;
       if ($shouldhaveovertime != $diff)
       {
+        atkerror("In week $week, the balance should be $shouldhaveovertime higher than the previous balance, but it is $diff higher");
+      }
+      if ((($prevbalance * 60) + $shouldhaveovertime) != ($rec["balance"]["balance"] * 60))
+      {
         atkerror("In week $week, the balance should be " . ($prevbalance * 60) . " + " . $shouldhaveovertime . " = " . (($prevbalance * 60) + $shouldhaveovertime) . " but it is calculated to be " . ($rec["balance"]["balance"] * 60));
       }
     }
