@@ -4,6 +4,13 @@
 Bug numbers are references to bugs in http://www.achievo.org/bugzilla
 [names] are references to people in the AUTHORS file.
 
+Changes in Achievo 1.3.3
+------------------------
+* Fixed weekComplete check: If there were no contracts and/or
+  timeregistrations, a week still appeared to be completely
+  booked. [Dennis]
+* Fixed SQL error in reminder_hoursnotblocked cron. [Guido]
+
 Changes in Achievo 1.3.2
 ------------------------
 * Fixed edit button of non recurring events in the scheduler. [Sandy]
