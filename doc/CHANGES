@@ -10,6 +10,9 @@ Changes in Achievo 1.3.3
   timeregistrations, a week still appeared to be completely
   booked. [Dennis]
 * Fixed SQL error in reminder_hoursnotblocked cron. [Guido]
+* Fixed missing translations in emails sent to project coordinators
+  when one of their team members locks a week in the time registration.
+  [Guido]
 
 Changes in Achievo 1.3.2
 ------------------------
