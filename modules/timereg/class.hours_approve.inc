@@ -53,10 +53,40 @@
   	  $g_sessionManager->pageVar("viewdate");
   	  $g_sessionManager->pageVar("periodid");
   	  $g_sessionManager->pageVar("viewuser");
+  	  $g_sessionManager->pageVar("viewlist");
 
   	  $this->m_lockmode = atkConfig::get("timereg", "lockmode", "week");
 
 	  }
+
+    function getWeekviewData($viewtime, $weekdates, $filterbycoordinator=false)
+    {
+      if (atkGetSessionManager()->pageVar("viewlist"))
+      {
+        $userid = $this->m_user;
+        $where = "activitydate >= '".$weekdates[1]['date']."'
+                  AND activitydate <= '".$weekdates[7]['date']."'
+                  AND hours.userid = '$userid'";
+
+        if ($filterbycoordinator)
+        {
+          $coordinator = atkGetUser();
+          $where.= " AND projectid.coordinator = '".$coordinator["id"]."'";
+        }
+        $this->getAttribute("activitydate")->removeFlag(AF_HIDE_LIST);
+        $data = $this->selectDb($where,"activitydate ASC,projectid.abbreviation ASC,projectid.name ASC,phaseid.name ASC","",$this->m_listExcludes);
+
+        $output = $this->weekviewHeader($weekdates, $viewtime);
+        $output.= atkNew("atk.recordlist.atkrecordlist")->render($this, $data, array(), RL_NO_SORT, $suppress);
+        $output.= $this->weekviewFooter($weekdates, $viewtime);
+
+        return atkNew("atk.ui.atkui")->renderBox(array("title"=>$this->weekviewTitle($userid, $viewtime), "content"=>$output));
+      }
+      else
+      {
+        return parent::getWeekviewData($viewtime, $weekdates, $filterbycoordinator);
+      }
+    }
 
     /**
      * Creates a custom titlebar for the weekview
@@ -82,6 +112,12 @@
      */
     function weekviewHeader()
     {
+	    // Read the hours_lock id
+	    $periodid = $this->m_postvars["periodid"];
+
+	    return $this->text("show_as").": ".
+             href(dispatch_url("timereg.hours_approve","admin", array("periodid"=>$periodid,"viewlist"=>0)), $this->text("grid"),SESSION_DEFAULT).' '.
+             href(dispatch_url("timereg.hours_approve","admin", array("periodid"=>$periodid,"viewlist"=>1)), $this->text("list"),SESSION_DEFAULT).'<br/><br/>';
     }
 
 	  /**

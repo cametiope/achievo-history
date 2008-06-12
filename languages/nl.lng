@@ -698,6 +698,9 @@
   "yearly" => "Jaar",
   "youareinthearchive" => "Je bent in het archief.",
   "zipcode" => "Postcode",
+  "show_as" => "Toon als",
+  "grid" => "Grid",
+  "list" => "Lijst",
 );
 
 ?>

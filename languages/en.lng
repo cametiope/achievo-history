@@ -699,6 +699,9 @@
   "yearly" => "Year",
   "youareinthearchive" => "You are viewing the archive.",
   "zipcode" => "Zipcode",
+  "show_as" => "Show as",
+  "grid" => "Grid",
+  "list" => "List",
 );
 
 ?>
