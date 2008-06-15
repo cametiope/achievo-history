@@ -696,6 +696,9 @@
   "yearly" => "Year",
   "youareinthearchive" => "You are viewing the archive.",
   "zipcode" => "Zipcode",
+  "no_member_error" => "Can't find employee using key='[param]'",
+  "member_many_match_error" => "More than one record matching key='[param]'",
+  'member_match_not_found_error' => "Matching record not found",
 );
 
 ?>
