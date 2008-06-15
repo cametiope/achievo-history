@@ -13,6 +13,7 @@
  */
 
 userelation("atkmanytoonerelation");
+useattrib("project.dummyeditattribute");
 
 class project_personemployee extends atkNode
 {
@@ -26,6 +27,8 @@ class project_personemployee extends atkNode
     $this->add(new atkManyToOneRelation("role", "project.role", AF_PRIMARY|AF_HIDE_EDIT|AF_HIDE_VIEW|AF_HIDE_ADD));
     $this->addFilter("personid.role = 'employee'");
 
+    $this->add(new atkDummyAttribute("hint", atktext("project_member_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW|AF_HIDE_EDIT));
+    $this->add(new dummyEditAttribute("member"));
     // If you may edit the project, you may also add contactpersons to it.
     $this->setSecurityAlias("project.project");
     foreach(array("add", "save", "update", "delete") as $action)
@@ -41,7 +44,7 @@ class project_personemployee extends atkNode
     $this->m_flags |= NF_NO_FILTER;
     return $handler->action_delete();
   }
-  
+
   //Overwrite personid display/edit for show employee and role in one line
   function personid_edit($record="", $fieldprefix="", $mode="")
   {
@@ -52,6 +55,102 @@ class project_personemployee extends atkNode
   {
     return $this->getAttribute("personid")->display($record, $fieldprefix, $mode)." ".$this->getAttribute("role")->display($record, $fieldprefix, $mode);
   }
-}
 
+  /**
+     * Save a new record to the database.
+     *
+     * The record is passed by reference, because any autoincrement field gets
+     * its value when stored to the database. The record is updated, so after
+     * the call to addDb you can use access the primary key fields.
+     *
+     * @param array $record The record to save.
+     * @param boolean $exectrigger Indicates whether the postAdd trigger
+     *                             should be fired.
+     * @param array $excludelist List of attributenames that should be ignored
+     *                           and not stored in the database.
+     * @return boolean True if succesful, false if not.
+     */
+  function addDb(&$record, $exectrigger=true, $mode="add", $excludelist=array())
+  {
+    if(atkArrayNvl($record,"member"))
+    {
+      return  true;
+    }
+    else
+    {
+      return parent::addDb($record, $exectrigger, $mode, $excludelist);
+    }
+  }
+  
+  function _addMember(&$record)
+  {
+    $tokens = explode(",", $record["member"]);
+    $node = &atkGetNode("employee.employee");
+    $result = false;
+    foreach ($tokens as $token)
+    {
+      $token = trim($token);
+      if($token)
+      {
+        $found = $node->searchDb($token);
+        if(count($found) == 0)
+        {
+      	  $string = $this->text("no_member_error");
+          atkimport("atk.utils.atkstringparser");	  
+      	  $parser = new atkStringParser($string);
+      	  $msg = $parser->parse(array("param"=>$token));
+      	  
+          triggerError($record, "member", 'no_member_error',$msg);
+        }
+        elseif(count($found)>1)
+        {
+      	  $string = $this->text("member_many_match_error");
+          atkimport("atk.utils.atkstringparser");	  
+      	  $parser = new atkStringParser($string);
+      	  $msg = $parser->parse(array("param"=>$token));
+      	  
+          triggerError($record, "member", 'member_many_match_error',$msg);
+        }
+        else 
+        {
+          $record["personid"] = $found[0];
+          if(parent::addDb($record, $exectrigger, $mode, $excludelist))
+          {
+            $result = true;
+          }
+        }
+      }
+    }
+    if(!$result && count($record['atkerror']) == 0)
+    {
+      triggerError($record, "member", 'member_match_not_found_error');
+    }
+    return $result;
+  }
+  /**
+     * Validates a record.
+     *
+     * Validates unique fields, required fields, dataformat etc.
+     *
+     * @internal This method instantiates the node's validator object, and
+     *           delegates validation to that object.
+     *
+     * @param array $record The record to validate
+     * @param String mode The mode for which validation is performed ('add' or 'update')
+     * @param array ignoreList The list of attributes that should not be
+     *                         validated
+     */
+  function validate(&$record, $mode, $ignoreList=array())
+  {
+    if(atkArrayNvl($record,"member"))
+    {
+      return  $this->_addMember($record);
+    }
+    else
+    {
+      return parent::validate($record, $mode, $ignoreList);
+    }
+  }
+
+}
 ?>
