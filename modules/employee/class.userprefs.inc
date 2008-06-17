@@ -26,16 +26,11 @@ class userprefs extends atkNode
     }
     $themes = $this->getThemes();
     $this->add(new atkListAttribute("theme",$themes,$themes,AF_HIDE_ADD));
-    $this->add(new adminLangSelectAttribute('lng',AF_OBLIGATORY));
+    $this->add(new adminLangSelectAttribute("lng", AF_APPLY));
 
     $this->setTable("person", "person");
   }
 
-  function initial_values()
-  {
-    return array("lng"=>atkconfig("language"));
-  }
-  
   function addPasswordAttribute()
   {
     $this->add(new atkDummyAttribute("passwordexplanation", atktext("password_leaveblankifunchanged"), AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_SEARCH|AF_HIDE_VIEW));

@@ -2,6 +2,9 @@
 
   useattrib('atklistattribute');
   atkimport("atk.atklanguage");
+
+  define("AF_APPLY",AF_SPECIFIC_1);
+
   class adminLangSelectAttribute extends atkListAttribute
   {
     function adminLangSelectAttribute($name,$flags=0)
@@ -42,15 +45,17 @@
 
     function value2db($record)
     {
-      global $g_sessionManager;
-      $fieldname = atkconfig('auth_languagefield');
-      $session = &atkSessionManager::getSession();
-      $session['globals']['authentication']['user'][$fieldname] = $record[$this->fieldName()];
-      sessionStore('reload_page','true');
+      if ($this->hasFlag(AF_APPLY))
+      {
+        $fieldname = atkconfig('auth_languagefield');
+        $session = &atkSessionManager::getSession();
+        $session['globals']['authentication']['user'][$fieldname] = $record[$this->fieldName()];
+        sessionStore('reload_page','true');
+      }
       return parent::value2db($record);
     }
 
-    function storageType($mode)
+    function storageType()
     {
       return ADDTOQUERY|POSTSTORE;
     }
