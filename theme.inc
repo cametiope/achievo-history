@@ -1,16 +1,14 @@
 <?php
-  /* Setup the system */
-  $config_atkroot = "./";
-  require_once($config_atkroot."atk/class.atknode.inc");
+  include_once("atk/atkbrowsertools.inc");
+  if (browserInfo::detectPDA())
+    $GLOBALS["g_theme"]["Name"] = "default";
+  elseif (atkArrayNvl(atkGetUser(), "theme") != "")
+    $GLOBALS["g_theme"]["Name"] = atkArrayNvl(atkGetUser(), "theme");
+  else
+    $GLOBALS["g_theme"]["Name"] = atkConfig("defaulttheme");
 
-  $sql = "SELECT theme from employee where userid='".$g_user["name"]."'";
-  $result = $g_db->getrows($sql);
-  
-  if(count($result)==1&&$result[0]["theme"]!="")
-  {
-    $g_theme["Name"] = $result[0]["theme"];
-  }
-  
-  $g_layout->initTheme();
-  $g_layout->import_layout();
+  $page = &atkNew("atk.ui.atkpage");
+  $theme = &atkInstance("atk.ui.atktheme");
+
+  $page->register_style($theme->stylePath("style.css"));
 ?>

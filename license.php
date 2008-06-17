@@ -1,23 +1,30 @@
 <?php
 
-  require "atk/class.atknode.inc";
+  $config_atkroot = "./";
+  include_once("atk.inc");
+  atksession();
+  atksecure();
   require "theme.inc";
 
-  $g_layout->output("<html>");
-  $g_layout->head($txt_title_license);
-  $g_layout->body();
-  $g_layout->ui_top($txt_title_license);
+  $page = &atknew("atk.ui.atkpage");
+  $ui = &atkinstance("atk.ui.atkui");
+  $theme = &atkTheme::getInstance();
+  $output = &atkOutput::getInstance();
 
+  $page->register_style($theme->stylePath("style.css"));
 
   $license = file("doc/LICENSE");
+  $tmp_output="";
   for ($i=0;$i<count($license);$i++)
   {
-    $g_layout->output('<br>'.$license[$i]);
+    $tmp_output.='<br>'.str_replace("", "", $license[$i]);
   }
 
-  $g_layout->ui_bottom();
-  $g_layout->output("</body>");
-  $g_layout->output("</html>");
-  $g_layout->outputFlush();
+  $title = atkText('title_license');
+  $box = $ui->renderBox(array("title"=>atkText("title_license"), "content"=>$tmp_output));
+  $actionpage = $ui->render("actionpage.tpl", array("blocks"=>array($box), "title"=>$title));
+  $page->addContent($actionpage);
+  $output->output($page->render($title, true));
 
+  $output->outputFlush();
 ?>

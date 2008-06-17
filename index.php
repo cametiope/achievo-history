@@ -1,116 +1,69 @@
 <?php
-  /* Achievo theme */
-  include_once("./theme.inc");
 
+  /**
+   * @internal includes
+   */
   $config_atkroot = "./";
-  require_once($config_atkroot."atk/class.atknode.inc");
- 
-  $g_layout->output('<html>');
-  $g_layout->head(text("app_title"));
-  
-  if(strtolower($config_menu_pos) == "top")
-  {
-    if($config_top_frame==1)
-    {
-       $g_layout->output('
-        <frameset rows="70,*" frameborder="0" border="0">
-          <frame name="top" scrolling="no" noresize src="top.php" marginwidth="0" marginheight="0">
-       ');    
-    }
-    $g_layout->output('
-               <frameset rows="100,*" frameborder="0" border="0">
-                  <frame name="menu" scrolling="no"   noresize src="menu.php"   marginwidth="0" marginheight="0">
-                  <frame name="main" scrolling="auto" noresize src="dispatch.php?atknodetype=hours&atkaction=admin" marginwidth="0" marginheight="0">
-    ');
-    if($config_top_frame==1) { $g_layout->output('</frameset>'); }
-    $g_layout->output('
-                   <noframes>
-                    <body bgcolor="#CCCCCC" text="#000000">
-                      <p>Your browser doesnt support frames, but this is required to run <? echo $txt_app_title; ?></p>
-                    </body>
-                  </noframes>
-               </frameset>
-               </html>
-                   ');
-  }
-  if(strtolower($config_menu_pos) == "bottom")
-  {
-    if($config_top_frame==1)
-    {
-       $g_layout->output('
-        <frameset rows="70,*" frameborder="0" border="0">
-          <frame name="top" scrolling="no" noresize src="top.php" marginwidth="0" marginheight="0">
-       ');    
-    }
-    $g_layout->output('
-               <frameset rows="*,100" frameborder="0" border="0">
-                  <frame name="main" scrolling="auto" noresize src="dispatch.php?atknodetype=hours&atkaction=admin" marginwidth="0" marginheight="0">
-                  <frame name="menu" scrolling="no"   noresize src="menu.php"   marginwidth="0" marginheight="0">
-    ');
-    if($config_top_frame==1) { $g_layout->output('</frameset>'); }
-    
-    $g_layout->output('
-                   <noframes>
-                    <body bgcolor="#CCCCCC" text="#000000">
-                      <p>Your browser doesnt support frames, but this is required to run <? echo $txt_app_title; ?></p>
-                    </body>
-                  </noframes>
-               </frameset>
-               </html>
-                   ');
-  }
-  elseif(strtolower($config_menu_pos) == "left")
-  {
-    if($config_top_frame==1)
-    {
-       $g_layout->output('
-        <frameset rows="70,*" frameborder="0" border="0">
-          <frame name="top" scrolling="no" noresize src="top.php" marginwidth="0" marginheight="0">
-       ');    
-    }
-    $g_layout->output('
-      <frameset cols="190,*" frameborder="0" border="0">
-        <frame name="menu" scrolling="no" noresize src="menu.php" marginwidth="0" marginheight="0">
-        <frame name="main" scrolling="auto" noresize src="dispatch.php?atknodetype=hours&atkaction=admin" marginwidth="0" marginheight="0">
-    ');
-    if($config_top_frame==1) { $g_layout->output('</frameset>'); }
+  include_once("atk.inc");
+  include_once("atk/atkbrowsertools.inc");
+  include_once("achievotools.inc");
+  atksession();
+  atksecure();
+  include "theme.inc";
 
-    $g_layout->output('
-        <noframes>
-          <body bgcolor="#CCCCCC" text="#000000">
-            <p>Your browser doesnt support frames, but this is required to run <? echo $txt_app_title; ?></p>
-          </body>
-        </noframes>
-      </frameset>
-      </html>
-       ');
-  }
-  elseif(strtolower($config_menu_pos)=="right")
+  $theme = &atkinstance('atk.ui.atktheme');
+  if (atkconfig("fullscreen"))
   {
-    if($config_top_frame==1)
-    {
-       $g_layout->output('
-        <frameset rows="70,*" frameborder="0" border="0">
-          <frame name="top" scrolling="no" noresize src="top.php" marginwidth="0" marginheight="0">
-       ');    
-    }
-    $g_layout->output('
-      <frameset cols="*,190" frameborder="0" border="0">
-        <frame name="main" scrolling="auto" noresize src="dispatch.php?atknodetype=hours&atkaction=admin" marginwidth="0" marginheight="0">
-        <frame name="menu" scrolling="no" noresize src="menu.php" marginwidth="0" marginheight="0">
-    ');
-    if($config_top_frame==1) { $g_layout->output('</frameset>'); }
+    // Fullscreen mode. Use index.php as launcher, and launch app.php fullscreen.
 
-    $g_layout->output('
-        <noframes>
-          <body bgcolor="#CCCCCC" text="#000000">
-            <p>Your browser doesnt support frames, but this is required to run <? echo $txt_app_title; ?></p>
-          </body>
-        </noframes>
-      </frameset>
-      </html>
-       ');
+    $page = &atknew("atk.ui.atkpage");
+    $ui = &atkinstance("atk.ui.atkui");
+    $theme = &atkinstance("atk.ui.atktheme");
+    $output = &atkinstance("atk.ui.atkoutput");
+
+    $page->register_style($theme->stylePath("style.css"));
+    $page->register_script(atkconfig("atkroot")."atk/javascript/launcher.js");
+
+    $content = '<script language="javascript">atkLaunchApp(); </script>';
+    $content.= '<br><br><a href="#" onClick="atkLaunchApp()">'.atktext('app_reopen', "atk").'</a> &nbsp; '.
+    '<a href="#" onClick="window.close()">'.atktext('app_close', "atk").'</a><br><br>';
+
+    $box = $ui->renderBox(array("title"=>atktext("app_launcher"),
+    "content"=>$content));
+
+    $page->addContent($box);
+    $output->output($page->render(atktext('app_launcher'), true));
+
+    $output->outputFlush();
   }
-
-  $g_layout->outputFlush();
+  else
+  {
+    if ($theme->getAttribute('useframes',true))
+    {
+      // Regular mode. app.php can be included directly.
+      include "app.php";
+    }
+    else
+    {
+      $user = &atkGetUser();
+      $indexpage = &atknew('atk.ui.atkindexpage');
+      $indexpage->setUsername(getFullUsername());
+      $indexpage->setTitle(getAchievoTitle());
+      $indexpage->setTopSearchPiece(getSearchPiece());
+      $centerpiece="";
+      $centerpiecelinks=array();
+      getCenterPiece($centerpiece,$centerpiecelinks);
+      $indexpage->setTopCenterPieceLinks($centerpiecelinks);
+      if($user["name"]=="administrator")
+      {
+        $destination = array("atknodetype"=>"pim.pim","atkaction"=>"adminpim");
+      }
+      else 
+      {
+        $destination = array("atknodetype"=>"pim.pim","atkaction"=>"pim");
+      }
+      $indexpage->setDefaultDestination($destination);
+      $indexpage->generate();
+    }
+  }
 ?>
