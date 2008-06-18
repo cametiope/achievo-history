@@ -42,8 +42,11 @@
       $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employee",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
       $attr->setDestinationFilter("person.status='active'");
       
-      $p_attr = &$this->add(new atkManyToOneRelation("master_project","project.project",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
-      $p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
+      if(atkConfig::get("project","use_subprojects"))
+      {      
+        $p_attr = &$this->add(new atkManyToOneRelation("master_project","project.project",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
+        $p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
+      }
 
       $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_HIDE_ADD|AF_HIDE_LIST));
       $this->add(new atkTextAttribute("description",TEXT_LARGE, AF_HIDE_LIST|AF_HIDE_ADD));
@@ -936,12 +939,15 @@
     
     function _hideMasterProject($id)
     {
-      $rows = &$this->selectDb("project.master_project='$id'","","","",array('id'));
-      
-      if(count($rows)>0)
-      {
-        $p_attr = &$this->getAttribute("master_project");
-        $p_attr->addFlag(AF_HIDE);
+      if(atkConfig::get("project","use_subprojects"))
+      {      
+        $rows = &$this->selectDb("project.master_project='$id'","","","",array('id'));
+        
+        if(count($rows)>0)
+        {
+          $p_attr = &$this->getAttribute("master_project");
+          $p_attr->addFlag(AF_HIDE);
+        }
       }
     }
     
