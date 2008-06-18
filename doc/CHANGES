@@ -44,9 +44,12 @@ Changes in Achievo 1.4
 * Made language field in employees, contact persons and userprefs non-
   obligatory. This also fixes language field obligatory errors when saving
   a node record that hides the language field. [Guido]
-  
+* Fixed SQL error when using aggregation of certain columns in the
+  hours survey. [Guido]
+
 Changes in Achievo 1.3.3
 ------------------------
+- Removed non-used 'organization' column from hoursurvey. [Guido]
 * Fixed weekComplete check: If there were no contracts and/or 
   timeregistrations, a week still appeared to be completely booked. [Dennis]
   
