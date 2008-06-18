@@ -259,7 +259,11 @@ class hoursurvey extends atkNode
     $functionlevelswitch =$g_sessionManager->pageVar("functionlevelswitch");
     $employer_id =        $g_sessionManager->pageVar("employer_id");
     $outputType =         atkArrayNvl($this->m_postvars, "outputType", "");
-    $subProject =         atkArrayNvl($this->m_postvars, "subproject", 0);
+    
+    if(atkConfig::get("project","use_subprojects"))
+    {      
+      $subProject = atkArrayNvl($this->m_postvars, "subproject", 0);
+    }
 
     $externalHourSurveyColumns = atkHarvestModules("getHourSurveyColumns", "", true);
 
@@ -439,7 +443,6 @@ class hoursurvey extends atkNode
       $dummyrec = array(
       "projectid"     =>array("id"=>$projectid),
       "project_category" => array("id"=>$category),
-      "subproject"   =>$subProject,
       "organizationid"=>array("id"=>$organizationid), // manytoonerelation needs subarray
       "phaseid"       =>array("id"=>$phaseid),
       "activityid"    =>array("id"=>$activity_id),
@@ -452,7 +455,12 @@ class hoursurvey extends atkNode
       "aggregate"     =>$aggregate,
       "remark"  =>$remark
       );
-
+      
+      if(atkConfig::get("project","use_subprojects"))
+      {      
+        $dummyrec["subproject"] = $subProject;
+      }
+      
       if(atkconfig::get("timereg","timereg_contact_link",false))
       {
         $dummyrec["contact_id"] = array("id"=>$contact_id);
@@ -504,14 +512,16 @@ class hoursurvey extends atkNode
 
       $data[] = array(atktext('project','project').':',$projectatt->edit($dummyrec)." ".$link);
 
+      if(atkConfig::get("project","use_subprojects"))
+      {      
+        $p_attr = new atkBoolAttribute("subproject");
+        $p_attr->addDependee("phaseid");
+        $p_attr->m_ownerInstance = &$hoursnode;
+        $p_attr->_registerDependees();
+  
+        $data[] = array(atktext('subproject','project').':',$p_attr->edit($dummyrec));
+      }
       
-      $p_attr = new atkBoolAttribute("subproject");
-      $p_attr->addDependee("phaseid");
-      $p_attr->m_ownerInstance = &$hoursnode;
-      $p_attr->_registerDependees();
-
-      $data[] = array(atktext('subproject','project').':',$p_attr->edit($dummyrec));
-
       $phaseatt = &$hoursnode->m_attribList["phaseid"];
       $phaseatt->setDestinationFilter("phase.projectid='[projectid.id]'");
       $phaseatt->m_ownerInstance = &$hoursnode;
