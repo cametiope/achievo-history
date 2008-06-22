@@ -44,7 +44,12 @@
       }
       $this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement", array("project.project", "planning"));
       $this->menuitem("team", dispatch_url("project.project_personemployee", "admin", array("projectid"=>"id='1'")), "projectmanagement", array("project.project", "admin"));
-      $this->menuitem("package", dispatch_url("project.package", "admin"), "projectmanagement", array("project.project", "admin"));
+      
+      if(atkConfig::get("project","package_enabled"))
+      {
+        $this->menuitem("package", dispatch_url("project.package", "admin"), "projectmanagement", array("project.project", "admin"));
+      }
+      
       $this->menuitem("activity_admin", dispatch_url("project.activity", "admin"), "setup", array("project.activity", "admin"));
       $this->menuitem("project_categories", dispatch_url("project.project_category", "admin"), "setup", array("project.activity", "admin"));
       $this->menuitem("tpl_phase_admin", dispatch_url("project.tpl_phase", "admin"), "setup", array("project.tpl_phase", "admin"));
