@@ -46,7 +46,7 @@ class package extends atkMetaNode
     $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time"),"atk.attributes.atkdurationattribute",array("15m"));
 
     $policy->addFlags("abbreviation","name",AF_UNIQUE);
-    $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","completed","deposit",
+    $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","completed","deposit","master",
       AF_HIDE_LIST);
     $policy->addFlags("name",AF_SEARCHABLE);
     $policy->addFlags("description","coordinator_id","startdate","enddate","initial_planning","current_planning","master",
