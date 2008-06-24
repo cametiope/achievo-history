@@ -26,6 +26,8 @@ class project_personemployee extends atkNode
       addListColumns("department","email","phone");
     $this->add(new atkManyToOneRelation("role", "project.role", AF_PRIMARY|AF_HIDE_EDIT|AF_HIDE_VIEW|AF_HIDE_ADD));
     $this->addFilter("personid.role = 'employee'");
+    
+    //$this->addFilter("project_person.projectid", atkGetPostVar('projectid'));
 
     $this->add(new atkDummyAttribute("hint", atktext("project_member_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW|AF_HIDE_EDIT));
     $this->add(new dummyEditAttribute("member"));
@@ -35,6 +37,8 @@ class project_personemployee extends atkNode
       $this->m_securityMap[$action] = "edit";
 
     $this->setTable("project_person", "project_person");
+    
+    $this->setDescriptorTemplate('[personid.lastname], [personid.firstname] ([personid.userid])');
   }
 
   function action_delete(&$handler)

@@ -11,7 +11,7 @@
   {
     function phaseselector()
     {
-      $this->phase("phaseselector", NF_READONLY);
+      parent::__construct("phaseselector", NF_READONLY);
       $this->setSecurityAlias("project.phase");
       $this->add(new phaseFilter());
     }

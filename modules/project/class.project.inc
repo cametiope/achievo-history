@@ -15,7 +15,8 @@
   useattrib("atkdummyattribute");
   useattrib("atknumberattribute");
   useattrib("docmanager.projectdocumentmanager");
-
+  useattrib("project.trafficlightattribute");
+  useattrib("project.memoattribute");
 
   define("PRJ_TIMEREG_ALL_USERS", 0);
   define("PRJ_TIMEREG_MEMBERS_ONLY", 1);
@@ -32,34 +33,31 @@
         $listener = &atknew("modules.crm.listeners.eventlistener");
         $this->addListener($listener);
       }
-      $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
-
-      $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));
-      $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));
-
-      $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
       
-      $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employee",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
+      $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
+      $this->add(new TrafficLightAttribute());      
+      $this->add(new MemoAttribute( AF_HIDE_LIST|AF_HIDE_ADD ));
+      $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));      
+      $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));      
+      $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));      
+      $this->add(new atkManyToOneRelation("project_group_id","project.project_group",AF_SEARCHABLE|AF_HIDE_ADD));
+                  
+      $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employee",AF_MANYTOONE_AUTOCOMPLETE|AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
       $attr->setDestinationFilter("person.status='active'");
       
+      $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_MANYTOONE_AUTOCOMPLETE|AF_HIDE_ADD|AF_HIDE_LIST));            
+
       if(atkConfig::get("project","use_subprojects"))
       {      
         $p_attr = &$this->add(new atkManyToOneRelation("master_project","project.project",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
         $p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
       }
 
-      $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_HIDE_ADD|AF_HIDE_LIST));
       $this->add(new atkTextAttribute("description",TEXT_LARGE, AF_HIDE_LIST|AF_HIDE_ADD));
+           
+      // NOTE, Ruud: documentation says this should be an 'Ajax Eingabefeld'. Guess this should be an autosuggest? To where?
       $this->add(new atkAttribute("quotation_number", AF_HIDE_LIST|AF_HIDE_ADD));
-      $this->add(new atkNumberAttribute("fixed_price",AF_HIDE_LIST|AF_HIDE_ADD, 13, 2), "finance");
-
-      // If we are in project administration mode, we show all projects. Otherwise, we only
-      // show active projects.
-      if (!isset($_SERVER["PWD"]))
-        $reportnodetype = $g_sessionManager->stackVar("reportnodetype");
-      else
-        $reportnodetype = "";
-
+      
       /** @todo: Remove filters from project node constructor */
       if (in_array($ATK_VARS["atknodetype"], array("project.project", "project.project_personcontact", "project.project_personemployee", "project.phase", "search.search"))&& in_array($ATK_VARS["atkaction"],array("admin","add","save","update","edit","search", "view")) || $reportnodetype=="hoursurvey")
       {
@@ -69,35 +67,73 @@
       {
         $this->add(new atkListAttribute("status",array("active","nonactive","archived"),array(),AF_HIDE|AF_LIST_NO_NULL_ITEM, 15));
         $this->addFilter("project.status='active'");
-      }
-
-      if (($ATK_VARS['atkaction'] == "edit" || $ATK_VARS['atkaction'] == "update") && atkconfig("project_contact_obligatory"))
-      {
-        $flags = AF_OBLIGATORY;
-      }
-      else
-      {
-        $flags = 0;
-      }
-
+      }          
+      
       // Add the organization relation
-      $this->add(new atkManyToOneRelation("customer", "organization.organization", AF_HIDE_LIST|AF_RELATION_AUTOLINK|AF_HIDE_ADD|AF_SEARCHABLE|AF_FORCE_LOAD), "", 500);
+      $this->add(new atkManyToOneRelation("customer", "organization.organization", AF_HIDE_LIST|AF_RELATION_AUTOLINK|AF_HIDE_ADD|AF_SEARCHABLE|AF_MANYTOONE_AUTOCOMPLETE|AF_FORCE_LOAD));
+      $this->add(new atkDateAttribute("startdate","","",0,0,AF_OBLIGATORY));
+      $this->add(new atkDateAttribute("enddate","","",0,0,AF_OBLIGATORY));
+      $this->add(new atkDateAttribute("initial_enddate","","",0,0,AF_HIDE));      
+      $this->add(new atkListAttribute("timereg_limit", array("all_users", "members_only"), array(PRJ_TIMEREG_ALL_USERS, PRJ_TIMEREG_MEMBERS_ONLY), AF_LIST_NO_NULL_ITEM|AF_HIDE_ADD|AF_HIDE_LIST));
+      
+      // Time registration
+      $this->add(new atkNumberAttribute("initial_planning", AF_READONLY|AF_HIDE_ADD));
+      $this->add(new atkNumberAttribute("current_planning",AF_HIDE_ADD,6));
+      
+      // Todo RUUD: hours spend attribuut
+      // $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));      
+       
+      $this->add(new atkNumberAttribute("completed",AF_READONLY|AF_HIDE_ADD));
+      $this->add(new atkNumberAttribute("remaining_effort_time", AF_HIDE_ADD|AF_READONLY));
+     
+      // If we are in project administration mode, we show all projects. Otherwise, we only
+      // show active projects.
+      if (!isset($_SERVER["PWD"]))
+        $reportnodetype = $g_sessionManager->stackVar("reportnodetype");
+      else
+        $reportnodetype = "";
 
-      $this->add(new atkOneToManyRelation("contacts","project.project_personcontact", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE|AF_HIDE_ADD|$flags));
+      $this->setTable("project","project");
 
-      $this->add(new atkOneToManyRelation("members","project.project_personemployee", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE), "team");
-      $this->add(new atkDummyAttribute("hint", atktext("project_member_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW|AF_HIDE_ADD), "team");
-      $this->add(new atkFuzzySearchAttribute("member_add", "employee.employee", "storeMembers", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL), "team");
-
-      // This is a listattrib and not a boolattrib, because more options may be added in the future.
-      $this->add(new atkListAttribute("timereg_limit", array("all_users", "members_only"), array(PRJ_TIMEREG_ALL_USERS, PRJ_TIMEREG_MEMBERS_ONLY), AF_LIST_NO_NULL_ITEM|AF_HIDE_ADD|AF_HIDE_LIST), "planning");
-
-      $this->add(new atkBoolAttribute("alwaysvisibleintimereg", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
-      $this->add(new atkDummyAttribute("separator", "<br><hr><br>", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
-      $this->add(new atkDateAttribute("startdate","","",0,0,AF_HIDE_ADD), "planning");
-      $this->add(new atkDateAttribute("enddate","","",0,0,AF_HIDE_ADD), "planning");
-
+      $this->setOrder("project.abbreviation, project.name");
+      $this->setIndex("name");     
+       
+      // NOTE, Ruud: commented because these attributes aren't needed in the General tab.     
+      //if (($ATK_VARS['atkaction'] == "edit" || $ATK_VARS['atkaction'] == "update") && atkconfig("project_contact_obligatory"))
+      //{
+      //  $flags = AF_OBLIGATORY;
+      //}
+      //else
+      //{
+      //  $flags = 0;
+      //}      
+      //$this->add(new atkOneToManyRelation("contacts","project.project_personcontact", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE|AF_HIDE_ADD|$flags));
+      //$this->add(new atkOneToManyRelation("members","project.project_personemployee", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE), "planning");
+      //$this->add(new atkDummyAttribute("hint", atktext("project_member_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW|AF_HIDE_ADD), "planning");
+      //$this->add(new atkFuzzySearchAttribute("member_add", "employee.employee", "storeMembers", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL), "planning");     
+      //$this->add(new atkBoolAttribute("alwaysvisibleintimereg", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
+      //$this->add(new atkDummyAttribute("separator", "<br><hr><br>", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
       $this->add(new atkOneToManyRelation("deliverables", "project.deliverable", "project_id", AF_HIDE_LIST), "planning");
+      //$p_attr = &$this->add(new atkManyToOneRelation("master_project","project.project",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
+      //$p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
+      //$this->add(new atkNumberAttribute("fixed_price",AF_HIDE_LIST|AF_HIDE_ADD, 13, 2), "finance");
+      //all phases (including manyally added ones) are shown in this relation.
+      //$this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE),"planning");
+      //$this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW), "planning");
+      //$this->add(new projecttemplateAttribute("template","project.tpl_project", AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD|AF_HIDE_SEARCH|AF_HIDE_VIEW));
+      //$this->add(new atkOneToManyRelation("todos", "todo.todo", "projectid", AF_HIDE_LIST|AF_HIDE_SEARCH), "todos");
+      //$this->add(new atkOneToManyRelation("notes", "notes.project_notes", "projectid", AF_HIDE_LIST|AF_HIDE_SEARCH), "notes");
+      //$this->add(new projectDocumentManager("documents", AF_HIDE_LIST|AF_HIDE_SEARCH), "documents");
+      //$timeline = &new dataGraphAttribute("timeline", "timeline", array("projectid"=>"[id]", "resolution"=>"auto"), "line", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT);
+      //$timeline->addDynamicParam("resolution", array("day", "week", "month", "auto"));
+      //$this->add($timeline, "stats");
+      //$this->add(new dataGraphAttribute("phasetimedistribution", "phasetime", array("projectid"=>"[id]"), "auto", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT), "stats");
+      //$this->add(new dataGraphAttribute("emptimedistribution", "emptime", array("projectid"=>"[id]"), "auto", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT), "stats");
+      //$this->add(new dataGraphAttribute("activitytimedistribution", "activitytime", array("projectid"=>"[id]"), "auto", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT), "stats");
+      //if(atkconfig::get("timereg","timereg_contact_link",false))
+      //{
+        //$this->add(new atkListAttribute("contact_restrict",array("restrict_project","restrict_eligible"),array(1,2),AF_HIDE_LIST|AF_FORCE_LOAD|AF_OBLIGATORY));
+      //}
 
       //$tmp = &new atkManyBoolRelation("phasetemplatematrix","project.phase","project.tpl_phase", AF_HIDE_LIST|AF_HIDE_SEARCH);
       //$tmp->m_localKey = "projectid";
@@ -105,34 +141,7 @@
       //$tmp->setStoreDeletionFilter("phase.template IS NOT NULL AND phase.template!='' AND phase.template!=0");
       //The phasetemplatematrix is in add mode visible on tab 'default' and in other modes on the 'planning' tab
       //$tab = ($ATK_VARS["atkaction"]=="view"||$ATK_VARS["atkaction"]=="edit"||$ATK_VARS["atkaction"]=="update"?"planning":"default");
-      //$this->add($tmp, $tab);
-
-      //all phases (including manyally added ones) are shown in this relation.
-      $this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE),"planning");
-
-      $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW), "planning");
-      $this->add(new projecttemplateAttribute("template","project.tpl_project", AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD|AF_HIDE_SEARCH|AF_HIDE_VIEW));
-
-      $this->add(new atkOneToManyRelation("todos", "todo.todo", "projectid", AF_HIDE_LIST|AF_HIDE_SEARCH), "todos");
-      $this->add(new atkOneToManyRelation("notes", "notes.project_notes", "projectid", AF_HIDE_LIST|AF_HIDE_SEARCH), "notes");
-      $this->add(new projectDocumentManager("documents", AF_HIDE_LIST|AF_HIDE_SEARCH), "documents");
-
-      $timeline = &new dataGraphAttribute("timeline", "timeline", array("projectid"=>"[id]", "resolution"=>"auto"), "line", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT);
-      $timeline->addDynamicParam("resolution", array("day", "week", "month", "auto"));
-      $this->add($timeline, "stats");
-      $this->add(new dataGraphAttribute("phasetimedistribution", "phasetime", array("projectid"=>"[id]"), "auto", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT), "stats");
-      $this->add(new dataGraphAttribute("emptimedistribution", "emptime", array("projectid"=>"[id]"), "auto", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT), "stats");
-      $this->add(new dataGraphAttribute("activitytimedistribution", "activitytime", array("projectid"=>"[id]"), "auto", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT), "stats");
-
-      if(atkconfig::get("timereg","timereg_contact_link",false))
-      {
-        $this->add(new atkListAttribute("contact_restrict",array("restrict_project","restrict_eligible"),array(1,2),AF_HIDE_LIST|AF_FORCE_LOAD|AF_OBLIGATORY));
-      }
-
-      $this->setTable("project","project");
-
-      $this->setOrder("project.abbreviation, project.name");
-      $this->setIndex("name");
+      //$this->add($tmp, $tab);      
     }
 
     function graph_topprojects($params)
@@ -805,6 +814,9 @@
      */
     function preAdd(&$record)
     {
+      // Add enddate to an additional field
+      $record['initial_enddate'] = $record['enddate'];
+      
       //get all tpl_project_phase combinations with the selected
       //projecttemplate id.
       $tpl_project_phase_Node = &atkGetNode("project.tpl_project_phase");
@@ -963,5 +975,3 @@
       return $handler->viewPage($record, $locked);
     }
   }
-
-?>

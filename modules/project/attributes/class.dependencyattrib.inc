@@ -9,7 +9,7 @@ class dependencyAttribute extends atkAttribute
    * @param $name Name of the attribute
    * @param $flags Flags for this attribute
    */
-  function dependencyAttribute($name, $flags=0)
+  function __construct($name, $flags=0)
   {
     /* base class constructor */
     $this->atkAttribute($name, $flags);
@@ -17,22 +17,25 @@ class dependencyAttribute extends atkAttribute
 
   function fetchValue($postvars)
   {
+    atk_var_dump($postvars);
     $values = isset($postvars[$this->formName()]) ? $postvars[$this->formName()] : null;
     $res = array();
     if (is_array($values))
     {
       if($values["first"]!=""&&$values["last"]!=""&&$values["first"]!=$values["last"])
       {
+        $value = explode('_',$values['last']);
         $res["first"]=$values["first"];
-        $res["last"]=$values["last"];
+        $res["last"]=$value[0];
+        $res['dep_type'] = $value[1];
       }
       // Find out if we need to delete dependencies..
       while (list($name,$val) = each($values))
       {
         if (substr($name,0,3)=="del")
         {
-          list($del,$first,$last) = split('_',$name);
-          $delarr[] = array("first"=>$first,"last"=>$last);
+          list($del,$first,$last, $dep_type) = split('_',$name);
+          $delarr[] = array("first"=>$first,"last"=>$last,"dep_type"=>$dep_type);
         }
       }
       $res["del"] = $delarr;
@@ -66,56 +69,72 @@ class dependencyAttribute extends atkAttribute
       $data[] = array(atktext('dependencies'),atktext('delete'));
       for ($i=0;$i<count($deps);$i++)
       {
-        $label = atktext("phase")." '".$deps[$i]["firstname"]."' ".atktext("mustbecompletedbeforephase")." '".$deps[$i]["lastname"]."'";
-        $delete = '&nbsp;&nbsp;<input type="checkbox" '.$this->getCSSClassAttribute("atkcheckbox").' name="'.$this->formName()."[del_".$deps[$i]["first"]."_".$deps[$i]["last"].']" value="1">';
+        $label  = atktext($deps[$i]["dep_type"])." '".$deps[$i]["firstname"]."' ".atktext("mustbecompletedfirst");
+        $delete = '&nbsp;&nbsp;<input type="checkbox" '.$this->getCSSClassAttribute("atkcheckbox").' name="'.$this->formName()."[del_".$deps[$i]["first"]."_".$deps[$i]["last"]."_".$deps[$i]["dep_type"].']" value="1">';
         $data[] = array($label,$delete);
       }
       $tbl = &atknew("atk.utils.atktablerenderer");
       $result.=$tbl->render($data,TBL_HEADER|TBL_ALTERNATE,"recordlist")."<br>";
     }
 
-    $recs = $this->getPhases($record["id"]);
+    $recs = $this->getPhasesAndPackages($record["projectid"], $record["id"]);
 
-    $names[0] = "---";
-    $ids[0]="";
+    $current_phase = '<input type="hidden" name="'.$this->formName().'[first]'.'" value="'.$record['id'].'" />';
 
-    for ($i=0;$i<count($recs);$i++)
-    {
-      $names[] = $recs[$i]["name"];
-      $ids[] = $recs[$i]["id"];
-    }
-
-    $phaselist1 = new atkListAttribute($this->formName()."[first]",$names, $ids);
-    $phaselist2 = new atkListAttribute($this->formName()."[last]",$names, $ids);
-
-    if (count($names)>2)
-    {
-      $result.=atktext("addnewdependency").":<br>";
-      $result.=atktext("phase")." ".$phaselist1->edit()." ".atktext("mustbecompletedbeforephase")." ".$phaselist2->edit();
-    }
-
+    $result  .= atktext("addnewdependency").":<br>";            
+    $result  .= atktext("phase")." ".$current_phase." ".atktext("mustbecompletedbefore");
+    $result .= $this->createDropdownList( $recs );
+    
     return $result;
   }
 
-  function getPhases($projectid)
+  
+  private function createDropdownList($recs)
   {
-    if (is_null($projectid))
+    $id = $this->getHtmlId($fieldprefix);
+    $result  = '<select id="'.$id.'" name="'.$id.'[last]"  class="atklistattribute" '.$onchange.($this->m_width?" style='width: {$this->m_width}px'":"").'>';
+    $result .= '<option value="">---</option>';
+    $prev_optgroup = '';
+
+    for ($i=0;$i<count($recs);$i++)
+    {           
+      // Todo: optgroup can be handled a bit cleaner (try to get rid of substr)
+      $optgroup = ucfirst($recs[$i]['dep_type']); 
+      if( $prev_optgroup != $optgroup )
+      {
+        if( $prev_optgroup != '' )
+        {
+          $result .= '</optgroup>';
+        }
+        $result .= '<optgroup label="'.$optgroup.'">';
+        $result.= '<option value="'.$recs[$i]['id'].'_'.$recs[$i]['dep_type'].'">'.$recs[$i]['name'];
+        $prev_optgroup = $optgroup;        
+      }
+      else 
+      {
+        $result.= '<option value="'.$recs[$i]['id'].'_'.$recs[$i]['dep_type'].'">'.$recs[$i]['name'];      
+      }
+    }
+    $result .= '</optgroup>';
+    $result.='</select>';    
+   
+    return $result;
+  }
+  
+  function getPhasesAndPackages($projectid,$phase_id)
+  {
+    if (is_null($projectid) || is_null($phase_id) )
     {
-      atkerror("dependancyattrib->getPhases: Empty projectid given");
+      atkerror("dependancyattrib->getPhasesAndPackages: Empty projectid given");
       return array();
     }
 
     $db = &atkGetDb();
 
-    $query = "SELECT
-                id, name
-              FROM
-                phase
-              WHERE
-                projectid = '".$projectid."' ORDER BY name";
-
-    $recs = $db->getrows($query);
-    return $recs;
+    $phases   = 'SELECT id, name, "phase" AS dep_type    FROM phase WHERE phase.projectid = '.$projectid.' AND phase.id <> '.$phase_id.' AND phase.id NOT IN (SELECT phaseid_col FROM dependency WHERE dep_type = "phase" AND phaseid_row = '.$phase_id.' ) ORDER BY phase.name';
+    $packages = 'SELECT id, name, "package" AS dep_type FROM package WHERE package.projectid = '.$projectid.' AND package.id NOT IN(SELECT phaseid_col FROM dependency WHERE dep_type = "package" AND phaseid_row = '.$phase_id.') ORDER BY package.name';
+    
+    return array_merge($db->getrows($phases), $db->getrows($packages));
   }
 
   /**
@@ -137,18 +156,16 @@ class dependencyAttribute extends atkAttribute
   {
     if ($rec["id"]!="")
     {
-      $query = "SELECT
-                  phaseid_row as first,
-                  ROW1.name as firstname,
-                  phaseid_col as last,
-                  COL1.name as lastname
-                FROM
-                  dependency, phase ROW1, phase COL1
-                WHERE
-                  ROW1.id = phaseid_row
-                  AND COL1.id = phaseid_col
-                  AND (ROW1.projectid = '".$rec["id"]."' OR COL1.projectid = '".$rec["id"]."')
-                  ORDER BY phaseid_row";
+      $query = 'SELECT 
+                  dependency.phaseid_col AS `first`, phase.name AS firstname, dependency.phaseid_row AS last, dependency.dep_type
+                FROM 
+                  dependency, phase
+                WHERE 
+                  phase.id = dependency.phaseid_col
+                AND
+                  dependency.phaseid_row = '. (int) $rec["id"].'
+                ORDER BY 
+                  dependency.phaseid_col';
 
       $db = &atkGetDb();
       return array("deps"=>$db->getrows($query));
@@ -167,27 +184,31 @@ class dependencyAttribute extends atkAttribute
 
     // First delete deleted items.
     $delarr = $values["del"];
+
     if (is_array($delarr))
     {
       for ($i=0;$i<count($delarr);$i++)
-      {
+      {        
         $delquery = "DELETE
                      FROM
                        dependency
                      WHERE
-                       phaseid_row = '".$delarr[$i]["first"]."'
-                       AND phaseid_col = '".$delarr[$i]["last"]."'";
-
+                       phaseid_row = '".$delarr[$i]["last"]."'
+                     AND 
+                       phaseid_col = '".$delarr[$i]["first"]."'
+                     AND
+                       dep_type = '".$delarr[$i]["dep_type"]."'";
+        
         $db->query($delquery);
       }
     }
 
-    // Now add a new item..
+    // Now add an new item..
     if ($values["first"]!="" && $values["last"]!="")
     {
       $query = "INSERT
-                  INTO dependency (phaseid_row,phaseid_col)
-                  VALUES ('".$values["first"]."','".$values["last"]."')";
+                  INTO dependency (phaseid_row,phaseid_col,dep_type)
+                  VALUES ('".$values["first"]."','".$values["last"]."', '".$values['dep_type']."')";
 
       $db->query($query);
     }
@@ -210,4 +231,3 @@ class dependencyAttribute extends atkAttribute
     return "";
   }
 }
-?>

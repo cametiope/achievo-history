@@ -9,6 +9,9 @@
   useattrib("atkdummyattribute");
   useattrib("atkfuzzysearchattribute");
   useattrib("project.spendhoursattribute");
+  useattrib("project.dependencyattrib");
+  useattrib("project.packageprojectselector");
+  
   userelation("atkmanytoonerelation");
   userelation("atkmanyboolrelation");
   userelation("atkonetomanyrelation");
@@ -17,73 +20,73 @@
   /**
    * Override of default atkManyBoolRelation because isEmpty depends not only on
    * setting of phase_activity but also of template.
-   */
+  */
   class phaseManyBoolRelation extends atkManyBoolRelation
   {
     function isEmpty($record)
     {
       return (parent::isEmpty($record) && $record["template"]["id"]=="");
     }
-  }
+  }   
+
 
   class phase extends atkNode
   {
-    function phase($name="phase", $flags=0)
+    public function __construct($name="phase", $flags=0)
     {
       $securitymanager = &atkGetSecurityManager();
       $initialplanningallowed = isset($securitymanager) && $securitymanager->allowed("project.project","initialplanning");
 
-      $this->atkNode($name,$flags|NF_AUTOSELECT|NF_EDITAFTERADD); // node() constructor is *not* called automatically!
+      $this->atkNode($name,$flags|NF_AUTOSELECT|NF_EDITAFTERADD|NF_ADD_LINK); // node() constructor is *not* called automatically!
 
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE, 50));
-      $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT));
-
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY));
+              
+      $this->add(new packageProjectSelector('Project / Package'));
+      $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW));
+            
+      $this->add(new atkListAttribute('priority', range(1,10)));
 
-      $tmp = new phaseManyBoolRelation("phase_activity", "project.phase_activity", "project.activity", AF_HIDE_LIST|AF_OBLIGATORY|AF_MANYBOOL_AUTOLINK);
-      $tmp->m_localKey = "phaseid";
-      $tmp->m_remoteKey = "activityid";
-      $this->add($tmp);
-
-      // template *must* come after phase_activity, because phase_activity does a delete of all
-      // records on store, so template must be stored after phase_activity.
-      $this->add(new phasetemplateAttribute("template","project.tpl_phase", AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
-
+      $assign_to = &$this->add(new atkManyToOneRelation('assign_to', 'person.person', AF_LARGE ) );
+      $assign_to->setDestinationFilter(' person.id IN (SELECT personid FROM project_person WHERE projectid = [projectid.id])');
+      
       $this->add(new atkDateAttribute("startdate", "", ""));
-      $this->add(new atkDateAttribute("enddate", "", ""));
-      $this->add(new atkDummyAttribute("duration","",AF_HIDE_ADD|AF_HIDE_EDIT));
+      $this->add(new atkDateAttribute("enddate", "", ""));      
+      
+      $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT));
+
+      $this->add(new atkDurationAttribute("initial_planning",'','', ($initialplanningallowed?0:AF_READONLY_EDIT)|AF_TOTAL|AF_DURATION_STRING));
+      $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));      
+      $this->add(new atkDurationAttribute("completed", '', '', AF_READONLY|AF_HIDE_ADD));
+      $this->add(new atkDurationAttribute("remaining_effort_time", '', '', AF_HIDE_ADD|AF_READONLY));
 
       // deliverable dependency
       $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable"));
       $depends->setDestinationFilter("project_id=[projectid.id]");
-
-      //$this->add(new atkNumberAttribute("max_phasetime"));
-      $this->add(new atkDurationAttribute("initial_planning",'','', ($initialplanningallowed?0:AF_READONLY_EDIT)|AF_TOTAL|AF_DURATION_STRING));
-      $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));
+            
       $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));
 
-      $this->add(new atkOneToManyRelation("phaseplanning", "project.phaseplanning", "phaseid", AF_HIDE_LIST));
-
-      $this->add(new atkFuzzySearchAttribute("phaseplanning_add", "employee.employee", "storePhaseplanning", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL, 20));
-
+      //$this->add(new atkOneToManyRelation("phaseplanning", "project.phaseplanning", "phaseid", AF_HIDE_LIST));
+      //$this->add(new atkFuzzySearchAttribute("phaseplanning_add", "employee.employee", "storePhaseplanning", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL, 20));
+      
       $cascadingdeletehours = atkConfig::get("project", "project_cascading_delete_hours", false);
       if($cascadingdeletehours)
         $this->add(new atkOneToManyRelation("hours","timereg.hours","phaseid",AF_HIDE|AF_CASCADE_DELETE));
-
+      
       $this->addSecurityMap("view","project.admin");
       $this->setOrder("phase.startdate, phase.name");
       $this->setTable("phase","phase");
     }
 
-    function descriptor_def()
+    public function setDescriptorTemplate()
     {
       return "[name]";
     }
 
 
-    function name_display($record, $mode)
+    public function name_display($record, $mode)
     {
       // Do not return a html link in plain or csv mode or select screen
       if (($mode=="plain") || ($mode=="csv"))
@@ -117,7 +120,7 @@
       }
     }
 
-    function duration_display($record,$mode)
+    public function duration_display($record,$mode)
     {
       if(is_array($record["startdate"]) && is_array($record["enddate"]))
       {
@@ -143,7 +146,7 @@
       return "";
     }
 
-    function initial_values()
+    public function initial_values()
     {
       // Compose the default initual values array
       $initial_values = array("status"=>"active");
@@ -161,14 +164,14 @@
       return $initial_values;
     }
 
-    function addDb(&$record, $exectrigger=true, $mode="add")
+    public function addDb(&$record, $exectrigger=true, $mode="add")
     {
       // This override makes sure that the current_planning is set equal to the number of initial_planning.
       $record["current_planning"] = $record["initial_planning"];
       return parent::addDb($record, $exectrigger, $mode);
     }
 
-    function postDel($rec)
+    public function postDel($rec)
     {
       if(isset($rec["id"]))
       {
@@ -179,7 +182,7 @@
       return true;
     }
 
-    function action_select(&$handler)
+    public function action_select(&$handler)
     {
       // In select mode, we place a filter, because we may only select active phases.
       $this->addFilter("phase.status='active'");
@@ -192,7 +195,7 @@
       return $handler->action_select();
     }
 
-    function phaseplanning_add_edit($record, $mode)
+    public function phaseplanning_add_edit($record, $mode)
     {
       $org = $this->m_attribList["phaseplanning_add"]->edit($record, $mode);
       useattrib("atkDurationAttribute");
@@ -212,7 +215,7 @@
      * @param String $mode The mode for which validation is performed ('add' or 'update')
      * @param array $ignoreList The list of attributes that should not be validated
      */
-    function validate(&$record, $mode, $ignoreList=array())
+    public function validate(&$record, $mode, $ignoreList=array())
     {
       // This check can only be done when updating an existing phase, not when adding a new one
       if ($mode == "update")
@@ -249,7 +252,7 @@
       atkNode::validate($record, $mode, $ignoreList);
     }
 
-    function storePhaseplanning($rec, $people)
+    public function storePhaseplanning($rec, $people)
     {
       useattrib("atkDurationAttribute");
       $tmp_attrib = new atkDurationAttribute("phaseplanning_initial");
@@ -265,7 +268,7 @@
       return true;
     }
 
-    function _addPlanningRecord($phase_id, $person_id, $initial_planning)
+    private function _addPlanningRecord($phase_id, $person_id, $initial_planning)
     {
       $db = &atkGetDb();
 
@@ -286,7 +289,7 @@
      * @param int $phase_id
      * @param int $person_id
      */
-    function _addTeamMemberRecord($phase_id,$person_id)
+    private function _addTeamMemberRecord($phase_id,$person_id)
     {
       $db = &atkGetDb();
       // person may allready exist
@@ -309,7 +312,7 @@
       }
     }
 
-    function rowColor($record)
+    public function rowColor($record)
     {
       if($record["current_planning"]>0)
       {
@@ -324,7 +327,7 @@
       }
     }
 
-    function recordActions($record, &$actions, &$mraactions)
+    public function recordActions($record, &$actions, &$mraactions)
     {
       //when we have a phase that belongs to a template, the records cannot be deleted in an admin screen.
       if(isset($record["template"]["id"]) && ($record["template"]["id"]!="") && $record["template"]["id"]!=0)
@@ -333,7 +336,7 @@
       }
     }
 
-    function preAdd(&$rec)
+    public function preAdd(&$rec)
     {
       //if the phase is added, check if the name is filled in and the template is
       if(empty($rec["name"]))
@@ -351,4 +354,3 @@
       return true;
     }
   }
-?>

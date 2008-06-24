@@ -35,6 +35,7 @@ class package extends atkMetaNode
     $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
     $policy->hasMany("package_person");
     
+    $policy->addFlags('projectid', AF_HIDE);
     $policy->setTypeAndParams("master","atk.attributes.atklistattribute",array(array("project.package","project.project")));
     $policy->setTypeAndParams("master_id","module.project.attributes.dynamicmanytoonerelation");
 
@@ -124,6 +125,8 @@ class package extends atkMetaNode
   
   function initial_values()
   {
+    $selectedproject = atkGetPostVar("projectid") != ''  ? atkGetPostVar("projectid") : 0;
+
     $nextyear = strtotime("+1 year");
     return array("startdate"=>array("year"=>date("Y"),
                                     "month"=>date("m"),
@@ -133,7 +136,8 @@ class package extends atkMetaNode
                                   "day"=>date("d",$nextyear)),
                  "status"=>1,
                  "master"=>"project.package",
-                 "coordinator_id"=>getUser());
+                 "coordinator_id"=>getUser(),
+                 'projectid' => $selectedproject);
   }
   
   function postMeta()
