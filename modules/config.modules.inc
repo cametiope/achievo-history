@@ -17,4 +17,4 @@
   module("quotation");
   module("docmanager");
   module("crm");
-?>
+  module("history");
