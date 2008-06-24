@@ -65,11 +65,14 @@ class package extends atkMetaNode
    */
   function master_id_validate(&$record, $mode)
   {
-    $db = &$this->getDb();
-    $rows = $db->getrows("SELECT id FROM package WHERE master_id='".$record["id"]."'");
-    if(count($rows)>0)
+    if(atkConfig::get("project","package_number_of_branches") != -1)
     {
-      triggerError($record, "master_id", "Long_chain_possible");
+      $db = &$this->getDb();
+      $rows = $db->getrows("SELECT id FROM package WHERE master_id='".$record["id"]."'");
+      if(count($rows)>0)
+      {
+        triggerError($record, "master_id", "Long_chain_possible");
+      }
     }
   }
   
