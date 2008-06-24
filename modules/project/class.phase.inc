@@ -40,7 +40,7 @@
       $this->atkNode($name,$flags|NF_AUTOSELECT|NF_EDITAFTERADD|NF_ADD_LINK); // node() constructor is *not* called automatically!
 
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
-      $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE, 50));
+      $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE|AF_FORCE_LOAD, 50));
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY));
               

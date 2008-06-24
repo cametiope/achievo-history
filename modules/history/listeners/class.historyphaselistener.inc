@@ -49,6 +49,19 @@
         {
           $changes[] = atktext('changed_enddate', 'history');
         }        
+        
+        // Has a dependency been removed
+        if( array_key_exists( 'del', $record['dependencies'] ) && $record['dependencies']['del'] !== NULL )
+        {
+          $changes[] = atktext('removed_dependency');
+        }
+        
+        // Have the dependencies been changed        
+        if( array_key_exists( 'first', $record['dependencies'] ) )
+        {
+          $changes[] = atktext('added_dependency');
+        }        
+        
       }
       
       return $changes;
@@ -63,7 +76,7 @@
      * @return void
      */
     private function storeChangesToHistory( $id, $changes )
-    {
+    {      
       $user = atkGetUser( );
       $node = atkGetNode( 'history.history' );
       
@@ -84,8 +97,8 @@
         );          
         
         $node->addDb( $record );
-      }
-
+       
+      }      
     }
     
   }
