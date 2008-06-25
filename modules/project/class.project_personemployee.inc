@@ -1,66 +1,84 @@
 <?php
 
-/**
- * Module Project
- * Class project_personemployee
- *
- * This class makes it possible to relate employees to a project in a certain role(s).
- *
- * $Id$
- * @author L. Willems  <lineke@ibuildings.nl>
- * @version $Revision$
- *
- */
+  /**
+   * Module Project
+   * Class project_personemployee
+   *
+   * This class makes it possible to relate employees to a project in a certain role(s).
+   *
+   * $Id$
+   * @author L. Willems  <lineke@ibuildings.nl>
+   * @version $Revision$
+   *
+   */
 
-userelation("atkmanytoonerelation");
-useattrib("project.dummyeditattribute");
-
-class project_personemployee extends atkNode
-{
-  function project_personemployee()
-  {
-    $this->atkNode("project_personemployee");
-
-    $this->add(new atkManyToOneRelation("projectid", "project.project", AF_OBLIGATORY|AF_PRIMARY|AF_HIDE));
-    $this->add(new atkManyToOneRelation("personid", "employee.employee", AF_OBLIGATORY|AF_PRIMARY|AF_LARGE))->
-      addListColumns("department","email","phone");
-    $this->add(new atkManyToOneRelation("role", "project.role", AF_PRIMARY|AF_HIDE_EDIT|AF_HIDE_VIEW|AF_HIDE_ADD));
-    $this->addFilter("personid.role = 'employee'");
-    
-    //$this->addFilter("project_person.projectid", atkGetPostVar('projectid'));
-
-    $this->add(new atkDummyAttribute("hint", atktext("project_member_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW|AF_HIDE_EDIT));
-    $this->add(new dummyEditAttribute("member"));
-    // If you may edit the project, you may also add contactpersons to it.
-    $this->setSecurityAlias("project.project");
-    foreach(array("add", "save", "update", "delete") as $action)
-      $this->m_securityMap[$action] = "edit";
-
-    $this->setTable("project_person", "project_person");
-    
-    $this->setDescriptorTemplate('[personid.lastname], [personid.firstname] ([personid.userid])');
-  }
-
-  function action_delete(&$handler)
-  {
-    // When deleting, the above filter won't work. But that doesn't matter, we
-    // don't need it anyway.
-    $this->m_flags |= NF_NO_FILTER;
-    return $handler->action_delete();
-  }
-
-  //Overwrite personid display/edit for show employee and role in one line
-  function personid_edit($record="", $fieldprefix="", $mode="")
-  {
-    return $this->getAttribute("personid")->edit($record, $fieldprefix, $mode)." ".$this->getAttribute("role")->edit($record, $fieldprefix, $mode);
-  }
-
-  function personid_display($record, $mode="")
-  {
-    return $this->getAttribute("personid")->display($record, $fieldprefix, $mode)." ".$this->getAttribute("role")->display($record, $fieldprefix, $mode);
-  }
+  userelation("atkmanytoonerelation");
+  useattrib("project.dummyeditattribute");
 
   /**
+   * Constructor.
+   *
+   */
+  class project_personemployee extends atkNode
+  {
+    public function __construct()
+    {
+      $this->atkNode("project_personemployee");
+
+      $this->add(new atkManyToOneRelation("projectid", "project.project", AF_OBLIGATORY|AF_PRIMARY|AF_HIDE));
+      $this->add(new atkManyToOneRelation("personid", "employee.employee", AF_OBLIGATORY|AF_PRIMARY|AF_LARGE))->
+        addListColumns("department","email","phone");
+      $this->add(new atkManyToOneRelation("role", "project.role", AF_PRIMARY|AF_HIDE_EDIT|AF_HIDE_VIEW|AF_HIDE_ADD));
+      $this->addFilter("personid.role = 'employee'");
+    
+      //$this->addFilter("project_person.projectid", atkGetPostVar('projectid'));
+
+      $this->add(new atkDummyAttribute("hint", atktext("project_member_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW|AF_HIDE_EDIT));
+      $this->add(new dummyEditAttribute("member"));
+      // If you may edit the project, you may also add contactpersons to it.
+      $this->setSecurityAlias("project.project");
+      foreach(array("add", "save", "update", "delete") as $action)
+        $this->m_securityMap[$action] = "edit";
+
+      $this->setTable("project_person", "project_person");
+    
+      $this->setDescriptorTemplate('[personid.lastname], [personid.firstname] ([personid.userid])');
+    }
+
+    function action_delete(&$handler)
+    {
+      // When deleting, the above filter won't work. But that doesn't matter, we
+      // don't need it anyway.
+      $this->m_flags |= NF_NO_FILTER;
+      return $handler->action_delete();
+    }
+
+    /**
+     * Overwrite personid edit for show employee and role in one line.
+     *
+     * @param array $record
+     * @param string $fieldprefix
+     * @param string $mode
+     * @return string
+     */
+    function personid_edit($record="", $fieldprefix="", $mode="")
+    {
+      return $this->getAttribute("personid")->edit($record, $fieldprefix, $mode)." ".$this->getAttribute("role")->edit($record, $fieldprefix, $mode);
+    }
+
+    /**
+     * Overwrite personid display for show employee and role in one line.
+     *
+     * @param array $record
+     * @param string $mode
+     * @return string
+     */
+    function personid_display($record, $mode="")
+    {
+      return $this->getAttribute("personid")->display($record, $fieldprefix, $mode)." ".$this->getAttribute("role")->display($record, $fieldprefix, $mode);
+    }
+
+    /**
      * Save a new record to the database.
      *
      * The record is passed by reference, because any autoincrement field gets
@@ -74,64 +92,65 @@ class project_personemployee extends atkNode
      *                           and not stored in the database.
      * @return boolean True if succesful, false if not.
      */
-  function addDb(&$record, $exectrigger=true, $mode="add", $excludelist=array())
-  {
-    if(atkArrayNvl($record,"member"))
+    public function addDb(&$record, $exectrigger=true, $mode="add", $excludelist=array())
     {
-      return  true;
-    }
-    else
-    {
-      return parent::addDb($record, $exectrigger, $mode, $excludelist);
-    }
-  }
-  
-  function _addMember(&$record)
-  {
-    $tokens = explode(",", $record["member"]);
-    $node = &atkGetNode("employee.employee");
-    $result = false;
-    foreach ($tokens as $token)
-    {
-      $token = trim($token);
-      if($token)
+      if(atkArrayNvl($record,"member"))
       {
-        $found = $node->searchDb($token);
-        if(count($found) == 0)
+        return  true;
+      }
+      else
+      {
+        return parent::addDb($record, $exectrigger, $mode, $excludelist);
+      }
+    }
+  
+    private function addMember(&$record)
+    {
+      $tokens = explode(",", $record["member"]);
+      $node = &atkGetNode("employee.employee");
+      $result = false;
+      foreach ($tokens as $token)
+      {
+        $token = trim($token);
+        if($token)
         {
-      	  $string = $this->text("no_member_error");
-          atkimport("atk.utils.atkstringparser");	  
-      	  $parser = new atkStringParser($string);
-      	  $msg = $parser->parse(array("param"=>$token));
-      	  
-          triggerError($record, "member", 'no_member_error',$msg);
-        }
-        elseif(count($found)>1)
-        {
-      	  $string = $this->text("member_many_match_error");
-          atkimport("atk.utils.atkstringparser");	  
-      	  $parser = new atkStringParser($string);
-      	  $msg = $parser->parse(array("param"=>$token));
-      	  
-          triggerError($record, "member", 'member_many_match_error',$msg);
-        }
-        else 
-        {
-          $record["personid"] = $found[0];
-          if(parent::addDb($record, $exectrigger, $mode, $excludelist))
+          $found = $node->searchDb($token);
+          if(count($found) == 0)
           {
-            $result = true;
+           $string = $this->text("no_member_error");
+            atkimport("atk.utils.atkstringparser");   
+           $parser = new atkStringParser($string);
+           $msg = $parser->parse(array("param"=>$token));
+          
+            triggerError($record, "member", 'no_member_error',$msg);
+          }
+          elseif(count($found)>1)
+          {
+            $string = $this->text("member_many_match_error");
+            atkimport("atk.utils.atkstringparser");   
+            $parser = new atkStringParser($string);
+            $msg = $parser->parse(array("param"=>$token));
+          
+            triggerError($record, "member", 'member_many_match_error',$msg);
+          }
+          else 
+          {
+            $record["personid"] = $found[0];
+            if(parent::addDb($record, $exectrigger, $mode, $excludelist))
+            {
+              $result = true;
+            }
           }
         }
       }
+      if(!$result && count($record['atkerror']) == 0)
+      {
+        triggerError($record, "member", 'member_match_not_found_error');
+      }
+      return $result;
     }
-    if(!$result && count($record['atkerror']) == 0)
-    {
-      triggerError($record, "member", 'member_match_not_found_error');
-    }
-    return $result;
-  }
-  /**
+  
+    /**
      * Validates a record.
      *
      * Validates unique fields, required fields, dataformat etc.
@@ -144,17 +163,13 @@ class project_personemployee extends atkNode
      * @param array ignoreList The list of attributes that should not be
      *                         validated
      */
-  function validate(&$record, $mode, $ignoreList=array())
-  {
-    if(atkArrayNvl($record,"member"))
+    public function validate(&$record, $mode, $ignoreList=array())
     {
-      return  $this->_addMember($record);
-    }
-    else
-    {
+      if(atkArrayNvl($record,"member"))
+      {
+        return  $this->addMember($record);
+      }
       return parent::validate($record, $mode, $ignoreList);
     }
-  }
 
-}
-?>
+  }
