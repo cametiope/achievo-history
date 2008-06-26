@@ -25,4 +25,6 @@
   $theme['frame_menu_width'] = 210;
   $theme['basetheme'] = 'steelblue';
   $theme['basethemelocation'] = 'atk';
+  $theme['use_project_menu']=true;
+
 ?>
