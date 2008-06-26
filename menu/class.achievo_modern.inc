@@ -22,12 +22,25 @@ class achievo_modern extends atkPlainMenu
       $ui = &atkinstance("atk.ui.atkui");
       $atkmenutop=($_REQUEST['atkmenutop']?$_REQUEST['atkmenutop']:$atkmenutop);
 
-      $box = $ui->renderBox(array("title"=>$this->getMenuTranslation($atkmenutop),
+      $parameter = array("title"=>$this->getMenuTranslation($atkmenutop),
       "menuitems"=>$menuitems,
       'menutop'=>$atkmenutop,
       'g_menu'=>$g_menu,
       'atkmenutop'=>$atkmenutop,
-      'atkmenutopname'=>$this->getMenuTopName($menuitems,$atkmenutop)),"menu");
+      'atkmenutopname'=>$this->getMenuTopName($menuitems,$atkmenutop));
+
+      if ($theme->getAttribute('use_project_menu'))
+      {
+        atkimport("menu.atktabmenu");
+        atkTabMenu::registerCssJs($page,$theme);
+        $parameter['tabmenu'] = atkTabMenu::renderMenu();
+
+        $box = $ui->renderBox($parameter,"tabmenu");
+      }
+      else
+      {
+        $box = $ui->renderBox($parameter,"menu");
+      }
 
       $page->addContent($box);
 
