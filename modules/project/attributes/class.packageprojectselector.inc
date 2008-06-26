@@ -12,7 +12,7 @@ class packageProjectSelector extends atkListAttribute
   {
     if( false !== ( $options = $this->getOptionArray() ) )
     {
-      $this->atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_FORCE_LOAD, $size=0);
+      $this->atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_FORCE_LOAD|AF_HIDE_LIST, $size=0);
     }
   }
   
@@ -20,6 +20,9 @@ class packageProjectSelector extends atkListAttribute
  /**
   * Returns a piece of html code that can be used in a form to edit this
   * attribute's value.
+  * 
+  * Note that master and master_id should be present in the node with hidden values
+  * 
   * @param $record Array with fields
   * @return piece of html code with a checkbox
   */
@@ -30,10 +33,9 @@ class packageProjectSelector extends atkListAttribute
     $result  = '<select id="'.$id.'" name="'.$id.'"  class="atklistattribute" '.$onchange.($this->m_width?" style='width: {$this->m_width}px'":"").'>';
 
     $values   = $this->getValues($record);
-    $recvalue = atkArrayNvl( $record, $this->fieldName() );    
+    $recvalue = atkArrayNvl( $record, $this->fieldName() );
     $this->m_selected = ( false !== strpos( $record['master'], 'pack') ) ? 'packages' : 'projects';
     $this->m_selected .=  '_' . $record['master_id'];   
-
     
     $prev_optgroup = '';
     for ($i=0;$i<count($values);$i++)

@@ -44,7 +44,10 @@
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY));
               
-      $this->add(new packageProjectSelector('Project / Package'));
+      $this->add(new packageProjectSelector('project_package'));
+      $this->add(new atkNumberAttribute("master_id", AF_HIDE));
+      $this->add(new atkAttribute("master", AF_HIDE));
+      
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW));
             
       $this->add(new atkListAttribute('priority', range(1,10)));
@@ -55,7 +58,7 @@
       $this->add(new atkDateAttribute("startdate", "", ""));
       $this->add(new atkDateAttribute("enddate", "", ""));      
       
-      $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT));
+      $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
 
       $this->add(new atkDurationAttribute("initial_planning",'','', ($initialplanningallowed?0:AF_READONLY_EDIT)|AF_TOTAL|AF_DURATION_STRING));
       $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));      
@@ -78,13 +81,9 @@
       $this->addSecurityMap("view","project.admin");
       $this->setOrder("phase.startdate, phase.name");
       $this->setTable("phase","phase");
+      
+      $this->setDescriptorTemplate("[name]");      
     }
-
-    public function setDescriptorTemplate()
-    {
-      return "[name]";
-    }
-
 
     public function name_display($record, $mode)
     {
