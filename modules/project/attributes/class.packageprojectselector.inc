@@ -109,8 +109,8 @@ class packageProjectSelector extends atkListAttribute
       return false;
     }
     
-    $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$id);
-    $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$id);
+    $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$id.' ORDER BY name ASC');
+    $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$id.' ORDER BY name ASC');
 
     $return  = array();
     $results = array_merge( $projects, $packages );
