@@ -13,12 +13,11 @@
       registerNode("project.dashboard", array("admin"));
       registerNode("project.project", array("admin", "add", "edit", "delete", "stats","planning", "initialplanning", "any_project", "changeabbreviation"), array("finance", "planning"));
       registerNode("project.phase", array("admin", "add", "edit", "delete"));
-      registerNode("project.deliverable", array("add", "edit", "delete"));
+      registerNode("project.deliverable", array("admin", "add", "edit", "delete"));
       registerNode("project.activity", array("admin", "add", "edit", "delete", "stats"));
       registerNode("project.tpl_phase", array("admin", "add", "edit", "delete"));
       registerNode("project.tpl_project", array("admin", "add", "edit", "delete"));
       registerNode("project.role", array("admin", "add", "edit", "delete"));
-      registerNode("project.mastergantt_colorconfig", array("admin", "edit"));
     }
 
     function getMenuItems()
@@ -43,7 +42,8 @@
         {
           $this->menuitem("package", dispatch_url("project.package", "admin", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "admin"));
         }
-              
+        
+        $this->menuitem("milestones", dispatch_url("project.deliverable", "admin", array("atkfilter" => "project_id='".$selectedproject."'")), 'projectmanagement');
         $this->menuitem("team", dispatch_url("project.project_personemployee", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
         $this->menuitem("project_edit", dispatch_url("project.project", "edit", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "edit"));
         $this->menuitem("project_view", dispatch_url("project.project", "view", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
@@ -51,8 +51,7 @@
         $this->menuitem("-","","projectmanagement");
         $this->menuitem("project_stats", dispatch_url("project.projectstats", "stats", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "stats"));
       }
-      $this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement", array("project.project", "planning"));
-      
+      $this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement", array("project.project", "planning"));      
       $this->menuitem("activity_admin", dispatch_url("project.activity", "admin"), "setup", array("project.activity", "admin"));
       $this->menuitem("project_categories", dispatch_url("project.project_category", "admin"), "setup", array("project.activity", "admin"));
       $this->menuitem("tpl_phase_admin", dispatch_url("project.tpl_phase", "admin"), "setup", array("project.tpl_phase", "admin"));
