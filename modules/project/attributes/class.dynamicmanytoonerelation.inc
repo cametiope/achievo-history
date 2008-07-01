@@ -88,10 +88,13 @@ class dynamicManyToOneRelation extends atkManyToOneRelation
 
   function display($record, $mode='list')
   {
+    $res = '';
     $this->_fixDestination(atkArrayNvl($record,$this->m_linkType));
-
-    if($this->m_destination == "dummynode") return '';
-    return parent::display($record, $mode);
+    if($this->m_destination != "dummynode")
+    {
+      $res = $this->m_ownerInstance->getAttribute($this->m_linkType)->display($record, $mode).": ".parent::display($record, $mode);
+    }
+    return $res;
   }
 
   function partial_refresh($mode)
