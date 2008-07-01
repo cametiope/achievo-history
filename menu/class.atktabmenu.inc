@@ -59,10 +59,17 @@ class atkTabMenu
 
     $res = $db->getrows("
       SELECT
-        p.id,p.name,'project' as type, p1.id sub
+        p.id,p.name,'project' as type, p1.sub
       FROM
-        project p
-        LEFT JOIN package p1 ON p1.master='project.project' AND p.id=p1.master_id");
+        project p LEFT JOIN
+        (SELECT
+          count(id) sub,
+          master_id
+         FROM package
+         WHERE master='project.project'
+         GROUP BY master_id
+        ) p1 ON p.id=p1.master_id
+      ");
 
     self::_addUrl($res,"project");
     $box = $ui->renderBox(array("tabmenu"=>$res),"treemenu");
@@ -84,10 +91,16 @@ class atkTabMenu
 
     $res = $db->getrows("
       SELECT
-        p.id,p.name,'package' as type, p1.id sub
+        p.id,p.name,'package' as type, p1.sub
       FROM
-        package p
-        LEFT JOIN package p1 ON p1.master='project.package' AND p.id=p1.master_id
+        package p LEFT JOIN
+        (SELECT
+          count(id) sub,
+          master_id
+         FROM package
+         WHERE master='project.package'
+         GROUP BY master_id
+        ) p1 ON p.id=p1.master_id
       WHERE
         p.master_id='".$id."' AND p.master='project.$type'");
 
