@@ -37,22 +37,22 @@
       {
         $this->menuitem("projectmanagement",dispatch_url("project.project", "admin"),"main",array("project.project", "admin"),400); // projects submenu
         $this->menuitem("dashboard", dispatch_url("project.dashboard", "view", array("atkselector" => "project.id='".$selectedproject."'")), 'projectmanagement');
-        $this->menuitem("phase", dispatch_url("project.phase", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), 'projectmanagement');
+        $this->menuitem("project_edit", dispatch_url("project.project", "edit", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "edit"));
         if(atkConfig::get("project","package_enabled"))
         {
-          $this->menuitem("package", dispatch_url("project.package", "admin", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "admin"));
-        }
-        
-        $this->menuitem("milestones", dispatch_url("project.deliverable", "admin", array("atkfilter" => "project_id='".$selectedproject."'")), 'projectmanagement');
-        $this->menuitem("team", dispatch_url("project.project_personemployee", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
-        $this->menuitem("project_edit", dispatch_url("project.project", "edit", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "edit"));
-        $this->menuitem("project_view", dispatch_url("project.project", "view", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
-        $this->menuitem("project_planning",  dispatch_url("project.project", "planning", array("selectedprojectid" => $selectedproject)), "projectmanagement", array("project.project", "planning"));
+          $this->menuitem("package", dispatch_url("project.package", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
+        }        
+        $this->menuitem("phase", dispatch_url("project.phase", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), 'projectmanagement');
+        $this->menuitem("team", dispatch_url("project.project_personemployee", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));        
+        $this->menuitem("milestones", dispatch_url("project.deliverable", "admin", array("atkfilter" => "project_id='".$selectedproject."'")), 'projectmanagement');        
+        //$this->menuitem("project_view", dispatch_url("project.project", "view", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
+        //$this->menuitem("project_planning",  dispatch_url("project.project", "planning", array("selectedprojectid" => $selectedproject)), "projectmanagement", array("project.project", "planning"));
         $this->menuitem("-","","projectmanagement");
-        $this->menuitem("project_stats", dispatch_url("project.projectstats", "stats", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "stats"));
+        //$this->menuitem("project_stats", dispatch_url("project.projectstats", "stats", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "stats"));
       }
-      $this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement", array("project.project", "planning"));      
+      //$this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement", array("project.project", "planning"));
       $this->menuitem("activity_admin", dispatch_url("project.activity", "admin"), "setup", array("project.activity", "admin"));
+      $this->menuitem("project_group", dispatch_url("project.project_group", "admin"), "setup", array("project.project_group", "admin"));
       $this->menuitem("project_categories", dispatch_url("project.project_category", "admin"), "setup", array("project.activity", "admin"));
       $this->menuitem("tpl_phase_admin", dispatch_url("project.tpl_phase", "admin"), "setup", array("project.tpl_phase", "admin"));
       $this->menuitem("tpl_project_admin", dispatch_url("project.tpl_project", "admin"), "setup", array("project.tpl_project", "admin"));
@@ -83,5 +83,3 @@
     }
 
   }
-
-?>
