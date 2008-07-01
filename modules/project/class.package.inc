@@ -24,10 +24,11 @@
 
   class package extends atkMetaNode
   {
+  	
     public $securityAlias = "project.project";
     public $order = "name";
     public $descriptor = "[name]";
-    public $flags = array(NF_EDITAFTERADD,NF_IMPORT);
+    public $flags = array(NF_ADD_LINK,NF_EDITAFTERADD);
   
     /**
      * Meta.
@@ -36,24 +37,27 @@
      */
     public static function meta(atkMetaPolicy $policy)
     {
+    	//parent::meta($policy);
+    	
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
-      $policy->hasMany("package_person");
+      //$policy->hasMany("package_person");
     
       $policy->addFlags('projectid', AF_HIDE);
       $policy->setTypeAndParams("master","atk.attributes.atklistattribute",array(array("project.package","project.project")));
       $policy->setTypeAndParams("master_id","module.project.attributes.dynamicmanytoonerelation");
 
       $policy->setTypeAndParams("status","atk.attributes.atklistattribute",array(array("active","nonactive","archived")));
-      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ? 
-        (('[spend_hours]' ? '[spend_hours]' : 0)/(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0))*100) : 0";
-      $policy->setTypeAndParams("completed","atk.attributes.atkcalculatorattribute",array($expression));
-      $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time"),"atk.attributes.atkdurationattribute",array("15m"));
+//      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ? 
+//        (('[spend_hours]' ? '[spend_hours]' : 0)/(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0))*100) : 0";
+//      $policy->setTypeAndParams("completed","atk.attributes.atkcalculatorattribute",array($expression));
+      $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time", "spend_hours"),"atk.attributes.atkdurationattribute",array("15m"));
+      $policy->addFlags("initial_planning","current_planning","remaining_effort_time", "spend_hours", AF_READONLY);
 
       $policy->addFlags("abbreviation","name",AF_UNIQUE);
-      $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","completed","deposit","master",
+      $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","deposit","master_id",
         AF_HIDE_LIST);
       $policy->addFlags("name",AF_SEARCHABLE);
-      $policy->addFlags("description","coordinator_id","startdate","enddate","initial_planning","current_planning","master",
+      $policy->addFlags("description","startdate","enddate","initial_planning","current_planning","master",
         "master_id","category_id", "status", "deposit", "completed", "spend_hours", "remaining_effort_time", AF_HIDE_ADD);
       $policy->addFlags("coordinator_id",AF_RELATION_AUTOLINK);
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
@@ -100,6 +104,21 @@
     }
   
     /**
+     * Display the master - master_id column a bit more userfriendly
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    public function master_display($record, $mode)
+    {
+      $node   = getNode( $record['master'] );
+      $node->addFilter( $node->getTable().'.id', $record['master_id'] );
+      $result = $node->selectDb();
+
+      return ucfirst( substr($record['master'], ( strpos( $record['master'], '.' ) +1 ) ) ).': '. $result[0]['name'];
+    }
+    
+    /**
      * Packages can have sub-packages, which also can have sub-packages, etc. The limit of branches is configurable.
      * This function return filter with packages, which lower then level in config file. 
      *
@@ -129,9 +148,15 @@
       return "package.id IN(".implode(",",$arr).")";
     }
   
+    /**
+     * Initial values
+     *
+     * @return array with initial values
+     */
     public function initial_values()
     {
-      $selectedproject = atkGetPostVar("projectid") != ''  ? atkGetPostVar("projectid") : 0;
+    	global $ATK_VARS;
+      $selectedproject = decodeKeyValueSet($ATK_VARS['atkfilter']);
 
       $nextyear = strtotime("+1 year");
       return array("startdate"=>array("year"=>date("Y"),
@@ -143,7 +168,7 @@
                    "status"=>1,
                    "master"=>"project.package",
                    "coordinator_id"=>getUser(),
-                   "projectid" => $selectedproject);
+                   "projectid" => $selectedproject[1]);
     }
   
     public function postMeta()
@@ -151,6 +176,13 @@
       $this->getAttribute("master")->addDependee("master_id");
     }
   
+    /**
+     * Display override for the completed attribute
+     *
+     * @param array $record
+     * @param string $mode
+     * @return string
+     */
     public function completed_display($record, $mode="")
     {
       return number_format($this->getAttribute("completed")->display($record, $mode))."%";
