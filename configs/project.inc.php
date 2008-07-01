@@ -13,12 +13,15 @@
   $config["completion_percentage_steps"] = 20;
   $config["project_cascading_delete_hours"] = false;
 
-  //Option to hide/disabled the packages.
+  // Option to hide/disabled the packages.
   $config["package_enabled"] = true;
 
-  //The limit of branches for sub_packages. By default this value is -1(unlimited).
+  // The limit of branches for sub_packages. By default this value is -1 (unlimited).
   $config["package_number_of_branches"] = -1; 
 
-  //For backwards compatibility issues, the subprojects will still be available in Achievo. 
-  //The functionality of subprojects can be turned off.
+  // For backwards compatibility issues, the subprojects will still be available in Achievo. 
+  // The functionality of subprojects can be turned off.
   $config["use_subprojects"] = true;   
+  
+  // The completion/progress bar is divided into parts of 5, 10 20 or 25 percent
+  $config["completed_parts"] = 10;
