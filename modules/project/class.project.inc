@@ -15,8 +15,6 @@
   useattrib("atkdummyattribute");
   useattrib("atknumberattribute");
   useattrib("docmanager.projectdocumentmanager");
-  useattrib("project.trafficlightattribute");
-  useattrib("project.memoattribute");
 
   define("PRJ_TIMEREG_ALL_USERS", 0);
   define("PRJ_TIMEREG_MEMBERS_ONLY", 1);
@@ -35,8 +33,6 @@
       }
       
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
-      $this->add(new TrafficLightAttribute());      
-      $this->add(new MemoAttribute( AF_HIDE_LIST|AF_HIDE_ADD ));
       $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));      
       $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));      
       $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));      
@@ -76,15 +72,20 @@
       $this->add(new atkDateAttribute("initial_enddate","","",0,0,AF_HIDE));      
       $this->add(new atkListAttribute("timereg_limit", array("all_users", "members_only"), array(PRJ_TIMEREG_ALL_USERS, PRJ_TIMEREG_MEMBERS_ONLY), AF_LIST_NO_NULL_ITEM|AF_HIDE_ADD|AF_HIDE_LIST));
       
+      $this->add(new atkNumberAttribute("completed",AF_READONLY));     
+      
       // Time registration
-      $this->add(new atkNumberAttribute("initial_planning", AF_READONLY|AF_HIDE_ADD));
-      $this->add(new atkNumberAttribute("current_planning",AF_HIDE_ADD,6));
+      $this->add(new atkDurationAttribute('initial_planning', '15m', '100h', AF_READONLY));
+      $this->add(new atkDurationAttribute('current_planning', '15m', '100h', AF_READONLY));
       
       // Todo RUUD: hours spend attribuut
-      // $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));      
-       
-      $this->add(new atkNumberAttribute("completed",AF_READONLY|AF_HIDE_ADD));
-      $this->add(new atkNumberAttribute("remaining_effort_time", AF_HIDE_ADD|AF_READONLY));
+      // $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));
+      $this->add(new atkDurationAttribute('spend_hours', '15m', '100h', AF_READONLY));
+
+      $this->add(new atkFieldSet('actual_planning', '[current_planning.field] &nbsp; ' . $this->text('booked') . ': [spend_hours.field]'));
+      
+      $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY));
+      
      
       // If we are in project administration mode, we show all projects. Otherwise, we only
       // show active projects.
@@ -123,7 +124,7 @@
       //$this->add(new projecttemplateAttribute("template","project.tpl_project", AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD|AF_HIDE_SEARCH|AF_HIDE_VIEW));
       //$this->add(new atkOneToManyRelation("todos", "todo.todo", "projectid", AF_HIDE_LIST|AF_HIDE_SEARCH), "todos");
       //$this->add(new atkOneToManyRelation("notes", "notes.project_notes", "projectid", AF_HIDE_LIST|AF_HIDE_SEARCH), "notes");
-      $this->add(new projectDocumentManager("documents", AF_HIDE_LIST|AF_HIDE_SEARCH), "documents");
+      //$this->add(new projectDocumentManager("documents", AF_HIDE_LIST|AF_HIDE_SEARCH), "documents");
       //$timeline = &new dataGraphAttribute("timeline", "timeline", array("projectid"=>"[id]", "resolution"=>"auto"), "line", AF_HIDE_ADD|AF_HIDE_LIST|AF_HIDE_EDIT);
       //$timeline->addDynamicParam("resolution", array("day", "week", "month", "auto"));
       //$this->add($timeline, "stats");
@@ -235,17 +236,33 @@
       
       $nextyear = strtotime("+1 year");
       return array("abbreviation" => $initialprojectcode,
-                   "startdate"=>array("year"=>date("Y"),
-                                      "month"=>date("m"),
-                                      "day"=>date("d")),
-                   "enddate"=>array("year"=>(date("Y",$nextyear)),
-                                    "month"=>date("m",$nextyear),
-                                    "day"=>date("d",$nextyear)),
-                   "timereg_limit"=>PRJ_TIMEREG_MEMBERS_ONLY,
-                   "status"=>"active",
+                   "startdate" => array("year"=>date("Y"),
+                                        "month"=>date("m"),
+                                        "day"=>date("d")),
+                   "enddate" => array("year"=>(date("Y",$nextyear)),
+                                      "month"=>date("m",$nextyear),
+                                      "day"=>date("d",$nextyear)),
+                   "timereg_limit" => PRJ_TIMEREG_MEMBERS_ONLY,
+                   "status" => "active",
+                   "completed" => 0,
+                   "initial_planning" => 0,
+                   "current_planning" => 0,
+                   "remaining_effort_time" => 0,
                    "coordinator"=>getUser());
     }
 
+    /**
+     * Display override for completed field
+     *
+     * @param array $record
+     * @param string $mode
+     * @return string
+     */
+    public function completed_display($record,$mode)
+    {
+      return $record['completed'].'%';
+    }
+    
     /**
      * Shows the planning for a project
      *
@@ -335,62 +352,62 @@
       $skel = atkconfig('project_dir_skel');
       $dest = atkconfig('project_dir_destination');
 
-    	if ($skel != '' && $dest != '' && is_dir($skel))
-    	{
-    	  atkdebug("Copying skell: $skel to destination: $dest started.");
-    	  atkimport("atk.utils.atkfileutils");
+      if ($skel != '' && $dest != '' && is_dir($skel))
+      {
+        atkdebug("Copying skell: $skel to destination: $dest started.");
+        atkimport("atk.utils.atkfileutils");
 
 
-    	  if (!is_dir($dest))
-    	  {
-    	    atkdebug("Destination isn't a existing directory. First create the destination.");
-    	    $succes = atkFileUtils::mkdirRecursive($dest);
-    	  }
-    	  else
-    	  {
-    	    atkdebug("Destination is a existing directory.");
-    	    $succes = true;
-    	  }
+        if (!is_dir($dest))
+        {
+          atkdebug("Destination isn't a existing directory. First create the destination.");
+          $succes = atkFileUtils::mkdirRecursive($dest);
+        }
+        else
+        {
+          atkdebug("Destination is a existing directory.");
+          $succes = true;
+        }
 
-    	  $dirname = atkFileUtils::parseDirectoryName(atkconfig('project_dir_name_template'), $rec);
+        $dirname = atkFileUtils::parseDirectoryName(atkconfig('project_dir_name_template'), $rec);
 
-    	  if (atkFileUtils::copyDirRecursive($skel, $dest, $dirname) && $succes)
-    	  {
-    	    atkdebug("The skell is copied to the destination.");
+        if (atkFileUtils::copyDirRecursive($skel, $dest, $dirname) && $succes)
+        {
+          atkdebug("The skell is copied to the destination.");
 
-    	    $mailer = &atknew('atk.utils.atkmailer');
+          $mailer = &atknew('atk.utils.atkmailer');
 
-    	    $body = sprintf(atktext("project_body"), $rec['abbreviation'], getcwd()."/".$dest."/".$dirname);
+          $body = sprintf(atktext("project_body"), $rec['abbreviation'], getcwd()."/".$dest."/".$dirname);
 
-    	    switch (atkconfig("project_formatmail"))
-    	    {
-    	      default:
-    	        break;
+          switch (atkconfig("project_formatmail"))
+          {
+            default:
+              break;
 
-    	      case 'html':
-    	        $mailer->isHTML(true);
-    	        break;
+            case 'html':
+              $mailer->isHTML(true);
+              break;
 
-    	      case 'htmlplain':
-    	        $mailer->isHTML(true);
-    	        $mailer->AltBody = strip_tags($body, '<a>');
-    	        break;
-    	    }
+            case 'htmlplain':
+              $mailer->isHTML(true);
+              $mailer->AltBody = strip_tags($body, '<a>');
+              break;
+          }
 
-    	    $mailer->From = atkconfig("mail_sender", "achievo");
-    	    $mailer->AddAddress(atkconfig("project_sendto"));
-    	    $mailer->Subject = atktext("project_subject").$rec['abbreviation'];
-    	    $mailer->Body = $body;
-    	    $mailer->Send();
-    	    atkdebug("Mail send to ".atkconfig("project_sendto")."?");
-    	  }
-    	  else
-    	    atkerror("No write permisson on destination: ".$dest);
-    	}
-    	else
-    	  atkdebug("Configs are empty or skell isn't a directory.");
+          $mailer->From = atkconfig("mail_sender", "achievo");
+          $mailer->AddAddress(atkconfig("project_sendto"));
+          $mailer->Subject = atktext("project_subject").$rec['abbreviation'];
+          $mailer->Body = $body;
+          $mailer->Send();
+          atkdebug("Mail send to ".atkconfig("project_sendto")."?");
+        }
+        else
+          atkerror("No write permisson on destination: ".$dest);
+      }
+      else
+        atkdebug("Configs are empty or skell isn't a directory.");
 
-    	return true;
+      return true;
     }
 
     function postDel($rec)
@@ -710,9 +727,9 @@
      */
     function action_select(&$handler)
     {
-    	if (!$this->allowed("any_project"))
+      if (!$this->allowed("any_project"))
       {
-		  	$pids = implode(",", $this->get_user_projects());
+        $pids = implode(",", $this->get_user_projects());
         if(!empty($pids))
           $this->addFilter("project.id IN ($pids) OR project.timereg_limit = ".PRJ_TIMEREG_ALL_USERS);
         else
@@ -730,16 +747,16 @@
     {
       $db = &atkGetDb();
       $sql = "SELECT DISTINCT projectid
-	               FROM project_person
-	               WHERE personid = '".atkGetUserId()."'";
-  	  $records = $db->getrows($sql);
-  	  $id_array = array();
-  	  foreach($records as $row)
-  	  {
-  	    array_push($id_array, $row["projectid"]);
-  	  }
-  	  array_push($id_array, 0);
-  	  return $id_array;
+                 FROM project_person
+                 WHERE personid = '".atkGetUserId()."'";
+      $records = $db->getrows($sql);
+      $id_array = array();
+      foreach($records as $row)
+      {
+        array_push($id_array, $row["projectid"]);
+      }
+      array_push($id_array, 0);
+      return $id_array;
     }
 
     function action_admin(&$handler, $record=null)
