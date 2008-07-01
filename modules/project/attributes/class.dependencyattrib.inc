@@ -9,7 +9,7 @@ class dependencyAttribute extends atkAttribute
    * @param $name Name of the attribute
    * @param $flags Flags for this attribute
    */
-  function __construct($name, $flags=0)
+  function dependencyAttribute($name, $flags=0)
   {
     /* base class constructor */
     $this->atkAttribute($name, $flags);
