@@ -21,7 +21,7 @@
       $this->add( new atkAttribute( "action", AF_READONLY ) );
           
       // Only show recent events
-      $this->addFilter("timestamp >= '".$user['previous_login']."'" );
+      //$this->addFilter("timestamp >= '".$user['previous_login']."'" );
       
       $this->setTable("history","history");
       $this->setOrder("timestamp DESC");
