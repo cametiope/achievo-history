@@ -43,15 +43,24 @@ class dynamicManyToOneRelation extends atkManyToOneRelation
 
   function _fixDestination($type)
   {
-    if(isset($type) && $this->m_destination != $type)
+    if(isset($type))
     {
-      $this->m_destination = $type;
-      if(is_object($this->m_cache[$type])) $this->m_destInstance = $this->m_cache[$type];
-      else
+      list($module,$classname) = explode(".",$type); 
+      if($this->m_destination != $type || !is_a($this->m_destInstance,$classname))
       {
-        $this->m_destInstance = "";
-        parent::createDestination();
-        $this->m_cache[$type] = $this->m_destInstance;
+        $this->m_destination = $type;
+        if(is_object($this->m_cache[$type])) $this->m_destInstance = $this->m_cache[$type];
+        else
+        {
+          $this->m_destInstance = "";
+          if(count($this->m_cache)==0)
+          {
+            $cache_id = $this->m_owner.".".$this->m_name;
+            atkGetNode($this->m_destination, true, $cache_id, true);
+          }
+          parent::createDestination();
+          $this->m_cache[$type] = $this->m_destInstance;
+        }
       }
     }
   }
