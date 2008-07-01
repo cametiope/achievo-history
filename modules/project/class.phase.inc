@@ -40,36 +40,42 @@
       $this->atkNode($name,$flags|NF_AUTOSELECT|NF_EDITAFTERADD|NF_ADD_LINK); // node() constructor is *not* called automatically!
 
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
+      
+      $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
+      
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE|AF_FORCE_LOAD, 50));
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
-      $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY));
+      $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY|AF_HIDE_LIST));
               
       $this->add(new packageProjectSelector('project_package'));
       $this->add(new atkNumberAttribute("master_id", AF_HIDE));
-      $this->add(new atkAttribute("master", AF_HIDE));
+      $this->add(new atkAttribute("master", AF_HIDE_ADD|AF_HIDE_EDIT));
       
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW));
             
-      $this->add(new atkListAttribute('priority', range(1,10)));
+      $this->add(new atkListAttribute('priority', range(1,10), '', AF_HIDE_LIST));
 
-      $assign_to = &$this->add(new atkManyToOneRelation('assign_to', 'person.person', AF_LARGE ) );
+      $assign_to = &$this->add(new atkManyToOneRelation('assign_to', 'person.person', AF_LARGE|AF_HIDE_LIST ) );
       $assign_to->setDestinationFilter(' person.id IN (SELECT personid FROM project_person WHERE projectid = [projectid.id])');
       
       $this->add(new atkDateAttribute("startdate", "", ""));
       $this->add(new atkDateAttribute("enddate", "", ""));      
       
-      $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
-
+      $completed = $this->getCompletedValues();
+      $this->add(new atkListAttribute("completed", $completed['options'], $completed['values'], AF_HIDE_ADD|AF_FORCE_LOAD|AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM));
+      
+      
+      
       $this->add(new atkDurationAttribute("initial_planning",'','', ($initialplanningallowed?0:AF_READONLY_EDIT)|AF_TOTAL|AF_DURATION_STRING));
       $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));      
-      $this->add(new atkDurationAttribute("completed", '', '', AF_READONLY|AF_HIDE_ADD));
+
       $this->add(new atkDurationAttribute("remaining_effort_time", '', '', AF_HIDE_ADD|AF_READONLY));
 
       // deliverable dependency
-      $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable"));
+      $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable", AF_HIDE_LIST));
       $depends->setDestinationFilter("project_id=[projectid.id]");
             
-      $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));
+      $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL|AF_HIDE_LIST));
 
       //$this->add(new atkOneToManyRelation("phaseplanning", "project.phaseplanning", "phaseid", AF_HIDE_LIST));
       //$this->add(new atkFuzzySearchAttribute("phaseplanning_add", "employee.employee", "storePhaseplanning", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL, 20));
@@ -144,6 +150,21 @@
       }
       return "";
     }
+    
+    /**
+     * Display the master - master_id column a bit more userfriendly
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    public function master_display($record, $mode)
+    {
+      $node = getNode( $record['master'] );
+      $node->addFilter( $node->getTable().'.id', $record['master_id'] );
+      $result = $node->selectDb();
+
+      return ucfirst( substr($record['master'], ( strpos( $record['master'], '.' ) +1 ) ) ).': '. $result[0]['name'];
+    }
 
     public function initial_values()
     {
@@ -159,6 +180,8 @@
         $initial_values["phase_activity"] = array(array("activityid"=>$activity[0]["id"]));
       }
 
+      $initial_values['completed'] = 0;
+      
       // Return the initual values:
       return $initial_values;
     }
@@ -351,5 +374,21 @@
         }
       }
       return true;
+    }
+    
+    /**
+     * Get the values and options for the completed dropdown
+     *
+     * @return array Array with values and options
+     */
+    private function getCompletedValues()
+    {
+      $values = range(0,100, atkConfig::get('project','completed_parts'));
+      for ($i=0, $_i=count($values); $i<$_i; $i++)
+      {
+        $completed['values'][$i] = $values[$i];
+        $completed['options'][$i] = $values[$i].'%';
+      }
+      return $completed;
     }
   }
