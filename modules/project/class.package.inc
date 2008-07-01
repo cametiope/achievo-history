@@ -54,7 +54,7 @@
       $policy->addFlags("initial_planning","current_planning","remaining_effort_time", "spend_hours", AF_READONLY);
 
       $policy->addFlags("abbreviation","name",AF_UNIQUE);
-      $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","deposit","master_id",
+      $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","deposit","master",
         AF_HIDE_LIST);
       $policy->addFlags("name",AF_SEARCHABLE);
       $policy->addFlags("description","startdate","enddate","initial_planning","current_planning","master",
@@ -63,6 +63,7 @@
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
       $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
+      $policy->addFlags("master",AF_FORCE_LOAD);
     }
   
     /**
@@ -103,21 +104,6 @@
       return $this->getAttribute("master_id")->getSelectableRecords($record, $mode);
     }
   
-    /**
-     * Display the master - master_id column a bit more userfriendly
-     *
-     * @param array $record
-     * @param string $mode
-     */
-    public function master_display($record, $mode)
-    {
-      $node   = getNode( $record['master'] );
-      $node->addFilter( $node->getTable().'.id', $record['master_id'] );
-      $result = $node->selectDb();
-
-      return ucfirst( substr($record['master'], ( strpos( $record['master'], '.' ) +1 ) ) ).': '. $result[0]['name'];
-    }
-    
     /**
      * Packages can have sub-packages, which also can have sub-packages, etc. The limit of branches is configurable.
      * This function return filter with packages, which lower then level in config file. 
