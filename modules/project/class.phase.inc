@@ -83,6 +83,9 @@
       $cascadingdeletehours = atkConfig::get("project", "project_cascading_delete_hours", false);
       if($cascadingdeletehours)
         $this->add(new atkOneToManyRelation("hours","timereg.hours","phaseid",AF_HIDE|AF_CASCADE_DELETE));
+
+      // list of linked deliverables for this phase
+      $this->add(new atkOneToManyRelation("deliverable_phase","project.deliverable_phase","phase_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
       
       $this->addSecurityMap("view","project.admin");
       $this->setOrder("phase.startdate, phase.name");
