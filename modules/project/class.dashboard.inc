@@ -9,7 +9,7 @@
   {
     function dashboard($name="dashboard", $flags=0)
     {
-      $this->atkNode($name,$flags|NF_READONLY );      
+      $this->atkNode($name,$flags );      
    
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
             
@@ -33,8 +33,10 @@
       
       $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY));
 
-      //$this->add(new atkOneToManyRelation("phase","project.phase","projectid",AF_HIDE_LIST|AF_CASCADE_DELETE));      
-                        
+      $rel = &new atkOneToManyRelation("phase", "project.phase", "projectid");
+      $rel->setDestinationFilter("phase.completed < 100 OR phase.completed IS NULL");
+      $this->add($rel);
+
       $this->setTable("project","project");
       $this->setOrder("project.abbreviation, project.name");
       $this->setIndex("name");     
