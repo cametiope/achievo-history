@@ -33,9 +33,11 @@
       
       $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY));
 
-      $rel = &new atkOneToManyRelation("phase", "project.phase", "projectid");
+      $rel = &new atkOneToManyRelation("phase", "project.phase", "projectid", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE);
       $rel->setDestinationFilter("phase.completed < 100 OR phase.completed IS NULL");
       $this->add($rel);
+
+      $this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
 
       $this->setTable("project","project");
       $this->setOrder("project.abbreviation, project.name");
