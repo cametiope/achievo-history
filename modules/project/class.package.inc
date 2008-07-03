@@ -42,6 +42,7 @@
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
       //$policy->hasMany("package_person");
     
+      $policy->hasOne("project.project",array("source"=>"projectid"),array(),AF_HIDE);
       $policy->addFlags('projectid', AF_HIDE);
       $policy->setTypeAndParams("master","atk.attributes.atklistattribute",array(array("project.package","project.project")));
       $policy->setTypeAndParams("master_id","module.project.attributes.dynamicmanytoonerelation");
@@ -69,6 +70,38 @@
       $policy->hasMany('project.deliverable', array('through' => 'project.deliverable_package', 'source' => 'package_id'));
     }
   
+    
+    /**
+     * Custom validation: does the package start on the same date (or later) then the project
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    public function startdate_validate(&$record, $mode)
+    {      
+      if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
+      {
+        atk_var_dump('hier');
+        triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
+      }
+    }
+     
+    
+    /**
+     * Custom validation: does the package end on the same date (or sooner) then the project
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    public function enddate_validate(&$record, $mode)
+    {
+      if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
+      {
+        triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));
+      }
+    } 
+    
+    
     /**
      * Privent over branch limit
      *
