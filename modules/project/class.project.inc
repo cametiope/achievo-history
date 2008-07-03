@@ -67,8 +67,8 @@
       
       // Add the organization relation
       $this->add(new atkManyToOneRelation("customer", "organization.organization", AF_HIDE_LIST|AF_RELATION_AUTOLINK|AF_HIDE_ADD|AF_SEARCHABLE|AF_MANYTOONE_AUTOCOMPLETE|AF_FORCE_LOAD));
-      $this->add(new atkDateAttribute("startdate","","",0,0,AF_OBLIGATORY));
-      $this->add(new atkDateAttribute("enddate","","",0,0,AF_OBLIGATORY));
+      $this->add(new atkDateAttribute("startdate","","",0,0,AF_OBLIGATORY|AF_FORCE_LOAD));
+      $this->add(new atkDateAttribute("enddate","","",0,0,AF_OBLIGATORY|AF_FORCE_LOAD));
       $this->add(new atkDateAttribute("initial_enddate","","",0,0,AF_HIDE));      
       $this->add(new atkListAttribute("timereg_limit", array("all_users", "members_only"), array(PRJ_TIMEREG_ALL_USERS, PRJ_TIMEREG_MEMBERS_ONLY), AF_LIST_NO_NULL_ITEM|AF_HIDE_ADD|AF_HIDE_LIST));
       

@@ -74,30 +74,47 @@
     /**
      * Custom validation: does the package start on the same date (or later) then the project
      *
+     * @todo add validation not only on the packages project, but also its master.master_id
      * @param array $record
      * @param string $mode
      */
     public function startdate_validate(&$record, $mode)
     {      
-      if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
+      if( $mode != 'add')
       {
-        atk_var_dump('hier');
-        triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
-      }
+        if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
+        {
+          triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
+        }
+        
+        /*
+        if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
+        {
+          $node = &atkGetNode( 'project.package' );
+          $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );
+          
+          // atk_var_dump($result, 'hierzo');
+        }
+        */
+      }      
     }
      
     
     /**
      * Custom validation: does the package end on the same date (or sooner) then the project
      *
+     * @todo add validation not only on the packages project, but also its master.master_id
      * @param array $record
      * @param string $mode
      */
     public function enddate_validate(&$record, $mode)
     {
-      if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
-      {
-        triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));
+      if( $mode != 'add')
+      { 
+        if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
+        {
+          triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
+        }
       }
     } 
     
