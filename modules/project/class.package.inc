@@ -64,6 +64,9 @@
       $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
       $policy->addFlags("master",AF_FORCE_LOAD);
+      
+      // list of linked deliverables for this phase
+      $policy->hasMany('project.deliverable', array('through' => 'project.deliverable_package', 'source' => 'package_id'));
     }
   
     /**
