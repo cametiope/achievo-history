@@ -21,6 +21,7 @@
 
   userelation("atkmanytoonerelation");
   useattrib("atklistattribute");
+  useattrib("project.packageprojectselector");
 
   class package extends atkMetaNode
   {
@@ -44,13 +45,19 @@
     
       $policy->hasOne("project.project",array("source"=>"projectid"),array(),AF_HIDE);
       $policy->addFlags('projectid', AF_HIDE);
-      $policy->setTypeAndParams("master","atk.attributes.atklistattribute",array(array("project.package","project.project")));
-      $policy->setTypeAndParams("master_id","module.project.attributes.dynamicmanytoonerelation");
 
+      $policy->addFlag('id', AF_FORCE_LOAD);
+      $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector', array('id' => '[id]' ) );           
+      //$policy->setTypeAndParams("master","atk.attributes.atklistattribute",array(array("project.package","project.project")));
+      //$policy->setTypeAndParams("master_id","module.project.attributes.dynamicmanytoonerelation");
+      $policy->addFlags("master", AF_HIDE_ADD|AF_HIDE_EDIT);
+      $policy->addFlags("master_id", AF_HIDE);
+      
+      
       $policy->setTypeAndParams("status","atk.attributes.atklistattribute",array(array("active","nonactive","archived")));
-//      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ? 
-//        (('[spend_hours]' ? '[spend_hours]' : 0)/(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0))*100) : 0";
-//      $policy->setTypeAndParams("completed","atk.attributes.atkcalculatorattribute",array($expression));
+      //      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ? 
+      //        (('[spend_hours]' ? '[spend_hours]' : 0)/(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0))*100) : 0";
+      //      $policy->setTypeAndParams("completed","atk.attributes.atkcalculatorattribute",array($expression));
       $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time", "spend_hours"),"atk.attributes.atkdurationattribute",array("15m"));
       $policy->addFlags("initial_planning","current_planning","remaining_effort_time", "spend_hours", AF_READONLY);
 
@@ -58,8 +65,7 @@
       $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","deposit","master",
         AF_HIDE_LIST);
       $policy->addFlags("name",AF_SEARCHABLE);
-      $policy->addFlags("description","startdate","enddate","initial_planning","current_planning","master",
-        "master_id","category_id", "status", "deposit", "completed", "spend_hours", "remaining_effort_time", AF_HIDE_ADD);
+      $policy->addFlags("description","startdate","enddate","initial_planning","current_planning","category_id", "status", "deposit", "completed", "spend_hours", "remaining_effort_time", AF_HIDE_ADD);
       $policy->addFlags("coordinator_id",AF_RELATION_AUTOLINK);
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
       $policy->addFlags("remaining_effort_time",AF_READONLY);
@@ -68,56 +74,10 @@
       
       // list of linked deliverables for this phase
       $policy->hasMany('project.deliverable', array('through' => 'project.deliverable_package', 'source' => 'package_id'));
+      
+      $policy->setOrder(array('abbreviation', 'name', 'projectid', 'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
     }
   
-    
-    /**
-     * Custom validation: does the package start on the same date (or later) then the project
-     *
-     * @todo add validation not only on the packages project, but also its master.master_id
-     * @param array $record
-     * @param string $mode
-     */
-    public function startdate_validate(&$record, $mode)
-    {      
-      if( $mode != 'add')
-      {
-        if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
-        {
-          triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
-        }
-        
-        /*
-        if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
-        {
-          $node = &atkGetNode( 'project.package' );
-          $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );
-          
-          // atk_var_dump($result, 'hierzo');
-        }
-        */
-      }      
-    }
-     
-    
-    /**
-     * Custom validation: does the package end on the same date (or sooner) then the project
-     *
-     * @todo add validation not only on the packages project, but also its master.master_id
-     * @param array $record
-     * @param string $mode
-     */
-    public function enddate_validate(&$record, $mode)
-    {
-      if( $mode != 'add')
-      { 
-        if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
-        {
-          triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
-        }
-      }
-    } 
-    
     
     /**
      * Privent over branch limit

@@ -2,13 +2,13 @@
 
 class packageProjectSelector extends atkListAttribute
 {
-
+  
   /**
    * Constructor
    * @param $name name of the attribute
    * @param $flags flags for this attribute
    */
-  function packageProjectSelector($name, $optionArray = array(), $valueArray = array(), $flags=0, $size=0)
+  function packageProjectSelector($name, $optionArray = array(), $valueArray = array(), $flags=0, $size=0, $id = false )
   {
     if( false !== ( $options = $this->getOptionArray() ) )
     {
@@ -99,18 +99,20 @@ class packageProjectSelector extends atkListAttribute
   {
     global $ATK_VARS;
     
-    $db = &atkGetDb();
+    $db = &atkGetDb();    
     
-    preg_match('/\'([0-9]*)\'/', $ATK_VARS['atkfilter'], $matches);
-    $id = $matches[1];
-
-    if( !$id )
+    $filter    = decodeKeyValueSet($ATK_VARS['atkfilter']);
+    
+    $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$filter['projectid'].' ORDER BY name ASC');    
+    $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$filter['projectid'].' ORDER BY name ASC');
+    
+    // If called from the package node, exclude the package node ID (so that a package cannot be added to itself)
+    if( isset( $ATK_VARS['atkselector'] ) && $ATK_VARS['atknodetype'] == 'project.package' )
     {
-      return false;
-    }
-    
-    $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$id.' ORDER BY name ASC');
-    $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$id.' ORDER BY name ASC');
+      $selector = decodeKeyValueSet($ATK_VARS['atkselector']); 
+      $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$filter['projectid'].' AND package.id <> '.$selector['package.id'].' ORDER BY name ASC');
+    }   
+   
 
     $return  = array();
     $results = array_merge( $projects, $packages );
