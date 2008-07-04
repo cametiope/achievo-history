@@ -47,12 +47,9 @@
       $policy->addFlags('projectid', AF_HIDE);
 
       $policy->addFlag('id', AF_FORCE_LOAD);
-      $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector', array('id' => '[id]' ) );           
-      //$policy->setTypeAndParams("master","atk.attributes.atklistattribute",array(array("project.package","project.project")));
-      //$policy->setTypeAndParams("master_id","module.project.attributes.dynamicmanytoonerelation");
-      $policy->addFlags("master", AF_HIDE_ADD|AF_HIDE_EDIT);
-      $policy->addFlags("master_id", AF_HIDE);
-      
+      $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );           
+      $policy->addFlags("master", AF_HIDE);
+      $policy->addFlags("master_id", AF_HIDE);      
       
       $policy->setTypeAndParams("status","atk.attributes.atklistattribute",array(array("active","nonactive","archived")));
       //      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ? 
@@ -70,14 +67,14 @@
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
       $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
-      $policy->addFlags("master",AF_FORCE_LOAD);
+      //$policy->addFlags("master",AF_FORCE_LOAD);
       
       // list of linked deliverables for this phase
       $policy->hasMany('project.deliverable', array('through' => 'project.deliverable_package', 'source' => 'package_id'));
       
       $policy->setOrder(array('abbreviation', 'name', 'projectid', 'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
     }
-  
+
     
     /**
      * Privent over branch limit
@@ -165,7 +162,6 @@
                                     "month"=>date("m",$nextyear),
                                     "day"=>date("d",$nextyear)),
                    "status"=>1,
-                   "master"=>"project.package",
                    "coordinator_id"=>getUser(),
                    "projectid" => $selectedproject[1]);
     }
