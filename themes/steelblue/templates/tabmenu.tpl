@@ -136,7 +136,15 @@ function showMainMenu()
     document.getElementById('tab_project').className = 'passivetab';
 }
 
-showProjectMenu();
+function showTab(tab){
+  if(typeof(tab)=='undefined') tab = "project";
+  
+  if(tab == "main") showMainMenu();  
+  else showProjectMenu();
+
+}
+
 {/literal}
+showTab('{$tab}')
 showSubMenu('{if $atkmenutop!=="main"}{$atkmenutopname|addslashes}{else}{$firstmenuitem|addslashes}{/if}');
 </script>
