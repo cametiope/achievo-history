@@ -10,16 +10,14 @@
    * the menu settings and loads the proper menu.
    *
    * @package atk
-   * @subpackage skel
    *
-   * @author Ivo Jansch <ivo@achievo.org>
-   * @author Peter C. Verhage <peter@ibuildings.nl>
+   * @author Yury Golovnya <yury@achievo.org>
    *
-   * @copyright (c)2000-2004 Ibuildings.nl BV
+   * @copyright (c)2000-2008 Ibuildings.nl BV
    * @license http://www.achievo.org/atk/licensing ATK Open Source License
    *
-   * @version $Revision: 1169 $
-   * $Id: menu.php 1169 2005-11-15 22:07:51Z ivo $
+   * @version $Revision$
+   * $Id$
    */
 
   /**
