@@ -175,7 +175,7 @@
        }
 
        //Reload the menu frame by creating javascript
-       $menu_url = session_url("menu.php?atkmenutop=projectmanagement&selectedproject=".$prjId, SESSION_DEFAULT);
+       $menu_url = session_url("menu.php?atkmenutop=projectmanagement&menutab=main&selectedproject=".$prjId, SESSION_DEFAULT);
        $script = "var newlocation=\"$menu_url\";
                   var oldlocation=parent.menu.location.toString();
                   if (oldlocation.indexOf(newlocation) == -1) {parent.menu.location = newlocation;}";
