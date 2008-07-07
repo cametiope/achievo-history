@@ -170,7 +170,7 @@
     {
       if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
       {
-        triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
+        triggerError($record, 'enddate', atktext('package_ends_after_project', 'project', 'package'));      
       }      
     }
     
