@@ -63,8 +63,7 @@
       
       $completed = $this->getCompletedValues();
       $this->add(new atkListAttribute("completed", $completed['options'], $completed['values'], AF_HIDE_ADD|AF_FORCE_LOAD|AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM));
-      
-      
+            
       
       $this->add(new atkDurationAttribute("initial_planning",'','', ($initialplanningallowed?0:AF_READONLY_EDIT)|AF_TOTAL|AF_DURATION_STRING));
       $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));      
@@ -276,7 +275,7 @@
     {
       if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
       {
-        triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
+        triggerError($record, 'startdate', atktext('phase_starts_before_project', 'project', 'phase'));
       }             
     }
         
@@ -364,7 +363,7 @@
 
 
     /**
-     * Custom validation: does the package end before its project ends
+     * Custom validation: does the phase end before its project ends
      *
      * @param array $record
      * @param string $mode
@@ -373,7 +372,7 @@
     {
       if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']) )
       {
-        triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
+        triggerError($record, 'enddate', atktext('phase_end_after_project', 'project', 'phase'));      
       }      
     }
 
