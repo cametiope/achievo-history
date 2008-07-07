@@ -100,7 +100,9 @@ class packageProjectSelector extends atkListAttribute
   {
     global $ATK_VARS;
 
-    atk_var_dump($ATK_VARS);
+    
+    atk_var_dump($ATK_VARS, 'ateekavars');
+    
     $db = &atkGetDb(); 
     
     $projects = array();
@@ -109,19 +111,26 @@ class packageProjectSelector extends atkListAttribute
     // Filters and selectors differ, depending on where the attribute is called from
     if( $ATK_VARS['atknodetype'] == 'project.package' )
     {
-      if( !isset( $ATK_VARS['atkfilter'] ) || !isset( $ATK_VARS['atkselector'] ) )
+      if( !isset( $ATK_VARS['atkfilter'] ) )
       {
         return false;
       }
-      
+
       $filter = decodeKeyValueSet( $ATK_VARS['atkfilter'] );
-      $projectid = $filter['projectid'];
+      $projectid = $filter['projectid'];              
+      $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$projectid.' ORDER BY name ASC'); 
       
-      $selector = decodeKeyValueSet( $ATK_VARS['atkselector'] );
-      $packageid = $selector['package.id'];
-      
-      $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$projectid.' ORDER BY name ASC');    
-      $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$projectid.' AND package.id <> '.$packageid.' ORDER BY name ASC');
+      if( isset( $ATK_VARS['atkselector'] ) )      
+      {
+        $selector = decodeKeyValueSet( $ATK_VARS['atkselector'] );
+        $packageid = $selector['package.id'];
+        
+        $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$projectid.' AND package.id <> '.$packageid.' ORDER BY name ASC');
+      }
+      else 
+      {
+        $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$projectid.' ORDER BY name ASC');
+      }              
     }
     elseif( $ATK_VARS['atknodetype'] == 'project.phase' )
     {

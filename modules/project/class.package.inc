@@ -47,7 +47,7 @@
       $policy->addFlags('projectid', AF_HIDE);
 
       $policy->addFlag('id', AF_FORCE_LOAD);
-      $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );           
+      $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );    
       $policy->addFlags("master", AF_HIDE);
       $policy->addFlags("master_id", AF_HIDE);      
       
@@ -278,13 +278,7 @@
       $selectedproject = decodeKeyValueSet($ATK_VARS['atkfilter']);
 
       $nextyear = strtotime("+1 year");
-      return array("startdate"=>array("year"=>date("Y"),
-                                      "month"=>date("m"),
-                                      "day"=>date("d")),
-                   "enddate"=>array("year"=>(date("Y",$nextyear)),
-                                    "month"=>date("m",$nextyear),
-                                    "day"=>date("d",$nextyear)),
-                   "status"=>1,
+      return array("status"=>1,
                    "coordinator_id"=>getUser(),
                    "projectid" => $selectedproject[1]);
     }
