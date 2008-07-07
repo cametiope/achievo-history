@@ -75,7 +75,68 @@
       $policy->setOrder(array('abbreviation', 'name', 'projectid', 'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
     }
 
+    /**
+     * Custom validation: does the package start on the same date (or later) then its master
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    public function startdate_validate(&$record, $mode)
+    {           
+      if( $mode != 'add')
+      {        
+        // Package starts before project does
+        if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
+        {
+          triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
+        }       
+        
+        // Package starts before selected master package does
+        if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
+        {
+          $node = &atkGetNode( 'project.package' );
+          $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
+                            
+          if( (int) dateutil::arr2str( $result[0]['startdate'] ) > (int) dateutil::arr2str( $record['startdate'] ) )
+          {
+            triggerError($record, 'startdate', atktext('package_starts_before_parent_package', 'project', 'package'));
+          }
+        }        
+      }      
+    }
+     
     
+    /**
+     * Custom validation: does the package end on the same date (or sooner) then the its master
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    public function enddate_validate(&$record, $mode)
+    {
+      if( $mode != 'add')
+      { 
+        // Package end after project does
+        if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
+        {
+          triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
+        }
+        
+        // Package starts before selected master package does
+        if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
+        {
+          $node = &atkGetNode( 'project.package' );
+          $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
+                            
+          if( (int) dateutil::arr2str( $result[0]['enddate'] ) < (int) dateutil::arr2str( $record['enddate'] ) )
+          {
+            triggerError($record, 'enddate', atktext('package_ends_after_parent_package', 'project', 'package'));
+          }
+        }         
+      }
+    } 
+
+       
     /**
      * Privent over branch limit
      *
@@ -94,6 +155,7 @@
         }
       }
     }
+    
   
     public function master_id_selection($record=array(), $mode="select")
     {
@@ -113,6 +175,7 @@
     
       return $this->getAttribute("master_id")->getSelectableRecords($record, $mode);
     }
+    
   
     /**
      * Packages can have sub-packages, which also can have sub-packages, etc. The limit of branches is configurable.
@@ -143,6 +206,7 @@
     
       return "package.id IN(".implode(",",$arr).")";
     }
+    
   
     /**
      * Initial values
@@ -166,11 +230,13 @@
                    "projectid" => $selectedproject[1]);
     }
   
+    
     public function postMeta()
     {
       $this->getAttribute("master")->addDependee("master_id");
     }
   
+    
     /**
      * Display override for the completed attribute
      *
