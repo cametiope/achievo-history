@@ -99,9 +99,6 @@ class packageProjectSelector extends atkListAttribute
   private function getOptionArray( )
   {
     global $ATK_VARS;
-
-    
-    atk_var_dump($ATK_VARS, 'ateekavars');
     
     $db = &atkGetDb(); 
     
