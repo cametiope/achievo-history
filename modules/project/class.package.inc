@@ -75,36 +75,105 @@
       $policy->setOrder(array('abbreviation', 'name', 'projectid', 'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
     }
 
+       
     /**
-     * Custom validation: does the package start on the same date (or later) then its master
+     * Call custom validation methods for the startdate field
      *
      * @param array $record
      * @param string $mode
      */
     public function startdate_validate(&$record, $mode)
-    {           
-      if( $mode != 'add')
-      {        
-        // Package starts before project does
-        if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
-        {
-          triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
-        }       
-        
-        // Package starts before selected master package does
-        if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
-        {
-          $node = &atkGetNode( 'project.package' );
-          $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
+    { 
+      if( $mode == 'update' )
+      {     
+        $this->validate_startdate_before_parent( $record, $mode); 
+        $this->validate_startdate_before_enddate( $record, $mode );
+        $this->validate_startdate_before_project( $record, $mode );        
+      }
+    }
+    
+    
+    /**
+     * Call custom validation methods for the enddate field
+     *
+     * @param array $record
+     * @param string $mode
+     */     
+    public function enddate_validate(&$record, $mode)
+    {
+      if( $mode == 'update' ) 
+      {
+        $this->validate_enddate_before_parent( $record, $mode );        
+        $this->validate_enddate_before_project( $record, $mode );
+      }
+    }
+    
+
+    /**
+     * Custom validation: does the package start on the same date (or later) then its project
+     *
+     * @param array $record
+     * @param string $mode
+     */        
+    private function validate_startdate_before_project( &$record, $mode )
+    {
+      if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
+      {
+        triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
+      }             
+    }
+    
+    
+    /**
+     * Custom validation: does the package start on the same date (or later) then its master
+     *
+     * @param array $record
+     * @param string $mode
+     */    
+    private function validate_startdate_before_parent( &$record, $mode )
+    {         
+      if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
+      {
+        $node = &atkGetNode( 'project.package' );
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
                             
-          if( (int) dateutil::arr2str( $result[0]['startdate'] ) > (int) dateutil::arr2str( $record['startdate'] ) )
-          {
-            triggerError($record, 'startdate', atktext('package_starts_before_parent_package', 'project', 'package'));
-          }
-        }        
+        if( (int) dateutil::arr2str( $result[0]['startdate'] ) > (int) dateutil::arr2str( $record['startdate'] ) )
+        {
+          triggerError($record, 'startdate', atktext('package_starts_before_parent_package', 'project', 'package'));
+        }
+      }        
+    }
+   
+
+    /**
+     * Custom validation: does the package start before it ends
+     *
+     * @param array $record
+     * @param string $mode
+     */    
+    private function validate_startdate_before_enddate( &$record, $mode )
+    {  
+      if( (int) dateutil::arr2str( $record['enddate'] ) < (int) dateutil::arr2str($record['startdate']))
+      {   
+        triggerError($record, 'startdate', atktext('enddate_is_before_startdate', 'project', 'package'));      
       }      
     }
-     
+    
+    
+    /**
+     * Custom validation: does the package end before its project ends
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    private function validate_enddate_before_project( &$record, $mode )
+    {
+      if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
+      {
+        triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
+      }      
+    }
+    
     
     /**
      * Custom validation: does the package end on the same date (or sooner) then the its master
@@ -112,31 +181,21 @@
      * @param array $record
      * @param string $mode
      */
-    public function enddate_validate(&$record, $mode)
-    {
-      if( $mode != 'add')
-      { 
-        // Package end after project does
-        if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
+    private function validate_enddate_before_parent( &$record, $mode )
+    {        
+      if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
+      {
+        $node = &atkGetNode( 'project.package' );
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
+                           
+        if( (int) dateutil::arr2str( $result[0]['enddate'] ) < (int) dateutil::arr2str( $record['enddate'] ) )
         {
-          triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
+          triggerError($record, 'enddate', atktext('package_ends_after_parent_package', 'project', 'package'));
         }
-        
-        // Package starts before selected master package does
-        if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
-        {
-          $node = &atkGetNode( 'project.package' );
-          $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
-                            
-          if( (int) dateutil::arr2str( $result[0]['enddate'] ) < (int) dateutil::arr2str( $record['enddate'] ) )
-          {
-            triggerError($record, 'enddate', atktext('package_ends_after_parent_package', 'project', 'package'));
-          }
-        }         
-      }
-    } 
+      }      
+    }
 
-       
+    
     /**
      * Privent over branch limit
      *

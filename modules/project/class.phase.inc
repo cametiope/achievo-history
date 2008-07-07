@@ -230,53 +230,154 @@
       return atktext("plan_employee", "phase")." ".$org." ".atktext("for")." ".$hours->edit($dummy)." ".atktext("hours");
 
     }
-
+   
+    
     /**
-     * Validates a phase record before saving its changes.
+     * Call custom validation methods for the startdate field
      *
-     * Validates unique fields, required fields, dataformat etc.
-     *
-     * @param array &$record The record to validate
-     * @param String $mode The mode for which validation is performed ('add' or 'update')
-     * @param array $ignoreList The list of attributes that should not be validated
+     * @param array $record
+     * @param string $mode
      */
-    public function validate(&$record, $mode, $ignoreList=array())
+    public function startdate_validate(&$record, $mode)
+    {      
+      if( $mode == 'update' )
+      {
+        $this->validate_startdate_timeregistration( $record, $mode );
+        $this->validate_startdate_before_parent( $record, $mode ); 
+        $this->validate_startdate_before_enddate( $record, $mode );
+        $this->validate_startdate_before_project( $record, $mode );
+      }
+    }
+    
+    
+    /**
+     * Call custom validation methods for the enddate field
+     *
+     * @param array $record
+     * @param string $mode
+     */     
+    public function enddate_validate(&$record, $mode)
     {
-      // This check can only be done when updating an existing phase, not when adding a new one
-      if ($mode == "update")
+      if( $mode == 'update' )
       {
-
-        // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)
-        $hoursNode = &atkGetNode("timereg.hours");
-        $earliesttimeregforphase = $hoursNode->selectDb("phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
-        atkimport("module.utils.dateutil");
-        $earliesttimeregdate = empty($earliesttimeregforphase) ? null : dateutil::arr2stamp($earliesttimeregforphase["0"]["activitydate"]);
-
-        // Get the start date of this phase record
-        $phasestartdate = dateutil::arr2stamp($record["startdate"]);
-
-        // Trigger an error on the startdate attribute if the earliesttimeregdate is not null and the startdate of this record is higher than de first earliesttimeregdate
-        if ((!is_null($earliesttimeregdate)) && ($phasestartdate > $earliesttimeregdate))
-        {
-          triggerError($record, "startdate", "error_cannot_set_startdate_later_than_first_timereg");
-        }
-
+        $this->validate_enddate_before_parent( $record, $mode );        
+        $this->validate_enddate_before_project( $record, $mode );                
       }
-      // Check if the enddate isn't before the startdate
-      if(($record["startdate"]["day"]!=0 && $record["startdate"]["day"]!=0 && $record["startdate"]["year"]!='') &&
-         ($record["enddate"]["day"]!=0 && $record["enddate"]["day"]!=0 && $record["enddate"]["year"]!=''))
+    }
+    
+    
+    /**
+     * Custom validation: does the phase start on the same date (or later) then its project
+     *
+     * @param array $record
+     * @param string $mode
+     */        
+    private function validate_startdate_before_project( &$record, $mode )
+    {
+      if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
       {
-        $startdate = sprintf("%04d-%02d-%02d",$record["startdate"]["year"],$record["startdate"]["month"],$record["startdate"]["day"]);
-        $enddate = sprintf("%04d-%02d-%02d",$record["enddate"]["year"],$record["enddate"]["month"],$record["enddate"]["day"]);
-        if($enddate<$startdate)
-        {
-          triggerError($record,"enddate","error_enddate_cannot_start_before_startdate");
-        }
+        triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
+      }             
+    }
+        
+    
+    /**
+     * Custom validation: startdate should be before the first timeregistration
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    private function validate_startdate_timeregistration( &$record, $mode )
+    {
+      // Get the date of the first registration for this node (or set $earliesttimeregdate to null if not found)
+      $hoursNode = &atkGetNode("timereg.hours");
+      $earliesttimeregforphase = $hoursNode->selectDb("phaseid='" . $record["id"] . "'", "hours.activitydate ASC", 1);
+      atkimport("module.utils.dateutil");
+      $earliesttimeregdate = empty($earliesttimeregforphase) ? null : dateutil::arr2stamp($earliesttimeregforphase["0"]["activitydate"]);
+
+      // Get the start date of this phase record
+      $phasestartdate = dateutil::arr2stamp($record["startdate"]);
+
+      // Trigger an error on the startdate attribute if the earliesttimeregdate is not null and the startdate of this record is higher than de first earliesttimeregdate
+      if ((!is_null($earliesttimeregdate)) && ($phasestartdate > $earliesttimeregdate))
+      {
+        triggerError($record, "startdate", "error_cannot_set_startdate_later_than_first_timereg");
       }
-      // Call the parents validate function to perform the default validation on the record
-      atkNode::validate($record, $mode, $ignoreList);
     }
 
+       
+    /**
+     * Custom validation: does the phase start on the same date (or later) then its master
+     *
+     * @param array $record
+     * @param string $mode
+     */    
+    private function validate_startdate_before_parent( &$record, $mode )
+    {      
+      if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
+      {
+        $node = &atkGetNode( 'project.package' );
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
+                          
+        if( (int) dateutil::arr2str( $result[0]['startdate'] ) > (int) dateutil::arr2str( $record['startdate'] ) )
+        {
+          triggerError($record, 'startdate', atktext('phase_starts_before_parent_package', 'project', 'phase'));
+        }
+      }         
+    }
+   
+
+    /**
+     * Custom validation: does the phase start before it ends
+     *
+     * @param array $record
+     * @param string $mode
+     */    
+    private function validate_startdate_before_enddate( &$record, $mode )
+    {
+      if( (int) dateutil::arr2str( $record['enddate'] ) < (int) dateutil::arr2str($record['startdate']))
+      {   
+        triggerError($record, 'startdate', atktext('enddate_is_before_startdate', 'project', 'phase'));      
+      }        
+    }
+    
+    
+    /**
+     * Custom validation: does the phase end on the same date (or sooner) then the its master
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    private function validate_enddate_before_parent( &$record, $mode )
+    {
+      if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
+      {
+        $node = &atkGetNode( 'project.package' );
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
+                            
+        if( (int) dateutil::arr2str( $result[0]['enddate'] ) < (int) dateutil::arr2str( $record['enddate'] ) )
+        {
+          triggerError($record, 'enddate', atktext('phase_ends_after_parent_package', 'project', 'phase'));
+        }
+      }
+    }        
+
+
+    /**
+     * Custom validation: does the package end before its project ends
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    private function validate_enddate_before_project( &$record, $mode )
+    {
+      if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']) )
+      {
+        triggerError($record, 'enddate', atktext('package_end_after_project', 'project', 'package'));      
+      }      
+    }
+
+           
     public function storePhaseplanning($rec, $people)
     {
       useattrib("atkDurationAttribute");
