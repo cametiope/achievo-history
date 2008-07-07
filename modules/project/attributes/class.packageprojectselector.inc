@@ -92,28 +92,55 @@ class packageProjectSelector extends atkListAttribute
   
   /**
    * Fetch projects and packages from DB
-   *
+   * 
+   * @todo refactor: too many dependencies
    * @return mixed
    */
   private function getOptionArray( )
   {
     global $ATK_VARS;
-    
-    $db = &atkGetDb();    
-    
-    $filter    = decodeKeyValueSet($ATK_VARS['atkfilter']);
-    
-    $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$filter['projectid'].' ORDER BY name ASC');    
-    $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$filter['projectid'].' ORDER BY name ASC');
-    
-    // If called from the package node, exclude the package node ID (so that a package cannot be added to itself)
-    if( isset( $ATK_VARS['atkselector'] ) && $ATK_VARS['atknodetype'] == 'project.package' )
-    {
-      $selector = decodeKeyValueSet($ATK_VARS['atkselector']); 
-      $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$filter['projectid'].' AND package.id <> '.$selector['package.id'].' ORDER BY name ASC');
-    }   
-   
 
+    atk_var_dump($ATK_VARS);
+    $db = &atkGetDb(); 
+    
+    $projects = array();
+    $packages = array();    
+
+    // Filters and selectors differ, depending on where the attribute is called from
+    if( $ATK_VARS['atknodetype'] == 'project.package' )
+    {
+      if( !isset( $ATK_VARS['atkfilter'] ) || !isset( $ATK_VARS['atkselector'] ) )
+      {
+        return false;
+      }
+      
+      $filter = decodeKeyValueSet( $ATK_VARS['atkfilter'] );
+      $projectid = $filter['projectid'];
+      
+      $selector = decodeKeyValueSet( $ATK_VARS['atkselector'] );
+      $packageid = $selector['package.id'];
+      
+      $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$projectid.' ORDER BY name ASC');    
+      $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$projectid.' AND package.id <> '.$packageid.' ORDER BY name ASC');
+    }
+    elseif( $ATK_VARS['atknodetype'] == 'project.phase' )
+    {
+      if( !isset( $ATK_VARS['atkfilter'] ) )
+      {
+        return false;
+      }
+      
+      $filter = decodeKeyValueSet( $ATK_VARS['atkfilter'] );      
+      $id = $filter['projectid'];
+      
+      $projects = $db->getRows( 'SELECT "projects_" AS prefix, id, name FROM project WHERE project.id = '.$id.' ORDER BY name ASC');    
+      $packages = $db->getRows( 'SELECT "packages_" AS prefix, id, name FROM package WHERE package.projectid = '.$id.' ORDER BY name ASC');
+    }
+    else 
+    {
+      return false;
+    }
+    
     $return  = array();
     $results = array_merge( $projects, $packages );
     if( count( $results ) > 0 )
@@ -125,7 +152,7 @@ class packageProjectSelector extends atkListAttribute
       }
       return $return;
     }    
-    return false;  
+    return false;    
   }
     
 }
