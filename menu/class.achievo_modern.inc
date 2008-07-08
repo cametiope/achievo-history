@@ -31,10 +31,8 @@ class achievo_modern extends atkPlainMenu
 
       if ($theme->getAttribute('use_project_menu'))
       {
-        $tab = atkArrayNvl($_REQUEST,"menutab");
         atkimport("menu.atktabmenu");
         atkTabMenu::registerCssJs($page,$theme);
-        $parameter['tab'] = $tab;
         $parameter['tabmenu'] = atkTabMenu::renderMenu();
 
         $box = $ui->renderBox($parameter,"tabmenu");

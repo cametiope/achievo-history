@@ -5,12 +5,12 @@
 	    <table border="0" cellpadding="0" cellspacing="0" class="tabsTabs mainTabs">
         <tr>
           <td id="tab_project" valign="middle" align="left" nowrap="nowrap" class="passivetab">
-              <a href="javascript:void(0)" onclick="showProjectMenu()">Project</a>
+              <a href="javascript:void(0)" onclick="showTab('project')">Project</a>
 
           </td>
           <td>&nbsp;</td>
 		      <td id="tab_mainMenu" valign="middle" align="left" nowrap="nowrap" class="activetab">
-              <a href="javascript:void(0)" onclick="showMainMenu()">Navigate</a>
+              <a href="javascript:void(0)" onclick="showTab('main')">Navigate</a>
           </td>
           <td>&nbsp;</td>
 		    </tr>
@@ -120,16 +120,14 @@ function hideAllSubMenus()
 	}
 }
 
-function showProjectMenu()
-{
+function showProjectMenu(){
     document.getElementById('projectMenu').style.display="";
     document.getElementById('mainMenu').style.display="none";
     document.getElementById('tab_project').className = 'activetab';
     document.getElementById('tab_mainMenu').className = 'passivetab';
 }
 
-function showMainMenu()
-{
+function showMainMenu(){
     document.getElementById('projectMenu').style.display="none";
     document.getElementById('mainMenu').style.display="";
     document.getElementById('tab_mainMenu').className = 'activetab';
@@ -137,14 +135,27 @@ function showMainMenu()
 }
 
 function showTab(tab){
-  if(typeof(tab)=='undefined') tab = "project";
-  
-  if(tab == "main") showMainMenu();  
-  else showProjectMenu();
+  if((typeof(tab)=='undefined') || !tab){
+	  tab = getTab();
+	  if (!tab){
+      tab = 'project';
+    }
+  }
+	setTab(tab);
 
+  if(tab == "main") showMainMenu();
+  else showProjectMenu();
 }
 
+function getTab(){
+  return parent.document.tab;
+}
+
+function setTab(value){
+  parent.document.tab = value;
+}
+
+showTab()
 {/literal}
-showTab('{$tab}')
 showSubMenu('{if $atkmenutop!=="main"}{$atkmenutopname|addslashes}{else}{$firstmenuitem|addslashes}{/if}');
 </script>

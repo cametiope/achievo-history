@@ -175,7 +175,7 @@
        }
 
        //Reload the menu frame by creating javascript
-       $menu_url = session_url("menu.php?atkmenutop=projectmanagement&menutab=main&selectedproject=".$prjId, SESSION_DEFAULT);
+       $menu_url = session_url("menu.php?atkmenutop=projectmanagement&selectedproject=".$prjId, SESSION_DEFAULT);
        $script = "var newlocation=\"$menu_url\";
                   var oldlocation=parent.menu.location.toString();
                   if (oldlocation.indexOf(newlocation) == -1) {parent.menu.location = newlocation;}";
@@ -198,7 +198,7 @@
     global $g_projectnamesize;
     $db = &atkGetDb();
 
-    $userid = atkArrayNvl(getUser(), "id");
+    $userid = atkGetUserId();
 
     $query = "SELECT DISTINCT project.abbreviation as projectcode, project.name as projectname, project.id as projectid ";
     $query.= "FROM project,phase,hours ";
@@ -370,6 +370,52 @@
     }
 
     return $result;
+  }
+
+  function reloadMenu()
+  {
+    global $g_sessionManager, $g_projectnamesize;
+
+    atkdebug("reloadMenu");
+    $prj = array();
+    //Get current sessionvar
+    $session = &atkSessionManager::getSession();
+    $prj =  $g_sessionManager->getValue("selectedprj","globals");
+
+    //If session var is empty fill with recent projects
+    if (count($prj) == 0)
+    {
+      $prj = getRecentProjects();
+    }
+
+   //When we reload menu from package/phase(task), we must use atkfilter as atkselector
+    $atkselect = $g_sessionManager->stackVar("atkfilter");
+
+    if (($atkselect != "") && isset($atkselect))
+    {
+       $projectid = sscanf($atkselect, "projectid='%d'");
+       $prjId = $projectid[0];
+    }
+    else
+    {
+        $atkselect = $g_sessionManager->stackVar("selectedprojectid");
+        if (($atkselect != "") && isset($atkselect))
+        {
+          $prjId = $atkselect;
+        }
+        else
+        {
+          $prjId = 0;
+        }
+    }
+
+     //Reload the menu frame by creating javascript
+     $menu_url = session_url("menu.php?atkmenutop=projectmanagement&selectedproject=".$prjId, SESSION_DEFAULT);
+     $script = "var newlocation=\"$menu_url\";
+                var oldlocation=parent.menu.location.toString();
+                if (oldlocation.indexOf(newlocation) == -1) {parent.menu.location = newlocation;}";
+     $page = &atkinstance("atk.ui.atkpage");
+     $page->register_loadScript($script);
   }
 
 ?>

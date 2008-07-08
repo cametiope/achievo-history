@@ -17,6 +17,7 @@
    * $Id$
    */
 
+  include_once("achievotools.inc");
   atkimport("atk.atkmetanode.inc");
 
   userelation("atkmanytoonerelation");
@@ -25,12 +26,12 @@
 
   class package extends atkMetaNode
   {
-  	
+
     public $securityAlias = "project.project";
     public $order = "name";
     public $descriptor = "[name]";
     public $flags = array(NF_ADD_LINK,NF_EDITAFTERADD);
-  
+
     /**
      * Meta.
      *
@@ -39,20 +40,20 @@
     public static function meta(atkMetaPolicy $policy)
     {
     	//parent::meta($policy);
-    	
+
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
       //$policy->hasMany("package_person");
-    
+
       $policy->hasOne("project.project",array("source"=>"projectid"),array(),AF_HIDE);
       $policy->addFlags('projectid', AF_HIDE);
 
       $policy->addFlag('id', AF_FORCE_LOAD);
-      $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );    
+      $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );
       $policy->addFlags("master", AF_HIDE);
-      $policy->addFlags("master_id", AF_HIDE);      
-      
+      $policy->addFlags("master_id", AF_HIDE);
+
       $policy->setTypeAndParams("status","atk.attributes.atklistattribute",array(array("active","nonactive","archived")));
-      //      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ? 
+      //      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ?
       //        (('[spend_hours]' ? '[spend_hours]' : 0)/(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0))*100) : 0";
       //      $policy->setTypeAndParams("completed","atk.attributes.atkcalculatorattribute",array($expression));
       $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time", "spend_hours"),"atk.attributes.atkdurationattribute",array("15m"));
@@ -68,14 +69,14 @@
       $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
       //$policy->addFlags("master",AF_FORCE_LOAD);
-      
+
       // list of linked deliverables for this phase
       $policy->hasMany('project.deliverable', array('through' => 'project.deliverable_package', 'source' => 'package_id'));
-      
+
       $policy->setOrder(array('abbreviation', 'name', 'projectid', 'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
     }
 
-       
+
     /**
      * Call custom validation methods for the startdate field
      *
@@ -83,83 +84,83 @@
      * @param string $mode
      */
     public function startdate_validate(&$record, $mode)
-    { 
+    {
       if( $mode == 'update' )
-      {     
-        $this->validate_startdate_before_parent( $record, $mode); 
+      {
+        $this->validate_startdate_before_parent( $record, $mode);
         $this->validate_startdate_before_enddate( $record, $mode );
-        $this->validate_startdate_before_project( $record, $mode );        
+        $this->validate_startdate_before_project( $record, $mode );
       }
     }
-    
-    
+
+
     /**
      * Call custom validation methods for the enddate field
      *
      * @param array $record
      * @param string $mode
-     */     
+     */
     public function enddate_validate(&$record, $mode)
     {
-      if( $mode == 'update' ) 
+      if( $mode == 'update' )
       {
-        $this->validate_enddate_before_parent( $record, $mode );        
+        $this->validate_enddate_before_parent( $record, $mode );
         $this->validate_enddate_before_project( $record, $mode );
       }
     }
-    
+
 
     /**
      * Custom validation: does the package start on the same date (or later) then its project
      *
      * @param array $record
      * @param string $mode
-     */        
+     */
     private function validate_startdate_before_project( &$record, $mode )
     {
       if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
       {
         triggerError($record, 'startdate', atktext('package_starts_before_project', 'project', 'package'));
-      }             
+      }
     }
-    
-    
+
+
     /**
      * Custom validation: does the package start on the same date (or later) then its master
      *
      * @param array $record
      * @param string $mode
-     */    
+     */
     private function validate_startdate_before_parent( &$record, $mode )
-    {         
+    {
       if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
       {
         $node = &atkGetNode( 'project.package' );
-        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
-                            
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );
+
         if( (int) dateutil::arr2str( $result[0]['startdate'] ) > (int) dateutil::arr2str( $record['startdate'] ) )
         {
           triggerError($record, 'startdate', atktext('package_starts_before_parent_package', 'project', 'package'));
         }
-      }        
+      }
     }
-   
+
 
     /**
      * Custom validation: does the package start before it ends
      *
      * @param array $record
      * @param string $mode
-     */    
+     */
     private function validate_startdate_before_enddate( &$record, $mode )
-    {  
+    {
       if( (int) dateutil::arr2str( $record['enddate'] ) < (int) dateutil::arr2str($record['startdate']))
-      {   
-        triggerError($record, 'startdate', atktext('enddate_is_before_startdate', 'project', 'package'));      
-      }      
+      {
+        triggerError($record, 'startdate', atktext('enddate_is_before_startdate', 'project', 'package'));
+      }
     }
-    
-    
+
+
     /**
      * Custom validation: does the package end before its project ends
      *
@@ -170,11 +171,11 @@
     {
       if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']))
       {
-        triggerError($record, 'enddate', atktext('package_ends_after_project', 'project', 'package'));      
-      }      
+        triggerError($record, 'enddate', atktext('package_ends_after_project', 'project', 'package'));
+      }
     }
-    
-    
+
+
     /**
      * Custom validation: does the package end on the same date (or sooner) then the its master
      *
@@ -182,20 +183,20 @@
      * @param string $mode
      */
     private function validate_enddate_before_parent( &$record, $mode )
-    {        
+    {
       if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
       {
         $node = &atkGetNode( 'project.package' );
-        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
-                           
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );
+
         if( (int) dateutil::arr2str( $result[0]['enddate'] ) < (int) dateutil::arr2str( $record['enddate'] ) )
         {
           triggerError($record, 'enddate', atktext('package_ends_after_parent_package', 'project', 'package'));
         }
-      }      
+      }
     }
 
-    
+
     /**
      * Privent over branch limit
      *
@@ -214,14 +215,14 @@
         }
       }
     }
-    
-  
+
+
     public function master_id_selection($record=array(), $mode="select")
     {
       if($record['master'] == 'project.package')
       {
         $this->getAttribute("master_id")->addDestinationFilter("package.id<>[id]");
-      
+
         if(atkConfig::get("project","package_number_of_branches") != -1)
         {
           $this->getAttribute("master_id")->addDestinationFilter($this->getPackageLevelId());
@@ -231,14 +232,14 @@
       {
         $this->getAttribute("master_id")->setDestinationFilter("");
       }
-    
+
       return $this->getAttribute("master_id")->getSelectableRecords($record, $mode);
     }
-    
-  
+
+
     /**
      * Packages can have sub-packages, which also can have sub-packages, etc. The limit of branches is configurable.
-     * This function return filter with packages, which lower then level in config file. 
+     * This function return filter with packages, which lower then level in config file.
      *
      * @return string Filter
      */
@@ -246,27 +247,27 @@
     {
       $id = atkConfig::get("project","package_number_of_branches");
       $db = &$this->getDb();
-    
+
       $query = "SELECT p0.id FROM package p0 ";
-    
+
       for($i=1; $i<$id; $i++)
       {
         $r = $i-1;
         $query .= "LEFT JOIN package p$i ON p$r.master_id=p$i.id AND p$r.master='project.package' ";
       }
       $query .= "WHERE p".($i-1).".id IS NULL";
-    
+
       $rows = $db->getrows($query);
-    
+
       foreach ($rows as $row)
       {
         $arr[] = $row["id"];
       }
-    
+
       return "package.id IN(".implode(",",$arr).")";
     }
-    
-  
+
+
     /**
      * Initial values
      *
@@ -282,14 +283,14 @@
                    "coordinator_id"=>getUser(),
                    "projectid" => $selectedproject[1]);
     }
-  
-    
+
+
     public function postMeta()
     {
       $this->getAttribute("master")->addDependee("master_id");
     }
-  
-    
+
+
     /**
      * Display override for the completed attribute
      *
@@ -301,4 +302,15 @@
     {
       return number_format($this->getAttribute("completed")->display($record, $mode))."%";
     }
+
+    //We must reload menu after changes in package/task
+    function dispatch($postvars, $fullpage=true)
+    {
+      if (!in_array($postvars['atkaction'],array('add','admin')))
+      {
+        reloadMenu();
+      }
+      return parent::dispatch($postvars, $fullpage);
+    }
+
   }

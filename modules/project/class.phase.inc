@@ -1,5 +1,6 @@
 <?php
 
+  include_once("achievotools.inc");
   useattrib("project.phasetemplateattribute");
   useattrib("atktextattribute");
   useattrib("atklistattribute");
@@ -11,7 +12,7 @@
   useattrib("project.spendhoursattribute");
   useattrib("project.dependencyattrib");
   useattrib("project.packageprojectselector");
-  
+
   userelation("atkmanytoonerelation");
   userelation("atkmanyboolrelation");
   userelation("atkonetomanyrelation");
@@ -27,7 +28,7 @@
     {
       return (parent::isEmpty($record) && $record["template"]["id"]=="");
     }
-  }   
+  }
 
 
   class phase extends atkNode
@@ -40,57 +41,57 @@
       $this->atkNode($name,$flags|NF_AUTOSELECT|NF_EDITAFTERADD|NF_ADD_LINK); // node() constructor is *not* called automatically!
 
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
-      
+
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
-      
+
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE|AF_FORCE_LOAD, 50));
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY|AF_HIDE_LIST));
-              
+
       $this->add(new packageProjectSelector('project_package'));
       $this->add(new atkNumberAttribute("master_id", AF_HIDE));
       $this->add(new atkAttribute("master", AF_HIDE_ADD|AF_HIDE_EDIT));
-      
+
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW));
-            
+
       $this->add(new atkListAttribute('priority', range(1,10), '', AF_HIDE_LIST));
 
       $assign_to = &$this->add(new atkManyToOneRelation('assign_to', 'person.person', AF_LARGE|AF_HIDE_LIST ) );
       $assign_to->setDestinationFilter(' person.id IN (SELECT personid FROM project_person WHERE projectid = [projectid.id])');
-      
+
       $this->add(new atkDateAttribute("startdate", "", ""));
-      $this->add(new atkDateAttribute("enddate", "", ""));      
-      
+      $this->add(new atkDateAttribute("enddate", "", ""));
+
       $completed = $this->getCompletedValues();
       $this->add(new atkListAttribute("completed", $completed['options'], $completed['values'], AF_HIDE_ADD|AF_FORCE_LOAD|AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM));
-            
-      
+
+
       $this->add(new atkDurationAttribute("initial_planning",'','', ($initialplanningallowed?0:AF_READONLY_EDIT)|AF_TOTAL|AF_DURATION_STRING));
-      $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));      
+      $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));
 
       $this->add(new atkDurationAttribute("remaining_effort_time", '', '', AF_HIDE_ADD|AF_READONLY));
 
       // deliverable dependency
       $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable", AF_HIDE_LIST));
       $depends->setDestinationFilter("project_id=[projectid.id]");
-            
+
       $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL|AF_HIDE_LIST));
 
       //$this->add(new atkOneToManyRelation("phaseplanning", "project.phaseplanning", "phaseid", AF_HIDE_LIST));
       //$this->add(new atkFuzzySearchAttribute("phaseplanning_add", "employee.employee", "storePhaseplanning", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL, 20));
-      
+
       $cascadingdeletehours = atkConfig::get("project", "project_cascading_delete_hours", false);
       if($cascadingdeletehours)
         $this->add(new atkOneToManyRelation("hours","timereg.hours","phaseid",AF_HIDE|AF_CASCADE_DELETE));
 
       // list of linked deliverables for this phase
       $this->add(new atkOneToManyRelation("deliverable_phase","project.deliverable_phase","phase_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
-      
+
       $this->addSecurityMap("view","project.admin");
       $this->setOrder("phase.startdate, phase.name");
       $this->setTable("phase","phase");
-      
-      $this->setDescriptorTemplate("[name]");      
+
+      $this->setDescriptorTemplate("[name]");
     }
 
     public function name_display($record, $mode)
@@ -152,7 +153,7 @@
       }
       return "";
     }
-    
+
     /**
      * Display the master - master_id column a bit more userfriendly
      *
@@ -183,7 +184,7 @@
       }
 
       $initial_values['completed'] = 0;
-      
+
       // Return the initual values:
       return $initial_values;
     }
@@ -229,8 +230,8 @@
       return atktext("plan_employee", "phase")." ".$org." ".atktext("for")." ".$hours->edit($dummy)." ".atktext("hours");
 
     }
-   
-    
+
+
     /**
      * Call custom validation methods for the startdate field
      *
@@ -238,48 +239,48 @@
      * @param string $mode
      */
     public function startdate_validate(&$record, $mode)
-    {      
+    {
       if( $mode == 'update' )
       {
         $this->validate_startdate_timeregistration( $record, $mode );
-        $this->validate_startdate_before_parent( $record, $mode ); 
+        $this->validate_startdate_before_parent( $record, $mode );
         $this->validate_startdate_before_enddate( $record, $mode );
         $this->validate_startdate_before_project( $record, $mode );
       }
     }
-    
-    
+
+
     /**
      * Call custom validation methods for the enddate field
      *
      * @param array $record
      * @param string $mode
-     */     
+     */
     public function enddate_validate(&$record, $mode)
     {
       if( $mode == 'update' )
       {
-        $this->validate_enddate_before_parent( $record, $mode );        
-        $this->validate_enddate_before_project( $record, $mode );                
+        $this->validate_enddate_before_parent( $record, $mode );
+        $this->validate_enddate_before_project( $record, $mode );
       }
     }
-    
-    
+
+
     /**
      * Custom validation: does the phase start on the same date (or later) then its project
      *
      * @param array $record
      * @param string $mode
-     */        
+     */
     private function validate_startdate_before_project( &$record, $mode )
     {
       if( (int) dateutil::arr2str( $record['projectid']['startdate'] ) > (int) dateutil::arr2str($record['startdate']))
       {
         triggerError($record, 'startdate', atktext('phase_starts_before_project', 'project', 'phase'));
-      }             
+      }
     }
-        
-    
+
+
     /**
      * Custom validation: startdate should be before the first timeregistration
      *
@@ -304,43 +305,43 @@
       }
     }
 
-       
+
     /**
      * Custom validation: does the phase start on the same date (or later) then its master
      *
      * @param array $record
      * @param string $mode
-     */    
+     */
     private function validate_startdate_before_parent( &$record, $mode )
-    {      
+    {
       if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
       {
         $node = &atkGetNode( 'project.package' );
-        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
-                          
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );
+
         if( (int) dateutil::arr2str( $result[0]['startdate'] ) > (int) dateutil::arr2str( $record['startdate'] ) )
         {
           triggerError($record, 'startdate', atktext('phase_starts_before_parent_package', 'project', 'phase'));
         }
-      }         
+      }
     }
-   
+
 
     /**
      * Custom validation: does the phase start before it ends
      *
      * @param array $record
      * @param string $mode
-     */    
+     */
     private function validate_startdate_before_enddate( &$record, $mode )
     {
       if( (int) dateutil::arr2str( $record['enddate'] ) < (int) dateutil::arr2str($record['startdate']))
-      {   
-        triggerError($record, 'startdate', atktext('enddate_is_before_startdate', 'project', 'phase'));      
-      }        
+      {
+        triggerError($record, 'startdate', atktext('enddate_is_before_startdate', 'project', 'phase'));
+      }
     }
-    
-    
+
+
     /**
      * Custom validation: does the phase end on the same date (or sooner) then the its master
      *
@@ -352,14 +353,14 @@
       if( $record['master'] == 'project.package' && $record['master_id'] !== NULL )
       {
         $node = &atkGetNode( 'project.package' );
-        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );  
-                            
+        $result = $node->selectDb( 'package.id = '. (int) $record['master_id'] );
+
         if( (int) dateutil::arr2str( $result[0]['enddate'] ) < (int) dateutil::arr2str( $record['enddate'] ) )
         {
           triggerError($record, 'enddate', atktext('phase_ends_after_parent_package', 'project', 'phase'));
         }
       }
-    }        
+    }
 
 
     /**
@@ -372,11 +373,11 @@
     {
       if( (int) dateutil::arr2str( $record['projectid']['enddate'] ) < (int) dateutil::arr2str($record['enddate']) )
       {
-        triggerError($record, 'enddate', atktext('phase_end_after_project', 'project', 'phase'));      
-      }      
+        triggerError($record, 'enddate', atktext('phase_end_after_project', 'project', 'phase'));
+      }
     }
 
-           
+
     public function storePhaseplanning($rec, $people)
     {
       useattrib("atkDurationAttribute");
@@ -478,7 +479,7 @@
       }
       return true;
     }
-    
+
     /**
      * Get the values and options for the completed dropdown
      *
@@ -494,4 +495,16 @@
       }
       return $completed;
     }
+
+    //We must reload menu after changes in package/task
+    function dispatch($postvars, $fullpage=true)
+    {
+      if (!in_array($postvars['atkaction'],array('add','admin')))
+      {
+        reloadMenu();
+      }
+      return parent::dispatch($postvars, $fullpage);
+    }
+
   }
+?>
