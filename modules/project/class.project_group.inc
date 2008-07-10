@@ -12,6 +12,7 @@ class project_group extends atkNode
     $this->setTable("project_group");
     $this->setOrder("name");
     $this->setDescriptorTemplate("[name]");    
+    $this->setSecurityAlias("project.activity");
   }
 
 }
