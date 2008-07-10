@@ -600,7 +600,7 @@
           {
             $var = "external$attr";
             $value = $$var;
-            if (!empty($value)) $filter.=" AND hours.$attr = '$value'";
+            if (!empty($value)) $hoursnode->m_postvars['atksearch'][$attr] = $value;
           }
         }
       }
