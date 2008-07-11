@@ -120,6 +120,8 @@ function hideAllSubMenus()
 	}
 }
 
+var idOfFolderTrees = ['project_tree'];
+
 function showProjectMenu(){
     document.getElementById('projectMenu').style.display="";
     document.getElementById('mainMenu').style.display="none";
