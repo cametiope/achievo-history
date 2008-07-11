@@ -93,7 +93,7 @@ Owner of DHTMLgoodies.com
 
 	function getNodeDataFromServer(ajaxIndex,ulId,parentId)
 	{
-		document.getElementById(ulId).innerHTML = ajaxObjectArray[ajaxIndex].response;
+	  document.getElementById(ulId).innerHTML = ajaxObjectArray[ajaxIndex].response;
 		ajaxObjectArray[ajaxIndex] = false;
 		parseSubItems(ulId,parentId);
 	}
@@ -107,7 +107,9 @@ Owner of DHTMLgoodies.com
 		}
 		var branchObj = document.getElementById(ulId);
 		var menuItems = branchObj.getElementsByTagName('LI');	// Get an array of all menu items
-		for(var no=0;no<menuItems.length;no++){
+
+		for(var no=0;no<menuItems.length;no++)
+		{
 			var imgs = menuItems[no].getElementsByTagName('IMG');
 			//if(imgs.length>0)continue;
 			nodeId++;
@@ -115,7 +117,10 @@ Owner of DHTMLgoodies.com
 			var img = document.createElement('IMG');
 			img.src = plusImage;
 			img.onclick = showHideNode;
-			if(subItems.length==0)img.style.visibility='hidden';else{
+
+			if(subItems.length==0)img.style.visibility='hidden';
+			else
+			{
 				subItems[0].id = 'tree_ul_' + treeUlCounter;
 				treeUlCounter++;
 			}
@@ -125,24 +130,39 @@ Owner of DHTMLgoodies.com
 			menuItems[no].id = 'dhtmlgoodies_treeNode' + nodeId;
 
 			var tmpParentId = menuItems[no].getAttribute('parentId');
-			if(!tmpParentId)tmpParentId = menuItems[no].tmpParentId;
-			if(tmpParentId && nodes[tmpParentId])showHideNode(false,nodes[no]);
+
+			if(!tmpParentId)
+			{
+			 tmpParentId = menuItems[no].parentId;
+			}
+
+			if(tmpParentId)
+			{
+			  var prnt = nodeId-1;
+			  if(initExpandedNodes.indexOf(',' + prnt + ',')!=-1)
+	  	  {
+  			  showHideNode(false,prnt);
+			  }
+		  }
 		}
 	}
 
 	function showHideNode(e,inputId)
 	{
 		if(inputId){
-			if(!document.getElementById('dhtmlgoodies_treeNode'+inputId))return;
+			if(!document.getElementById('dhtmlgoodies_treeNode'+inputId)){
+			  return;
+			}
 			thisNode = document.getElementById('dhtmlgoodies_treeNode'+inputId).getElementsByTagName('IMG')[0];
 		}else {
 			thisNode = this;
-			if(this.tagName=='A')thisNode = this.parentNode.getElementsByTagName('IMG')[0];
+			if(this.tagName=='A')thisNode = this.parentNode.getElementsByTagName('IMG')[0];//don't need - we open atknode when click on node name
 
 		}
 		if(thisNode.style.visibility=='hidden')return;
 		var parentNode = thisNode.parentNode;
 		inputId = parentNode.id.replace(/[^0-9]/g,'');
+
 		if(thisNode.src.indexOf(plusName)>=0){
 			thisNode.src = thisNode.src.replace(plusName,minusName);
 			var ul = parentNode.getElementsByTagName('UL')[0];
@@ -180,25 +200,35 @@ Owner of DHTMLgoodies.com
 	function initTree()
 	{
 
-		for(var treeCounter=0;treeCounter<idOfFolderTrees.length;treeCounter++){
+		for(var treeCounter=0;treeCounter<idOfFolderTrees.length;treeCounter++)
+		{
 			var dhtmlgoodies_tree = document.getElementById(idOfFolderTrees[treeCounter]);
 			var menuItems = dhtmlgoodies_tree.getElementsByTagName('LI');	// Get an array of all menu items
-			for(var no=0;no<menuItems.length;no++){
+
+			for(var no=0;no<menuItems.length;no++)
+			{
 				nodeId++;
 				var subItems = menuItems[no].getElementsByTagName('UL');
+
 				var img = document.createElement('IMG');
 				img.src = plusImage;
 				img.onclick = showHideNode;
-				if(subItems.length==0)img.style.visibility='hidden';else{
+
+				if(subItems.length==0)img.style.visibility='hidden';
+				else
+				{
 					subItems[0].id = 'tree_ul_' + treeUlCounter;
 					treeUlCounter++;
 				}
+
 				var aTag = menuItems[no].getElementsByTagName('IMG')[0];
 				menuItems[no].insertBefore(img,aTag);
+
 				if(!menuItems[no].id)menuItems[no].id = 'dhtmlgoodies_treeNode' + nodeId;
 			}
 
 		}
+
 		initExpandedNodes = Get_Cookie('dhtmlgoodies_expandedNodes');
 		if(initExpandedNodes){
 			var nodes = initExpandedNodes.split(',');
