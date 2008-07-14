@@ -154,6 +154,8 @@ class atkTabMenu
     {
       $rows[$i]['url'] = session_url(dispatch_url("project.".$type, "edit", array("atkselector" => $type.".id='".$rows[$i]["id"]."'"),"dispatch.php"),SESSION_NEW);
       $rows[$i]['img'] = $theme->imgPath($type.".gif");
+      $rows[$i]['title'] = $rows[$i]['name'];
+      $rows[$i]['name'] = substr($rows[$i]['name'],0,$theme->getAttribute("menu_item_length"));
     }
   }
 
