@@ -26,5 +26,6 @@
   $theme['basetheme'] = 'steelblue';
   $theme['basethemelocation'] = 'atk';
   $theme['use_project_menu']=true;
+  $theme['menu_item_length']=15;
 
 ?>
