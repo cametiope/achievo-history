@@ -352,6 +352,7 @@
   "months" => "Months",
   "monthview" => "Monthview",
   "morning" => "Morning",
+  "move_locked" => "Move locked",
   "mra_activate" => "Activate",
   "mra_complete" => "Complete",
   "mra_deactivate" => "Deactivate",

@@ -9,6 +9,10 @@ Changes in Achievo 1.4.0
 + Added ability to view the time registrations for a week as a list while
   approving/disapproving blocked weeks. This allows you to see the remarks
   for every time registration within the week. [Guido]
++ Added ability to move hours in locked weeks when you have the move_locked
+  privilege. [Guido]
+* Improved privilege check when moveing hours (don't check the first selected
+  record only). [Guido]
 
 Changes in Achievo 1.3.3
 ------------------------

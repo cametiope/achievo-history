@@ -351,6 +351,7 @@
   "months" => "Maanden",
   "monthview" => "Maandoverzicht",
   "morning" => "Ochtend",
+  "move_locked" => "Verplaats geblokkeerd",
   "mra_activate" => "Activeer",
   "mra_complete" => "Instellen op afgerond",
   "mra_deactivate" => "Deactiveer",

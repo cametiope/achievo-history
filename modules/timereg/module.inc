@@ -4,7 +4,7 @@
   {
     function getNodes()
     {
-      registerNode("timereg.hours", array("admin","add","edit","delete","lock","unlock", "any_user", "any_project"));
+      registerNode("timereg.hours", array("admin","add","edit","delete","lock","unlock","move_locked", "any_user", "any_project"));
       registerNode("timereg.hours_approve", array("admin","add","delete","approve","disapprove","any_user")); // niet
       registerNode("timereg.hours_lock", array("admin","add","delete")); // niet
       registerNode("timereg.workperiod", array("admin", "add", "edit", "delete"));
@@ -14,7 +14,7 @@
     function getMenuItems()
     {
       $lockmode = atkConfig::get("timereg", "lockmode", "week");
-      
+
       // Build the timereg menu
       $this->menuitem("time_registration", dispatch_url("timereg.hours", "admin"), "main", array("timereg.hours", "admin"), 100);
       $this->menuitem("hours_admin", dispatch_url("timereg.hours", "admin"), "time_registration", array("timereg.hours", "admin"));

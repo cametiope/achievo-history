@@ -992,9 +992,9 @@ class hours extends atkNode
                 hours.userid = '$userid'
                 AND activitydate between '$start' and '$end'";
     list($res) = $db->getrows($query);
-    
+
     if ($res['contract']==0 || $result['totaal']==0)
-    {    
+    {
       // either no contract in this period, or no hours booked at all..
       return false;
     }
@@ -1300,10 +1300,12 @@ class hours extends atkNode
     else
     {
       $actionbase = dispatch_url($this->atknodetype(), "__PLACEHOLDER__", array("atkselector" => "[pk]", "viewuser" => $this->m_user));
-      atkdebug('actionbase: '.$actionbase);
       $actions = array();
       $actions["edit"] = str_replace("__PLACEHOLDER__", "edit", $actionbase);
       $actions["delete"] = str_replace("__PLACEHOLDER__", "delete", $actionbase);
+    }
+    if ($this->recordIsMoveable($rec, $userid, $locktype))
+    {
       $mraactions["mra_move"] = "mra_move";
     }
   }
@@ -1311,6 +1313,14 @@ class hours extends atkNode
   function recordIsReadonly($rec, $userid, $locktype)
   {
     return (empty($userid) || (($rec["userid"]["id"] != $userid) && !$this->allowed("any_user")) || ($locktype != ""));
+  }
+
+  function recordIsMoveable($rec, $userid, $locktype)
+  {
+    if (!$this->allowed("edit")) return false;
+    if (!$this->allowed("move_locked") && $locktype != "") return false;
+    if (!$this->allowed("any_user") && $rec["userid"]["id"] != $userid) return false;
+    return true;
   }
 
   /**

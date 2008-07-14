@@ -13,60 +13,40 @@
       for($i=0,$_i=count($attribkeys); $i<$_i; $i++)
         if (!in_array($attribkeys[$i], array("projectid", "phaseid", "activityid", "javascript")))
           $this->m_attribList[$attribkeys[$i]]->addFlag(AF_HIDE);
-
     }
 
-    function action_edit($handler)
+    function allowed($action, $records=array())
     {
-      global $g_user;
+      // Only handle the edit and save action
+      if (!in_array($action, array("add","save"))) return false;
 
-      $atkselector = "";
-      if(is_array($this->m_postvars["atkselector"]))
+      // Make sure we have an array of records
+      if (empty($records)) $records = array();
+      if (!empty($records) && !isset($records[0])) $records = array($records);
+
+      // Loop trough the records and return false if one of them cannot be moved
+      atkImport("modules.utils.dateutil");
+      foreach($records as $record)
       {
-        $atkselector = "(".implode(" OR ", $this->m_postvars["atkselector"]).")";
-      }
-      else
-        $atkselector = $this->m_postvars["atkselector"];
-
-      $recs = $this->selectDb($atkselector, "hours.id", "", "", array("userid", "activitydate"));
-
-      $this->m_lock = $this->getLockType($recs[0]["userid"]["id"],
-                        sprintf("%02d-%02d-%02d", $recs[0]["activitydate"]["year"],
-                                                  $recs[0]["activitydate"]["month"],
-                                                  $recs[0]["activitydate"]["day"]));
-      if ($this->m_lock=="")
-      {
-        if (!$this->allowed("any_user"))
+        $locktype = $this->getLockType($record["userid"]["id"], dateutil::arr2string($record["activitydate"], "Y-m-d"));
+        if (!$this->recordIsMoveable($record, $record["userid"]["id"], $locktype))
         {
-          $this->addFilter("hours.userid",strtolower($g_user["id"]));
+          return false;
         }
-        return $handler->action_edit();
       }
-      else
-      {
-        // Week is locked. We may not edit, only view.
-        $handler = $this->getHandler("view");
-        return $handler->invoke("action_view");
-      }
-    }
-
-
-    function allowed($action, $record="")
-    {
-      $secMgr = &atkGetSecurityManager();
-      return $secMgr->allowed("timereg.hours", "edit");
+      return true;
     }
 
     function doMove($ids, $phaseid, $activityid)
     {
-      $db = &atkGetDb();
+      $db = atkGetDb();
       foreach($ids as $id)
       {
         $db->query("UPDATE hours SET phaseid='$phaseid', activityid='$activityid' WHERE hours.id='$id'");
       }
     }
 
-    function action_save(&$handler)
+    function action_save()
     {
       // Get the relevant postvars
       $selector = atkArrayNvl($this->m_postvars, "atkselector", array());
@@ -95,7 +75,7 @@
       $result = parent::editArray($mode, $record, $forceList, $suppressList, $fieldprefix);
       $selector = atkArrayNvl($this->m_postvars, "atkselector", array());
       foreach($selector as $selectoritem)
-        $result["hide"][] = '<input type="hidden" name="atkselector[]" value="'.$selectoritem.'">';
+        $result["hide"][] = '<input type="hidden" name="atkselector[]" value="'.$selectoritem.'"/>';
       return $result;
     }
 
