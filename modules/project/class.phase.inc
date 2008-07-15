@@ -49,7 +49,7 @@
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY|AF_HIDE_LIST));
 
       $this->add(new packageProjectSelector('project_package'));
-      $this->add(new atkNumberAttribute("master_id", AF_HIDE));
+      $this->add(new atkNumberAttribute("master_id", AF_HIDE|AF_FORCE_LOAD));
       $this->add(new atkAttribute("master", AF_HIDE_ADD|AF_HIDE_EDIT));
 
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW));
