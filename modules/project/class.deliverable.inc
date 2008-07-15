@@ -30,7 +30,7 @@
       
       // Relations
       $this->add(new atkOneToManyRelation('phase', 'project.deliverable_phase','deliverable_id', AF_HIDE_ADD|AF_HIDE_LIST));
-      $this->add(new atkOneToManyRelation('package', 'project.deliverable_package', 'deliverable_id', AF_HIDE_ADD|AF_HIDE_LIST));      
+      $this->add(new atkOneToManyRelation('package', 'project.deliverable_package', 'deliverable_id', AF_HIDE_ADD|AF_HIDE_LIST));   
       $this->add(new atkOneToManyRelation('document','project.deliverable_document', 'deliverable_id', AF_HIDE_ADD|AF_HIDE_LIST));
       
       $this->add(new atkNumberAttribute("emailstatus", AF_HIDE|AF_FORCE_LOAD));
@@ -101,14 +101,14 @@
         $milestones[$i]['deletelink'] = '<a href="'.dispatch_url('project.deliverable', 'delete', $dispatch_params ).'" title="delete"><img src="'.$theme->iconPath( 'delete', 'recordlist').'" alt="delete" border="0" /></a>';
       }
       
-      $smarty->assign('addlink', '<a href="'.dispatch_url('project.deliverable', 'add', array('atklevel' => 1, 'atkprevlevel' => 0, 'atkstackid' => atkStackID() ) ).'" title="add">Add milestone</a>');
+      $smarty->assign('addlink', '<a href="'.dispatch_url('project.deliverable', 'add', array('atklevel' => 1, 'atkprevlevel' => 0, 'atkstackid' => atkStackID() ) ).'" title="add">'.atktext('link_deliverable_add', 'project').'</a>');
       $smarty->assign('header_titles', array('&nbsp;', 'Date', 'Progress', 'Owner', 'Status', '&nbsp;'));
       $smarty->assign('milestones', $milestones);
       $content = $smarty->fetch(moduleDir('project').'templates/milestones_admin.tpl');
       $ui = &$this->getUi();
       $this->addStyle("style.css");
              
-      $result = $ui->renderBox(array("title" => "<strong>Milestones</strong><br/><br/>", "content" => $content));
+      $result = $ui->renderBox(array("title" => "<strong>".atktext('deliverables')."</strong><br/><br/>", "content" => $content));
       $page->addContent($this->renderActionPage("admin", $result));      
     } 
            
