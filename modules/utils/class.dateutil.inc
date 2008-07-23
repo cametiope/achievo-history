@@ -30,7 +30,18 @@
 
     function str2arr($strdate)
     {
-      return array("year"=>substr($strdate,0,4), "month"=>substr($strdate,4,2), "day"=>substr($strdate,6,2));
+      if(strstr($strdate,'-'))
+      {
+        return array("day" => substr($strdate, 8, 2),
+                     "month" => substr($strdate, 5, 2),
+                     "year" => substr($strdate, 0, 4));
+      }
+      else
+      {
+      return array("day" => substr($strdate, 6, 2),
+                   "month" => substr($strdate, 4, 2),
+                   "year" => substr($strdate, 0, 4));
+      }
     }
 
     function str2stamp($strdate)

@@ -28,15 +28,15 @@ class atkTabMenu
    * Register css and js files for menu
    *
    */
-  public static function registerCssJs($page,$theme)
+  public static function registerCssJs($page)
   {
     $theme = &atkinstance("atk.ui.atktheme");
     $plus = $theme->imgPath("plus.gif");
     $minus = $theme->imgPath("minus.gif");
 
     $page->register_scriptcode("
-    	var idOfFolderTrees = ['project_tree'];
-
+      var cookieName = 'tabmenu';
+    	var ajaxRequestFile = 'tabmenu.php';
     	var plusImage = '$plus';
     	var minusImage = '$minus';
     	var plusName = 'plus.gif';

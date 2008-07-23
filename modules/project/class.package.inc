@@ -42,7 +42,7 @@
     	//parent::meta($policy);
 
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
-      //$policy->hasMany("package_person");
+      $policy->hasMany("package_person");
 
       $policy->hasOne("project.project",array("source"=>"projectid"),array(),AF_HIDE);
       $policy->addFlags('projectid', AF_HIDE);

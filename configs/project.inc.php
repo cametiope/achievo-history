@@ -25,3 +25,6 @@
   
   // The completion/progress bar is divided into parts of 5, 10 20 or 25 percent
   $config["completed_parts"] = 10;
+
+  // The default view mode for resourceplanning
+  $config["resourceplanning_view"] = "week";
