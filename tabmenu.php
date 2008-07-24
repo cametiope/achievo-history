@@ -31,12 +31,7 @@
 
   if(isset($_GET['parentId']))
   {
-    $output = &atkOutput::getInstance();
-
     atkimport("menu.atktabmenu");
-
-    $output->output(atkTabMenu::renderSubMenu($_GET['parentId'],$_GET['parentType']));
-
-    $output->outputFlush();
+    echo atkTabMenu::renderSubMenu($_GET['parentId'],$_GET['parentType']);
   }
 ?>
