@@ -42,7 +42,8 @@ class atkTabMenu
     	var plusName = 'plus.gif';
     	var minusName = 'minus.gif';
     ");
-    $page->register_script(atkconfig("atkroot")."atk/javascript/prototype/prototype.js");
+//    $page->register_script(atkconfig("atkroot")."atk/javascript/prototype/prototype.js");
+    $page->register_script(atkconfig("atkroot")."javascript/ajax.js");
     $page->register_script(atkconfig("atkroot")."javascript/folder-tree-static.js");
     $page->register_style($theme->stylePath("folder-tree-static.css"));
   }
