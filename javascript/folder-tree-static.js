@@ -91,6 +91,14 @@ Owner of DHTMLgoodies.com
 		}
 	}
 
+	function getNodeDataFromServer(ajaxIndex,ulId,parentId)
+	{
+	  document.getElementById(ulId).innerHTML = ajaxObjectArray[ajaxIndex].response;
+		ajaxObjectArray[ajaxIndex] = false;
+		parseSubItems(ulId,parentId);
+	}
+
+
 	function parseSubItems(ulId,parentId)
 	{
 
@@ -169,12 +177,11 @@ Owner of DHTMLgoodies.com
 				var parentType = firstLi.getAttribute('parentType');
 				if(!parentType)parentType = firstLi.parentType;
 				if(parentId){
-					new Ajax.Request(ajaxRequestFile + '?parentId=' + parentId  + '&parentType=' + parentType, {
-					  onSuccess: function(transport) {
-					    $(ul.id).update(transport.responseText);
-					    parseSubItems(ul.id,parentId);
-					  }
-					});
+					ajaxObjectArray[ajaxObjectArray.length] = new sack();
+					var ajaxIndex = ajaxObjectArray.length-1;
+					ajaxObjectArray[ajaxIndex].requestFile = ajaxRequestFile + '?parentId=' + parentId  + '&parentType=' + parentType;
+					ajaxObjectArray[ajaxIndex].onCompletion = function() { getNodeDataFromServer(ajaxIndex,ul.id,parentId); };	// Specify function that will be executed after file has been found
+					ajaxObjectArray[ajaxIndex].runAJAX();		// Execute AJAX function
 				}
 			}
 
