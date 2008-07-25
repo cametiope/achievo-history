@@ -333,7 +333,7 @@ class contracts extends atkNode
         $buttons[] = '<input type="submit" class="btn_save" name="activate_contract" value="'.$this->text("activate_contract").'">';
       }
     }
-    return array_merge($buttons, parent::getFormButtons($mode,$record));
+    return array_merge(parent::getFormButtons($mode,$record), $buttons);
   }
 
   function action_update(&$handler)
