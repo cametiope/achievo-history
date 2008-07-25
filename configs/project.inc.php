@@ -28,3 +28,6 @@
 
   // The default view mode for resourceplanning
   $config["resourceplanning_view"] = "week";
+
+  // The default view mode for projectplanning
+  $config["projectplanning_view"] = "week";
