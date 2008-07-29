@@ -44,13 +44,16 @@
         if(atkConfig::get("project","package_enabled"))
         {
           $this->menuitem("package", dispatch_url("project.package", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
-        }        
+        }
         $this->menuitem("phase", dispatch_url("project.phase", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), 'projectmanagement');
-        $this->menuitem("team", dispatch_url("project.project_personemployee", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));        
-        $this->menuitem("milestones", dispatch_url("project.deliverable", "admin", array("atkfilter" => "project_id='".$selectedproject."'")), 'projectmanagement');        
-        $this->menuitem("resourseplanning", dispatch_url("project.resourceplanning", "report", array("atkfilter" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.resourceplanning", "admin"));        
-        //$this->menuitem("project_view", dispatch_url("project.project", "view", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
-        //$this->menuitem("project_planning",  dispatch_url("project.project", "planning", array("selectedprojectid" => $selectedproject)), "projectmanagement", array("project.project", "planning"));
+        $this->menuitem("team", dispatch_url("project.project_personemployee", "admin", array("atkfilter" => "projectid='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
+        $this->menuitem("milestones", dispatch_url("project.deliverable", "admin", array("atkfilter" => "project_id='".$selectedproject."'")), 'projectmanagement');
+        $this->menuitem("resourceplanning", dispatch_url("project.resourceplanning", "report", array("atkfilter" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.resourceplanning", "admin"));
+        if (moduleExists('history'))
+          $this->menuitem("history", dispatch_url("history.history", "admin", array("atkfilter" => "project_id='".$selectedproject."'")), 'projectmanagement', array("history.history", "admin"));
+
+          //$this->menuitem("project_view", dispatch_url("project.project", "view", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
+        $this->menuitem("project_planning",  dispatch_url("project.project", "planning", array("selectedprojectid" => $selectedproject)), "projectmanagement", array("project.project", "planning"));
         $this->menuitem("-","","projectmanagement");
         //$this->menuitem("project_stats", dispatch_url("project.projectstats", "stats", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "stats"));
       }
