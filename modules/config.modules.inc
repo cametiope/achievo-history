@@ -5,6 +5,7 @@
   module("employee");
   module("person");
   module("timereg");
+  module("timereg_advanced");
   module("project");
   module("organization");
   module("notes");
