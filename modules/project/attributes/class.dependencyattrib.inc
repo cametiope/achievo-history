@@ -17,7 +17,6 @@ class dependencyAttribute extends atkAttribute
 
   function fetchValue($postvars)
   {
-    atk_var_dump($postvars);
     $values = isset($postvars[$this->formName()]) ? $postvars[$this->formName()] : null;
     $res = array();
     if (is_array($values))
