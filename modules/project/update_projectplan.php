@@ -8,29 +8,29 @@
 
   $action = atkGetPostVar("action");
 
-  $startdate  = atkGetPostVar("startdate");//present allways
-  $enddate  = atkGetPostVar("enddate");//present allways
+  //get var from url
+  $startdate  = atkGetPostVar("startdate");
+  $enddate  = atkGetPostVar("enddate");
   $type = atkGetPostVar("type");
   $id = atkGetPostVar("id");
-  $employee = atkGetPostVar('employeeId');//present allways
-  $depth = atkGetPostVar('depth');//present allways
+  $employee = atkGetPostVar('employeeId');
+  $depth = atkGetPostVar('depth');
 
   $startdate = fixdate($startdate);
   $enddate = fixdate($enddate);
 
+  $startweek = date("W",dateutil::str2stamp($startdate));
+  $endweek = date("W",dateutil::str2stamp($enddate));
+
+  $startdate = dateutil::startOfWeek(dateutil::arr2str((dateutil::str2arr($startdate))));
+  $enddate = dateutil::endOfWeek(dateutil::arr2str((dateutil::str2arr($enddate))));
+
+  /*@var $node projectplanning*/
+  $node = &atkGetNode("project.projectplanning");
+
   switch($type)
   {
     case "employee":
-
-      /*@var $node projectplanning*/
-      $node = &atkGetNode("project.projectplanning");
-      $node->m_projectId = $projectid;
-
-      $startweek = date("W",dateutil::str2stamp($startdate));
-      $endweek = date("W",dateutil::str2stamp($enddate));
-
-      $startdate = dateutil::startOfWeek(dateutil::arr2str((dateutil::str2arr($startdate))));
-      $enddate = dateutil::endOfWeek(dateutil::arr2str((dateutil::str2arr($enddate))));
 
       //data collection
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$id);
@@ -50,47 +50,29 @@
           $node->setFact("project",$key,$id,$value);
         }
 
-        $line = array();
-        $line[] = "&nbsp;";
-
-        for($w=$startweek;$w<=$endweek;$w++)
+        //skip subprojects
+        if(!$r['master_project'])
         {
-          $line[] = $w;
+          $line = array();
+          $line[] = "&nbsp;";
+
+          for($w=$startweek;$w<=$endweek;$w++)
+          {
+            $line[] = $w;
+          }
+
+          $plan = $node->getPlan('project',$key,$id);
+          $fact = $node->getFact('project',$key,$id);
+
+          $line[] = atkDurationAttribute::_minutes2string($plan);
+          $line[] = atkDurationAttribute::_minutes2string($fact);
+          $line[] = atkDurationAttribute::_minutes2string($plan - $fact);
+
+          $data[] = array("data"=>$line,"id"=>$key,"type"=>'project',"name"=>$r['name'],"employeeid"=>$id);
         }
-
-        $plan = $node->getPlan('project',$key,$id);
-        $fact = $node->getFact('project',$key,$id);
-
-        $line[] = atkDurationAttribute::_minutes2string($plan);
-        $line[] = atkDurationAttribute::_minutes2string($fact);
-        $line[] = atkDurationAttribute::_minutes2string($plan - $fact);
-
-        $data[] = array("data"=>$line,"id"=>$key,"type"=>'project',"name"=>$r['name'],"employeeid"=>$id);
       }
-      $min_width = ($endweek - $startweek +3)*50+190;
-
-      $vars = array('plan'=>$data,
-                    'min_width'=>$min_width,
-                    'depth'=>$depth,
-                    'width'=>190-$depth*20,
-                    'padding'=>$depth*20
-                      );
-
-      $ui = &atkinstance("atk.ui.atkui");
-
-      $content = $ui->render(moduleDir('project').'templates/projectline.tpl',$vars);
-
-      echo $content;
-      exit;
       break;
     case "project":
-      $node = &atkGetNode("project.projectplanning");
-
-      $startweek = date("W",dateutil::str2stamp($startdate));
-      $endweek = date("W",dateutil::str2stamp($enddate));
-
-      $startdate = dateutil::startOfWeek(dateutil::arr2str((dateutil::str2arr($startdate))));
-      $enddate = dateutil::endOfWeek(dateutil::arr2str((dateutil::str2arr($enddate))));
 
       //data collection
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employee, '', $id);
@@ -131,30 +113,8 @@
         }
       }
 
-      $min_width = ($endweek - $startweek +3)*50+190;
-
-      $vars = array('plan'=>$data,
-                    'min_width'=>$min_width,
-                    'depth'=>$depth,
-                    'width'=>190-$depth*20,
-                    'padding'=>$depth*20
-                      );
-
-      $ui = &atkinstance("atk.ui.atkui");
-
-      $content = $ui->render(moduleDir('project').'templates/projectline.tpl',$vars);
-
-      echo $content;
-      exit;
       break;
     case "package":
-      $node = &atkGetNode("project.projectplanning");
-
-      $startweek = date("W",dateutil::str2stamp($startdate));
-      $endweek = date("W",dateutil::str2stamp($enddate));
-
-      $startdate = dateutil::startOfWeek(dateutil::arr2str((dateutil::str2arr($startdate))));
-      $enddate = dateutil::endOfWeek(dateutil::arr2str((dateutil::str2arr($enddate))));
 
       //data collection
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employee, $id);
@@ -191,24 +151,23 @@
           $data[] = array("data"=>$line,"id"=>$i['id'],"type"=>$type,"name"=>$i['name'],"employeeid"=>$employee);
         }
       }
-
-      $min_width = ($endweek - $startweek +3)*50+190;
-
-      $vars = array('plan'=>$data,
-                    'min_width'=>$min_width,
-                    'depth'=>$depth,
-                    'width'=>190-$depth*20,
-                    'padding'=>$depth*20
-                      );
-
-      $ui = &atkinstance("atk.ui.atkui");
-
-      $content = $ui->render(moduleDir('project').'templates/projectline.tpl',$vars);
-
-      echo $content;
-      exit;
       break;
   }
+
+  $min_width = ($endweek - $startweek +3)*50+190;
+
+  $vars = array('plan'=>$data,
+                'min_width'=>$min_width,
+                'depth'=>$depth,
+                'width'=>190-$depth*20,
+                'padding'=>$depth*20
+                  );
+
+  $ui = &atkinstance("atk.ui.atkui");
+  $content = $ui->render(moduleDir('project').'templates/projectline.tpl',$vars);
+
+  echo $content;
+  exit;
 
   function fixdate($date)
   {

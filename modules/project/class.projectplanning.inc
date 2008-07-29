@@ -24,8 +24,32 @@ include_once("achievotools.inc");
   class projectplanning extends atkNode
   {
     var $m_employeeId;
-    var $m_projectId;
+
+    /**
+     * Array with plan/fact hours
+     *
+     * Has the following structure:
+     * ['project'|'package'|'task'|'employee'] - type - resource accumulated by type
+     * ['employee_id'] - employee_id - resource accumulated by user
+     * ['id'] - id  - id of type
+     * array() - array with plan and fact hours
+     *
+     * @var array()
+     */
     var $m_resourceHours = array();
+
+    /**
+     * Parent-child hierarchy
+     *
+     * Has the following structure:
+     * ['project.package'|'project.project'] - parent type
+     * ['id'] - parent id
+     * ['project'|'package'|'task'] - child type
+     * array() - array with name and id of child
+     *
+     *
+     * @var array()
+     */
     var $m_parentChild =  array();
 
     public function __construct()
@@ -47,7 +71,6 @@ include_once("achievotools.inc");
       $timerange = $this->text("from")." : ".$start->edit($dummyrec).$this->text("till")." : ".$end->edit($dummyrec);
 
 //      list($name,$id) = explode("=",atkArrayNvl($this->m_postvars,"atkfilter"));
-//      $this->m_projectId = stripQuotes($id);
       $theme = &atkinstance("atk.ui.atktheme");
 
       $page = &atkinstance("atk.ui.atkpage");
@@ -112,18 +135,6 @@ include_once("achievotools.inc");
 
       $rows = $this->getRows();
 
-      if($cookie && is_array($cookie))
-      {
-        foreach ($cookie[$this->m_projectId] as $c)
-        {
-          list($id,$type,$person_id,$action) = explode('-',$c);
-          if($action=='unfold')
-          {
-            $rows[] = array('type'=>$type,"employee"=>$person_id,"id"=>$id);
-          }
-        }
-      }
-
       //Header row
       $min_width = ($endweek - $startweek +3)*50+190;
 
@@ -132,9 +143,9 @@ include_once("achievotools.inc");
 
       $weeks = dateutil::weeksBetween($startdate,$enddate);
 
-      for($w=$startweek;$w<=$endweek;$w++)
+      foreach ($weeks as $w)
       {
-        $header[] = $w;
+        $header[] = substr($w['week'],-4);
       }
 
       $header[] = $this->text("plan");
@@ -322,6 +333,7 @@ include_once("achievotools.inc");
         $this->m_resourceHours['project'][$r['employee']][$r['projectid']]['plan'] += $plan;
         $this->m_resourceHours['project'][$r['employee']][$r['projectid']]['fact'] += $r['fact'];
         $this->m_resourceHours['project'][$r['employee']][$r['projectid']]['name'] = $r['projectname'];
+        $this->m_resourceHours['project'][$r['employee']][$r['projectid']]['master_project'] = $r['master_project'];
 
         //per employee
         $this->m_resourceHours['employee'][$r['employee']][$r['employee']]['plan'] += $plan;
@@ -367,30 +379,24 @@ include_once("achievotools.inc");
       return $ret;
     }
 
-    function getPlan($type,$id,$employee)
+    public function getPlan($type,$id,$employee)
     {
       return $this->m_resourceHours[$type][$employee][$id]['plan'];
     }
 
-    function getFact($type,$id,$employee)
+    public function getFact($type,$id,$employee)
     {
       return $this->m_resourceHours[$type][$employee][$id]['fact'];
     }
 
-    function setPlan($type,$id,$employee,$value)
+    public function setPlan($type,$id,$employee,$value)
     {
       $this->m_resourceHours[$type][$employee][$id]['plan'] = $value;
     }
 
-    function setFact($type,$id,$employee,$value)
+    public function setFact($type,$id,$employee,$value)
     {
       $this->m_resourceHours[$type][$employee][$id]['fact'] = $value;
-    }
-
-    function getName($type,$id,$employee)
-    {
-      return $this->m_resourceHours[$type][$employee][$id]['name'];
-      //return $this->m_parentChild[$type][$employee][$id]['name'];
     }
 
     function getView()
@@ -435,11 +441,6 @@ include_once("achievotools.inc");
         $year = date("Y");
         $enddate = date('Y-m-d',mktime(0,0,0,$month+2,0,$year));
       }
-    }
-
-    function getEmployeeId()
-    {
-      $id = atkArrayNvl($this->m_postvars,"employee_id");
     }
 
     function getProjectChild($id,$employee)
