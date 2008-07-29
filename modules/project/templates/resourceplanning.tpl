@@ -29,6 +29,12 @@
     }
 </script>
 {/literal}
+
+{if $projectmenu != ''}
+  {$projectmenu}<br/>
+  <br/>
+{/if}
+
 <form name="resourceplaning" method="post" action="{atkdispatchfile}">
   {$session_form}
 

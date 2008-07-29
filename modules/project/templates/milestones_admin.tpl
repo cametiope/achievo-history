@@ -26,6 +26,11 @@
 </script>    
 {/literal}
 
+{if $projectmenu != ''}
+  {$projectmenu}<br/>
+  <br/>
+{/if}
+
 <div>
   {$addlink}
 </div>
