@@ -16,7 +16,8 @@
       $this->atkNode("deliverable_package");
      
       $this->add(new atkManyToOneRelation("package_id","project.package",AF_PRIMARY));       
-      $this->add(new atkManyToOneRelation("deliverable_id","project.deliverable",AF_PRIMARY));  
+      $this->add(new atkManyToOneRelation("deliverable_id","project.deliverable",AF_PRIMARY))->
+        addListColumns("duedate");
              
       $this->setTable("deliverable_package");     
       
