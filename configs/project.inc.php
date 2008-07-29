@@ -5,9 +5,9 @@
   $config["project_cascading_delete_hours"] = false;
 
   // Criteria for trafficlight displayal
-  $config["trafficlight_red"]     = '>= 0 AND < 30';
-  $config["trafficlight_orange"]  = '>= 30 AND < 100';
-  $config["trafficlight_green"]   = '= 100';
+  $config["trafficlight_red"]     = array('start' => 0, 'end' => 29);
+  $config["trafficlight_yellow"]  = array('start' => 30, 'end' => 99);
+  $config["trafficlight_green"]   = array('start' => 100, 'end' => 100);
 
   // Determines the steps shown in the completion selectlist. Use a value like 5, 10, 20 or 25 percent
   $config["completion_percentage_steps"] = 20;
@@ -32,6 +32,6 @@
   // The default view mode for projectplanning
   $config["projectplanning_view"] = "week";
 
-  $config["project_resource_planning_green"] = '$availability >= 0 AND $availability <80';
-  $config["project_resource_planning_yellow"] = '$availability>= 80 AND $availability<100';
-  $config["project_resource_planning_red"] = '$availability>= 100';
+  $config["project_resource_planning_green"] = '$availability >= 0 AND $availability < 80';
+  $config["project_resource_planning_yellow"] = '$availability >= 80 AND $availability < 100';
+  $config["project_resource_planning_red"] = '$availability >= 100';
