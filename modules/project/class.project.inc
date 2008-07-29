@@ -15,45 +15,68 @@
   useattrib("atkdummyattribute");
   useattrib("atknumberattribute");
   useattrib("docmanager.projectdocumentmanager");
+  useattrib("project.trafficlightattribute");
+  useattrib("project.trafficlightmemoattribute");
 
   define("PRJ_TIMEREG_ALL_USERS", 0);
   define("PRJ_TIMEREG_MEMBERS_ONLY", 1);
 
   class project extends atkNode
   {
-    function project($name="project", $flags=0)
+
+    /**
+     * Project identifier
+     *
+     * @var string
+     */
+    private $project;
+
+    /**
+     * Constructor
+     *
+     * @param string $name
+     * @param integer $flags
+     */
+    public function project($name="project", $flags=0)
     {
       global $ATK_VARS, $g_sessionManager;
 
-      $this->atkNode($name,$flags|NF_EDITAFTERADD|NF_IMPORT);
+      $this->atkNode($name,$flags|NF_ADD_LINK|NF_EDITAFTERADD|NF_IMPORT);
       if($name=="project")
       {
         $listener = &atknew("modules.crm.listeners.eventlistener");
         $this->addListener($listener);
       }
-      
+
+      $this->setProjectId();
+
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
-      $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));      
-      $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));      
-      $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));      
-      $this->add(new atkManyToOneRelation("project_group_id","project.project_group",AF_SEARCHABLE|AF_HIDE_ADD));
-                  
+
+      // The next three attributes have to be the first three attributes in this node
+      $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
+      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('m', 'a'), AF_HIDE_LIST|AF_DISPLAY_VERT));
+      $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST));
+
+      $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));
+      $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));
+      $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
+      $this->add(new atkManyToOneRelation("project_group_id","project.project_group",AF_HIDE_LIST|AF_HIDE_ADD));
+
       $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employee",AF_MANYTOONE_AUTOCOMPLETE|AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
       $attr->setDestinationFilter("person.status='active'");
-      
-      $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_MANYTOONE_AUTOCOMPLETE|AF_HIDE_ADD|AF_HIDE_LIST));            
+
+      $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_MANYTOONE_AUTOCOMPLETE|AF_HIDE_ADD|AF_HIDE_LIST));
 
       if(atkConfig::get("project","use_subprojects"))
-      {      
+      {
         $p_attr = &$this->add(new atkManyToOneRelation("master_project","project.project",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
         $p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
       }
 
       $this->add(new atkTextAttribute("description",TEXT_LARGE, AF_HIDE_LIST|AF_HIDE_ADD));
-           
-      // NOTE, Ruud: documentation says this should be an 'Ajax Eingabefeld'. Guess this should be an autosuggest? To where?
+
       $this->add(new atkAttribute("quotation_number", AF_HIDE_LIST|AF_HIDE_ADD));
-      
+
       /** @todo: Remove filters from project node constructor */
       if (in_array($ATK_VARS["atknodetype"], array("project.project", "project.project_personcontact", "project.project_personemployee", "project.phase", "search.search"))&& in_array($ATK_VARS["atkaction"],array("admin","add","save","update","edit","search", "view")) || $reportnodetype=="hoursurvey")
       {
@@ -63,30 +86,29 @@
       {
         $this->add(new atkListAttribute("status",array("active","nonactive","archived"),array(),AF_HIDE|AF_LIST_NO_NULL_ITEM, 15));
         $this->addFilter("project.status='active'");
-      }          
-      
+      }
+
       // Add the organization relation
       $this->add(new atkManyToOneRelation("customer", "organization.organization", AF_HIDE_LIST|AF_RELATION_AUTOLINK|AF_HIDE_ADD|AF_SEARCHABLE|AF_MANYTOONE_AUTOCOMPLETE|AF_FORCE_LOAD));
       $this->add(new atkDateAttribute("startdate","","",0,0,AF_OBLIGATORY|AF_FORCE_LOAD));
       $this->add(new atkDateAttribute("enddate","","",0,0,AF_OBLIGATORY|AF_FORCE_LOAD));
-      $this->add(new atkDateAttribute("initial_enddate","","",0,0,AF_HIDE));      
+      $this->add(new atkDateAttribute("initial_enddate","","",0,0,AF_HIDE));
       $this->add(new atkListAttribute("timereg_limit", array("all_users", "members_only"), array(PRJ_TIMEREG_ALL_USERS, PRJ_TIMEREG_MEMBERS_ONLY), AF_LIST_NO_NULL_ITEM|AF_HIDE_ADD|AF_HIDE_LIST));
-      
-      $this->add(new atkNumberAttribute("completed",AF_READONLY));     
-      
+
+      $this->add(new atkNumberAttribute("completed",AF_READONLY|AF_HIDE_ADD));
+
       // Time registration
-      $this->add(new atkDurationAttribute('initial_planning', '15m', '100h', AF_READONLY));
-      $this->add(new atkDurationAttribute('current_planning', '15m', '100h', AF_READONLY));
-      
+      $this->add(new atkDurationAttribute('initial_planning', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
+      $this->add(new atkDurationAttribute('current_planning', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
+
       // Todo RUUD: hours spend attribuut
       // $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));
-      $this->add(new atkDurationAttribute('spend_hours', '15m', '100h', AF_READONLY));
+      $this->add(new atkDurationAttribute('spend_hours', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
 
-      $this->add(new atkFieldSet('actual_planning', '[current_planning.field] &nbsp; ' . $this->text('booked') . ': [spend_hours.field]'));
-      
-      $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY));
-      
-     
+      $this->add(new atkFieldSet('actual_planning', '[current_planning.field] &nbsp; ' . $this->text('booked') . ': [spend_hours.field]', AF_HIDE_LIST|AF_HIDE_ADD));
+
+      $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
+
       // If we are in project administration mode, we show all projects. Otherwise, we only
       // show active projects.
       if (!isset($_SERVER["PWD"]))
@@ -94,12 +116,20 @@
       else
         $reportnodetype = "";
 
+
+
+      $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
+      $deliverable->setDestinationFilter('project_id=[id]');
+
+      $this->setColumnAttribs(array('deliverable'));
+
+
       $this->setTable("project","project");
 
       $this->setOrder("project.abbreviation, project.name");
-      $this->setIndex("name");     
-       
-      // NOTE, Ruud: commented because these attributes aren't needed in the General tab.     
+      $this->setIndex("name");
+
+      // NOTE, Ruud: commented because these attributes aren't needed in the General tab.
       //if (($ATK_VARS['atkaction'] == "edit" || $ATK_VARS['atkaction'] == "update") && atkconfig("project_contact_obligatory"))
       //{
       //  $flags = AF_OBLIGATORY;
@@ -107,11 +137,11 @@
       //else
       //{
       //  $flags = 0;
-      //}      
+      //}
       //$this->add(new atkOneToManyRelation("contacts","project.project_personcontact", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE|AF_HIDE_ADD|$flags));
       //$this->add(new atkOneToManyRelation("members","project.project_personemployee", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE), "planning");
       //$this->add(new atkDummyAttribute("hint", atktext("project_member_fuzzyhint"), AF_HIDE_LIST|AF_HIDE_VIEW|AF_HIDE_ADD), "planning");
-      //$this->add(new atkFuzzySearchAttribute("member_add", "employee.employee", "storeMembers", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL), "planning");     
+      //$this->add(new atkFuzzySearchAttribute("member_add", "employee.employee", "storeMembers", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL), "planning");
       //$this->add(new atkBoolAttribute("alwaysvisibleintimereg", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
       //$this->add(new atkDummyAttribute("separator", "<br><hr><br>", AF_HIDE_LIST|AF_HIDE_ADD), "planning");
       //$this->add(new atkOneToManyRelation("deliverables", "project.deliverable", "project_id", AF_HIDE_LIST), "planning");
@@ -142,7 +172,7 @@
       //$tmp->setStoreDeletionFilter("phase.template IS NOT NULL AND phase.template!='' AND phase.template!=0");
       //The phasetemplatematrix is in add mode visible on tab 'default' and in other modes on the 'planning' tab
       //$tab = ($ATK_VARS["atkaction"]=="view"||$ATK_VARS["atkaction"]=="edit"||$ATK_VARS["atkaction"]=="update"?"planning":"default");
-      //$this->add($tmp, $tab);      
+      //$this->add($tmp, $tab);
     }
 
     function graph_topprojects($params)
@@ -219,6 +249,7 @@
       return "";
     }
 
+
     function initial_values()
     {
       $projectnumbermodule = atkConfig('projectnumbermodule');
@@ -233,7 +264,7 @@
         atkdebug("Getting projectcode.");
         $initialprojectcode = $this->getInitialProjectcode();
       }
-      
+
       $nextyear = strtotime("+1 year");
       return array("abbreviation" => $initialprojectcode,
                    "startdate" => array("year"=>date("Y"),
@@ -262,7 +293,7 @@
     {
       return $record['completed'].'%';
     }
-    
+
     /**
      * Shows the planning for a project
      *
@@ -803,7 +834,40 @@
         $abbrattr = &$this->getAttribute("abbreviation");
         $abbrattr->addFlag(AF_READONLY);
       }
+
+      $handler->addRenderBoxVar('projectmenu', $this->getProjectMenu());
+
       return $handler->action_edit();
+    }
+
+    /**
+     * View action handler override
+     *
+     * Add an extra param to the template
+     *
+     * @param atkViewHandler $handler
+     * @return string HTML
+     */
+    function action_view(&$handler)
+    {
+      $handler->addRenderBoxVar('projectmenu', $this->getProjectMenu());
+      return $handler->action_view();
+    }
+
+    /**
+     * Overrideable function to create a header for view mode.
+     * Similar to the admin header functionality.
+     */
+    function viewHeader()
+    {
+      return $this->getProjectMenu();
+    }
+
+    function getProjectMenu()
+    {
+      atkimport('module.project.projectmenu');
+      $pm = new projectmenu('project.package', $this->project);
+      return $pm->getTabHtml();
     }
 
     function adminFooter()
@@ -833,7 +897,7 @@
     {
       // Add enddate to an additional field
       $record['initial_enddate'] = $record['enddate'];
-      
+
       //get all tpl_project_phase combinations with the selected
       //projecttemplate id.
       $tpl_project_phase_Node = &atkGetNode("project.tpl_project_phase");
@@ -965,13 +1029,13 @@
 
       $db->query($query);
     }
-    
+
     function _hideMasterProject($id)
     {
       if(atkConfig::get("project","use_subprojects"))
-      {      
+      {
         $rows = &$this->selectDb("project.master_project='$id'","","","",array('id'));
-        
+
         if(count($rows)>0)
         {
           $p_attr = &$this->getAttribute("master_project");
@@ -979,16 +1043,53 @@
         }
       }
     }
-    
-    function editPage(&$handler, $record, $locked=FALSE)
+
+    public function editPage(&$handler, $record, $locked=FALSE)
     {
       $this->_hideMasterProject($record['id']);
       return $handler->editPage($record, $locked);
     }
 
-    function viewPage(&$handler, $record, $locked=FALSE)
+    public function viewPage(&$handler, $record, $locked=FALSE)
     {
       $this->_hideMasterProject($record['id']);
       return $handler->viewPage($record, $locked);
     }
+
+    /**
+     * Template override for custom traffic light display
+     *
+     * @param String $action
+     * @param array $record
+     * @param String $tab
+     * @return String The filename of the template (without path)
+     */
+    public function getTemplate($action, $record=NULL, $tab="")
+    {
+      switch ($action)
+      {
+        case "add": return "editform.tpl";
+        case "edit": return "editform_trafficlight.tpl";
+        case "view": return "viewform_trafficlight.tpl";
+      }
+      return parent::getTemplate($action, $record, $tab);
+    }
+
+      /**
+     * Set the project id.
+     */
+    private function setProjectId()
+    {
+      $vars = atkGetPostVar();
+      if ($vars['atknodetype'] == 'project.project' && array_key_exists('atkselector', $vars) && $vars['atkselector'] != '')
+      {
+        $this->project = $vars['atkselector'];
+        sessionStore('projectid', $vars['atkselector']);
+      }
+      else
+      {
+        $this->project = sessionLoad('projectid');
+      }
+    }
+
   }

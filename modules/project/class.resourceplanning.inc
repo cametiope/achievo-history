@@ -11,9 +11,9 @@
    * @version $Revision$
    *
    */
-atkimport("module.project.utils.resourceutils");
-atkimport("module.utils.dateutil");
-useattrib("atkdurationattribute");
+	atkimport("module.project.utils.resourceutils");
+	atkimport("module.utils.dateutil");
+	useattrib("atkdurationattribute");
 
   /**
    * Constructor.
@@ -22,13 +22,21 @@ useattrib("atkdurationattribute");
   class resourceplanning extends atkNode
   {
 //    var $m_employeeId;
-    var $m_projectId;
-    var $m_resourceHours = array();
-    var $m_parentChild =  array();
+    private $m_projectId;
+    private $m_resourceHours = array();
+    private $m_parentChild =  array();
+
+    /**
+     * Project identifier
+     *
+     * @var string
+     */
+    private $project;
 
     public function __construct()
     {
       $this->atkNode("resourceplanning");
+      $this->project = sessionLoad('projectid');
     }
 
     function getView()
@@ -95,6 +103,7 @@ useattrib("atkdurationattribute");
 
       $page = &atkinstance("atk.ui.atkpage");
       $page->register_style($theme->stylePath("style.css"));
+      $page->register_style($theme->stylePath("tabs.css"));
 
       $header = array();
       $data = array();
@@ -102,7 +111,9 @@ useattrib("atkdurationattribute");
 
       $this->getWeekView($startdate, $enddate, '', $header, $data, $min_width);
 
+
       $vars = array('session_form'=>atkSessionManager::formState(),
+                    'projectmenu' => $this->getProjectMenu(),
                     'dispatch'=>getDispatchFile(),
                     'timerange'=>$timerange,
                     'planheader'=>$header,
@@ -316,5 +327,16 @@ useattrib("atkdurationattribute");
       return $this->m_resourceHours[$type][$employee][$id]['name'];
     }
 
-  }
-?>
+    /**
+     * Get the project menu.
+     *
+     * @return string HTML
+     */
+    private function getProjectMenu()
+    {
+      atkimport('module.project.projectmenu');
+      $pm = new projectmenu($this->atkNodeType(), $this->m_project);
+      return $pm->getTabHtml();
+    }
+
+   }

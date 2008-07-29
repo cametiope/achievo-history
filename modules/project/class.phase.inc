@@ -12,6 +12,8 @@
   useattrib("project.spendhoursattribute");
   useattrib("project.dependencyattrib");
   useattrib("project.packageprojectselector");
+  useattrib("project.trafficlightattribute");
+  useattrib("project.trafficlightmemoattribute");
 
   userelation("atkmanytoonerelation");
   userelation("atkmanyboolrelation");
@@ -33,6 +35,20 @@
 
   class phase extends atkNode
   {
+
+    /**
+     * Project identifier
+     *
+     * @var string
+     */
+  	private $project;
+
+  	/**
+  	 * Constructor.
+  	 *
+  	 * @param String $name
+  	 * @param Integer $flags
+  	 */
     public function __construct($name="phase", $flags=0)
     {
       $securitymanager = &atkGetSecurityManager();
@@ -40,7 +56,14 @@
 
       $this->atkNode($name,$flags|NF_AUTOSELECT|NF_EDITAFTERADD|NF_ADD_LINK); // node() constructor is *not* called automatically!
 
+      $this->setProjectId();
+
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
+
+      // The next three attributes have to be the first three attributes in this node
+      $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
+      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('m', 'a'), AF_HIDE_LIST|AF_DISPLAY_VERT));
+      $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST));
 
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
 
@@ -49,7 +72,7 @@
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY|AF_HIDE_LIST));
 
       $this->add(new packageProjectSelector('project_package'));
-      $this->add(new atkNumberAttribute("master_id", AF_HIDE|AF_FORCE_LOAD));
+      $this->add(new atkNumberAttribute("master_id", AF_HIDE));
       $this->add(new atkAttribute("master", AF_HIDE_ADD|AF_HIDE_EDIT));
 
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW));
@@ -66,10 +89,9 @@
       $this->add(new atkListAttribute("completed", $completed['options'], $completed['values'], AF_HIDE_ADD|AF_FORCE_LOAD|AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM));
 
 
-      $this->add(new atkDurationAttribute("initial_planning",'','', ($initialplanningallowed?0:AF_READONLY_EDIT)|AF_TOTAL|AF_DURATION_STRING));
-      $this->add(new atkDurationAttribute("current_planning",'','', AF_HIDE_ADD|AF_TOTAL|AF_DURATION_STRING));
-
-      $this->add(new atkDurationAttribute("remaining_effort_time", '', '', AF_HIDE_ADD|AF_READONLY));
+      $this->add(new atkDurationAttribute("initial_planning"));
+      $this->add(new atkDurationAttribute("current_planning"));
+      $this->add(new atkDurationAttribute("remaining_effort_time"));
 
       // deliverable dependency
       $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable", AF_HIDE_LIST));
@@ -91,7 +113,19 @@
       $this->setOrder("phase.startdate, phase.name");
       $this->setTable("phase","phase");
 
+      $this->setColumnAttribs(array('deliverable_phase'));
+
       $this->setDescriptorTemplate("[name]");
+
+      global $ATK_VARS;
+      if ($this->atkNodeType() != $ATK_VARS['atknodetype'])
+      {
+        $this->getAttribute('startdate')->addFlag(AF_HIDE_LIST);
+        $this->getAttribute('master')->addFlag(AF_HIDE_LIST);
+        $this->getAttribute('initial_planning')->addFlag(AF_HIDE_LIST);
+        $this->getAttribute('current_planning')->addFlag(AF_HIDE_LIST);
+        $this->addFlag(NF_NO_VIEW|NF_NO_EDIT|NF_NO_DELETE|NF_NO_SEARCH);
+      }
     }
 
     public function name_display($record, $mode)
@@ -477,6 +511,7 @@
             $rec["name"] = $record["name"];
         }
       }
+
       return true;
     }
 
@@ -496,8 +531,13 @@
       return $completed;
     }
 
-    //We must reload menu after changes in package/task
-    function dispatch($postvars, $fullpage=true)
+    /**
+     * We must reload menu after changes in package/task.
+     *
+     * @param Array $postvars
+     * @param Bool $fullpage
+     */
+    public function dispatch($postvars, $fullpage=true)
     {
       if (!in_array($postvars['atkaction'],array('add','admin')))
       {
@@ -506,5 +546,131 @@
       return parent::dispatch($postvars, $fullpage);
     }
 
+    /**
+     * Last minute overrides
+     *
+     * @param Array $record
+     * @param String $mode
+     * @return Bool
+     */
+    public function preAddToEditArray($record, $mode)
+    {
+      $initalplaning_attr = $this->getAttribute('initial_planning');
+      $currentplanning_attr = $this->getAttribute('current_planning');
+      $remainingefforttime_attr = $this->getAttribute('remaining_effort_time');
+
+      if ($mode == 'add' )
+      {
+        $initalplaning_attr->addFlag(AF_OBLIGATORY);
+        $currentplanning_attr->addFlag(AF_HIDE_ADD|AF_FORCE_LOAD);
+        $remainingefforttime_attr->addFlag(AF_HIDE_ADD|AF_FORCE_LOAD);
+      }
+      else
+      {
+        $initalplaning_attr->addFlag(AF_READONLY);
+      }
+
+      if ($this->atkNodeType() != $this->m_postvars['atknodetype'])
+      {
+        $this->getAttribute('startdate')->addFlag(AF_HIDE_LIST);
+        $this->getAttribute('master')->addFlag(AF_HIDE_LIST);
+        $this->getAttribute('master')->addFlag(AF_HIDE_LIST);
+        $initalplaning_attr->addFlag(AF_HIDE_LIST);
+        $currentplanning_attr->addFlag(AF_HIDE_LIST);
+      }
+      return true;
+    }
+
+
+    /**
+     * Template override for custom traffic light display
+     *
+     * @param String $action
+     * @param array $record
+     * @param String $tab
+     * @return String The filename of the template (without path)
+     */
+    public function getTemplate($action, $record=NULL, $tab="")
+    {
+      switch ($action)
+      {
+        case "add": return "editform.tpl";
+        case "edit": return "editform_trafficlight.tpl";
+        case "view": return "viewform_trafficlight.tpl";
+      }
+      return parent::getTemplate($action, $record, $tab);
+    }
+
+    /**
+     * Edit action handler override.
+     *
+     * Add an extra param to the template
+     *
+     * @param atkEditHandler $handler
+     * @return string HTML
+     */
+    public function action_edit(&$handler)
+    {
+      $handler->addRenderBoxVar('projectmenu', $this->getProjectMenu());
+      return $handler->action_edit();
+    }
+
+    /**
+     * AdminHeader override for projectmenu.
+     */
+    public function adminHeader()
+    {
+      $this->getPage()->register_style(atkTheme::getInstance()->stylePath('tabs.css'));
+      return $this->getProjectMenu().'<br/>';
+    }
+
+    /**
+     * AddHeader override for projectmenu.
+     */
+    public function addHeader()
+    {
+      $this->getPage()->register_style(atkTheme::getInstance()->stylePath('tabs.css'));
+      return $this->getProjectMenu().'<br/>';
+    }
+
+    /**
+     * AdminHeader override for projectmenu.
+     */
+    public function viewHeader()
+    {
+      return $this->getProjectMenu().'<br/>';
+    }
+
+    /**
+     * Get the project menu.
+     *
+     * @return string HTML
+     */
+    private function getProjectMenu()
+    {
+      atkimport('module.project.projectmenu');
+      $pm = new projectmenu($this->atkNodeType(), $this->m_project);
+      return $pm->getTabHtml();
+    }
+
+    /**
+     * Set the project id.
+     */
+    private function setProjectId()
+    {
+      $vars = atkGetPostVar();
+
+      if ($vars['atknodetype'] == 'project.phase' &&
+          array_key_exists('atkfilter', $vars) &&
+          $vars['atkfilter'] != '')
+      {
+        $this->project = $vars['atkfilter'];
+        sessionStore('projectid', $this->project);
+      }
+      else
+      {
+        $this->project = sessionLoad('projectid');
+      }
+    }
+
   }
-?>

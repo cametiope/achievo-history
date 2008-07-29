@@ -22,7 +22,11 @@
 
   userelation("atkmanytoonerelation");
   useattrib("atklistattribute");
+  useattrib("atkradioattribute");
   useattrib("project.packageprojectselector");
+
+  useattrib("project.trafficlightattribute");
+  useattrib("project.trafficlightmemoattribute");
 
   class package extends atkMetaNode
   {
@@ -33,15 +37,34 @@
     public $flags = array(NF_ADD_LINK,NF_EDITAFTERADD);
 
     /**
+     * Project identifier
+     *
+     * @var string
+     */
+    private $project;
+
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+    	$this->setProjectId();
+    	parent::__construct();
+    }
+
+    /**
      * Meta.
      *
      * @param atkMetaPolicy $policy
      */
     public static function meta(atkMetaPolicy $policy)
     {
-    	//parent::meta($policy);
+    	$policy->setType('trafficlight', 'trafficlightattribute');
+    	$policy->setTypeAndParams('trafficlight_updatestyle', 'atkradioattribute', array('options' => array('manual', 'automatic'), 'values' => array('m', 'a')));
+    	$policy->setTypeAndParams('trafficlight_memo', 'trafficlightmemoattribute', array('size' => array('rows' => '4')));
 
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
+
       $policy->hasMany("package_person");
 
       $policy->hasOne("project.project",array("source"=>"projectid"),array(),AF_HIDE);
@@ -49,31 +72,29 @@
 
       $policy->addFlag('id', AF_FORCE_LOAD);
       $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );
-      $policy->addFlags("master", AF_HIDE);
+      $policy->addFlags("master", AF_HIDE_ADD|AF_HIDE_EDIT);
       $policy->addFlags("master_id", AF_HIDE);
 
       $policy->setTypeAndParams("status","atk.attributes.atklistattribute",array(array("active","nonactive","archived")));
-      //      $expression = "(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0)) ?
-      //        (('[spend_hours]' ? '[spend_hours]' : 0)/(('[spend_hours]' ? '[spend_hours]' : 0) + ('[remaining_effort_time]' ? '[remaining_effort_time]' : 0))*100) : 0";
-      //      $policy->setTypeAndParams("completed","atk.attributes.atkcalculatorattribute",array($expression));
       $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time", "spend_hours"),"atk.attributes.atkdurationattribute",array("15m"));
       $policy->addFlags("initial_planning","current_planning","remaining_effort_time", "spend_hours", AF_READONLY);
 
-      $policy->addFlags("abbreviation","name",AF_UNIQUE);
-      $policy->addFlags("abbreviation","coordinator_id","category_id","status","initial_planning","deposit","master",
-        AF_HIDE_LIST);
+      $policy->addFlags("abbreviation_package","name",AF_UNIQUE);
+      $policy->addFlags("abbreviation_package","coordinator_id","category_id","status","initial_planning","deposit","master_id",
+                        "trafficlight", "trafficlight_updatestyle", "trafficlight_memo", AF_HIDE_LIST);
       $policy->addFlags("name",AF_SEARCHABLE);
       $policy->addFlags("description","startdate","enddate","initial_planning","current_planning","category_id", "status", "deposit", "completed", "spend_hours", "remaining_effort_time", AF_HIDE_ADD);
       $policy->addFlags("coordinator_id",AF_RELATION_AUTOLINK);
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
       $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
-      //$policy->addFlags("master",AF_FORCE_LOAD);
+      $policy->addFlags('trafficlight_updatestyle', AF_DISPLAY_VERT);
 
-      // list of linked deliverables for this phase
-      $policy->hasMany('project.deliverable', array('through' => 'project.deliverable_package', 'source' => 'package_id'));
+      $policy->hasMany('deliverable_package', array('source' => 'package_id'));
+      $policy->addFlags('package_person', 'deliverable_package', AF_NO_LABEL);
 
-      $policy->setOrder(array('abbreviation', 'name', 'projectid', 'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
+      $policy->setOrder(array('trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'abbreviation_package', 'name', 'projectid',
+                              'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
     }
 
 
@@ -285,11 +306,15 @@
     }
 
 
+    /**
+     * Postmeta.
+     */
     public function postMeta()
     {
       $this->getAttribute("master")->addDependee("master_id");
+      $this->setColumnAttribs(array('deliverable_package', 'package_person'));
+      //$this->setProjectId();
     }
-
 
     /**
      * Display override for the completed attribute
@@ -303,8 +328,13 @@
       return number_format($this->getAttribute("completed")->display($record, $mode))."%";
     }
 
-    //We must reload menu after changes in package/task
-    function dispatch($postvars, $fullpage=true)
+    /**
+     * We must reload menu after changes in package/task
+     *
+     * @param Array $postvars
+     * @param Boolean $fullpage
+     */
+    public function dispatch($postvars, $fullpage=true)
     {
       if (!in_array($postvars['atkaction'],array('add','admin')))
       {
@@ -313,4 +343,109 @@
       return parent::dispatch($postvars, $fullpage);
     }
 
+    /**
+     * Display the master - master_id column a bit more userfriendly
+     *
+     * @param array $record
+     * @param string $mode
+     */
+    public function master_display($record, $mode)
+    {
+      $node   = getNode( $record['master'] );
+      $node->addFilter( $node->getTable().'.id', $record['master_id'] );
+      $result = $node->selectDb();
+
+      return ucfirst( substr($record['master'], ( strpos( $record['master'], '.' ) +1 ) ) ).': '. $result[0]['name'];
+    }
+
+    /**
+     * Template override for custom traffic light display
+     *
+     * @param String $action
+     * @param array $record
+     * @param String $tab
+     * @return String The filename of the template (without path)
+     */
+    public function getTemplate($action, $record=NULL, $tab="")
+    {
+      switch ($action)
+      {
+        case "add": return "editform.tpl";
+        case "edit": return "editform_trafficlight.tpl";
+        case "view": return "viewform_trafficlight.tpl";
+      }
+      return parent::getTemplate($action, $record, $tab);
+    }
+
+    /**
+     * Edit action handler override.
+     *
+     * Add an extra param to the template
+     *
+     * @param atkEditHandler $handler
+     * @return string HTML
+     */
+    public function action_edit(&$handler)
+    {
+      $handler->addRenderBoxVar('projectmenu', $this->getProjectMenu());
+      return $handler->action_edit();
+    }
+
+    /**
+     * AdminHeader override for projectmenu.
+     */
+    public function adminHeader()
+    {
+    	$this->getPage()->register_style(atkTheme::getInstance()->stylePath('tabs.css'));
+      return $this->getProjectMenu().'<br/>';
+    }
+
+    /**
+     * AddHeader override for projectmenu.
+     */
+    public function addHeader()
+    {
+      $this->getPage()->register_style(atkTheme::getInstance()->stylePath('tabs.css'));
+      return $this->getProjectMenu().'<br/>';
+    }
+
+    /**
+     * AdminHeader override for projectmenu.
+     */
+    public function viewHeader()
+    {
+      return $this->getProjectMenu().'<br/>';
+    }
+
+    /**
+     * Get the project menu.
+     *
+     * @return string HTML
+     */
+    private function getProjectMenu()
+    {
+      atkimport('module.project.projectmenu');
+      $pm = new projectmenu($this->atkNodeType(), $this->m_project);
+      return $pm->getTabHtml();
+    }
+
+    /**
+     * Set the project id.
+     */
+    private function setProjectId()
+    {
+    	$vars = atkGetPostVar();
+
+      if ($vars['atknodetype'] == 'project.package' &&
+          array_key_exists('atkfilter', $vars) &&
+          $vars['atkfilter'] != '')
+      {
+        $this->project = $vars['atkfilter'];
+        sessionStore('projectid', $this->project);
+      }
+      else
+      {
+        $this->project = sessionLoad('projectid');
+      }
+    }
   }
