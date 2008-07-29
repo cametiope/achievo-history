@@ -299,7 +299,7 @@ $this->debuglog(array("function"=>"updateOvertimeBalance","userid"=>$userid, "da
       for ($i=0,$_i=count($contracts); $i<$_i; $i++)
       {
          // Get an array of working days that are specified with this contract
-         $workdays = $this->getWorkDays($contracts[$i]["WorkingDays"]);
+         $workdays = self::getWorkDays($contracts[$i]["WorkingDays"]);
 
          // Convert the contract start and enddate to "yyyymmdd" format so we can use it in calculations
          $contractstartdate = date("Ymd", adodb_mktime(0, 0, 0, substr($contracts[$i]["startdate"], 5, 2), substr($contracts[$i]["startdate"], 8, 2), substr($contracts[$i]["startdate"], 0, 4)));
@@ -314,7 +314,7 @@ $this->debuglog(array("function"=>"updateOvertimeBalance","userid"=>$userid, "da
          if ($contractstartdate < $begindate) $contractstartdate = $begindate;
 
          // Calculate the amount of worked days within the period
-         $numdays = $this->getNumDays($contractstartdate, $contractenddate, $workdays);
+         $numdays = self::getNumDays($contractstartdate, $contractenddate, $workdays);
 
          // Calculate the amount of weeks (number of working days in the period divided by
          // the number of weekly working days) and multiply it with the amount of weekly hours

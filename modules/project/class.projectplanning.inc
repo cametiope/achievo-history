@@ -13,7 +13,9 @@
    */
 atkimport("module.project.utils.resourceutils");
 atkimport("module.utils.dateutil");
+atkimport("module.timereg.overtime_balance");
 useattrib("atkdurationattribute");
+include_once("achievotools.inc");
 
   /**
    * Constructor.
@@ -122,30 +124,105 @@ useattrib("atkdurationattribute");
         }
       }
 
-      //Header creation
-      $header[] = $this->text("plan");
-      $header[] = $this->text("fact");
       //Header row
       $min_width = ($endweek - $startweek +3)*50+190;
+
+      //Header creation
+      $header[] = $this->text("contract_hours");
+
+      $weeks = dateutil::weeksBetween($startdate,$enddate);
 
       for($w=$startweek;$w<=$endweek;$w++)
       {
         $header[] = $w;
       }
 
+      $header[] = $this->text("plan");
+      $header[] = $this->text("fact");
+      $header[] = $this->text("diff");
+
       //Data rows
       foreach ($rows as $r)
       {
         $line = array();
-        $line[] = atkDurationAttribute::_minutes2string($this->getPlan($r['type'],$r['id'],$r['employee']));
-        $line[] = atkDurationAttribute::_minutes2string($this->getFact($r['type'],$r['id'],$r['employee']));
-        //
+        //get employee contract hours
+        $line[] = overtime_balance::getContractHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$r['employee']);
 
-        for($w=$startweek;$w<=$endweek;$w++)
+        foreach ($weeks as $w)
         {
-          $line[] = $w;
+          $line[] = $this->getAvailability(resourceutils::str2str($w['startdate']),resourceutils::str2str($w['enddate']),$r['employee']);
         }
+
+        $plan = $this->getPlan($r['type'],$r['id'],$r['employee']);
+        $fact = $this->getFact($r['type'],$r['id'],$r['employee']);
+        $line[] = atkDurationAttribute::_minutes2string($plan);
+        $line[] = atkDurationAttribute::_minutes2string($fact);
+        $line[] = atkDurationAttribute::_minutes2string($plan - $fact);
+
         $data[] = array("data"=>$line,"id"=>$r['id'],"type"=>$r['type'],"name"=>$r['name'],"employeeid"=>$r['employee']);
+      }
+    }
+
+    function getAvailability($start,$end,$employee)
+    {
+      $rows = $this->getDb()->getrows("
+        SELECT
+            h.id,
+            h.current_planning plan,
+            h.startdate,
+            h.enddate
+          FROM
+            phase h
+          WHERE
+           h.assign_to='$employee' AND
+          ( (h.startdate BETWEEN '$start' AND '$end') OR
+          (h.enddate BETWEEN '$start' AND '$end') OR
+          (h.startdate < '$start' AND h.enddate > '$end') )
+      ");
+
+      $res = 0;
+      foreach ($rows as $r)
+      {
+        $factdays = $this->getWorkingDaysFromTask($r['startdate'],$r['enddate'],$start, $end);
+        $plandays = resourceutils::getWorkingDays($r['startdate'],$r['enddate']);
+        $res += $factdays*$r['plan']/$plandays;
+      }
+      $contractHours = overtime_balance::getContractHours(resourceutils::str2str($start), resourceutils::str2str($end),$employee)*60;
+      if($contractHours)
+      {
+        $availability = (1-$res/$contractHours)*100;
+        if(eval("return ".atkConfig::get("project","project_resource_planning_green").";"))
+        {
+          $image = "user_green.png";
+          $alt = 'green';
+        }
+        elseif(eval("return ".atkConfig::get("project","project_resource_planning_yellow").";"))
+        {
+          $image = "user_orange.png";
+          $alt = 'yellow';
+        }
+        elseif(eval("return ".atkConfig::get("project","project_resource_planning_red").";"))
+        {
+          $image = "user_red.png";
+          $alt = 'red';
+        }
+
+        return "<img src='images/$image' alt='$alt' title='".number_format($availability,2)."%' />";
+      }
+      else
+        return "<img src='images/error.png' alt='no data available' title='".$this->text('no_data_available')."%' />";
+
+    }
+
+    function handleSubPackage($id, $employee)
+    {
+      $this->getPackageChild($id, $employee);
+      foreach ($this->m_parentChild['project.package'][$id]['package'] as $child)
+      {
+        $this->handleSubPackage($child['id'],$employee);
+        $value = $this->getPlan("package",$id,$employee) + $this->getPlan("package",$child['id'],$employee);
+
+        $this->setPlan("package",$id,$employee,$value);
       }
     }
 
@@ -170,7 +247,7 @@ useattrib("atkdurationattribute");
             project.master_project
           FROM
             phase h
-            JOIN
+            LEFT JOIN
             ( SELECT 'project.package' master, id master_id, name,
             	master parent,
             	master_id parent_id
@@ -193,7 +270,6 @@ useattrib("atkdurationattribute");
           (h.enddate BETWEEN '$start' AND '$end') )
       ");
 
-      $this->m_resourceHours['task'] = array();
       foreach ($rows as $r)
       {
         //per task
@@ -202,19 +278,7 @@ useattrib("atkdurationattribute");
         $plan = $factdays*$r['plan']/$plandays;
 
         $this->m_resourceHours['task'][$r['employee']][$r['id']] = array("plan"=>$plan,"fact"=>$r['fact'],"name"=>$r['name']);
-/*
-        //child data from task
-        $this->m_parentChild[$r['master']][$r['master_id']][] = array("type"=>'task',"id"=>$r['id']);
 
-        //child data from package
-        $this->m_parentChild[$r['parent']][$r['parent_id']][] = array("type"=>'package',"id"=>$r['master_id']);
-
-        //child data from project
-        if($r['master_project'])
-        {
-          $this->m_parentChild['project.project'][$r['master_project']][] = array("type"=>'project',"id"=>$r['projectid']);
-        }
-*/
         //per package
         if($r['master'] == 'project.package')
         {
@@ -280,6 +344,16 @@ useattrib("atkdurationattribute");
     function getFact($type,$id,$employee)
     {
       return $this->m_resourceHours[$type][$employee][$id]['fact'];
+    }
+
+    function setPlan($type,$id,$employee,$value)
+    {
+      $this->m_resourceHours[$type][$employee][$id]['plan'] = $value;
+    }
+
+    function setFact($type,$id,$employee,$value)
+    {
+      $this->m_resourceHours[$type][$employee][$id]['fact'] = $value;
     }
 
     function getName($type,$id,$employee)

@@ -38,13 +38,20 @@
       foreach ($node->m_resourceHours['project'][$id] as $key=>$r)
       {
         $line = array();
-        $line[] = atkDurationAttribute::_minutes2string($node->getPlan('project',$key,$id));
-        $line[] = atkDurationAttribute::_minutes2string($node->getFact('project',$key,$id));
+        $line[] = "&nbsp;";
 
         for($w=$startweek;$w<=$endweek;$w++)
         {
           $line[] = $w;
         }
+
+        $plan = $node->getPlan('project',$key,$id);
+        $fact = $node->getFact('project',$key,$id);
+
+        $line[] = atkDurationAttribute::_minutes2string($plan);
+        $line[] = atkDurationAttribute::_minutes2string($fact);
+        $line[] = atkDurationAttribute::_minutes2string($plan - $fact);
+
         $data[] = array("data"=>$line,"id"=>$key,"type"=>'project',"name"=>$r['name'],"employeeid"=>$id);
       }
       $min_width = ($endweek - $startweek +3)*50+190;
@@ -77,12 +84,14 @@
 
       $node->getProjectChild($id, $employee);
 
-      if(count($node->m_parentChild['project.project'][$id]['project']))
+      foreach ($node->m_parentChild['project.project'][$id]['project'] as $child)
       {
-        foreach ($node->m_parentChild['project.project'][$id]['project'] as $child)
-        {
-          $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employee, '', $child_id['id']);
-        }
+        $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employee, '', $child['id']);
+      }
+
+      foreach ($node->m_parentChild['project.project'][$id]['package'] as $child)
+      {
+        $node->handleSubPackage($child['id'],$employee);
       }
 
       foreach ($node->m_parentChild['project.project'][$id] as $type=>$child)
@@ -91,13 +100,20 @@
         foreach ($child as $i)
         {
           $line = array();
-          $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employee));
-          $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employee));
+          $line[] = "&nbsp;";
 
           for($w=$startweek;$w<=$endweek;$w++)
           {
             $line[] = $w;
           }
+
+          $plan = $node->getPlan($type,$i['id'],$employee);
+          $fact = $node->getFact($type,$i['id'],$employee);
+
+          $line[] = atkDurationAttribute::_minutes2string($plan);
+          $line[] = atkDurationAttribute::_minutes2string($fact);
+          $line[] = atkDurationAttribute::_minutes2string($plan - $fact);
+
           $data[] = array("data"=>$line,"id"=>$i['id'],"type"=>$type,"name"=>$i['name'],"employeeid"=>$employee);
         }
       }
@@ -145,13 +161,20 @@
         {
           //child-package
           $line = array();
-          $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employee));
-          $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employee));
+          $line[] = "&nbsp;";
 
           for($w=$startweek;$w<=$endweek;$w++)
           {
             $line[] = $w;
           }
+
+          $plan = $node->getPlan($type,$i['id'],$employee);
+          $fact = $node->getFact($type,$i['id'],$employee);
+
+          $line[] = atkDurationAttribute::_minutes2string($plan);
+          $line[] = atkDurationAttribute::_minutes2string($fact);
+          $line[] = atkDurationAttribute::_minutes2string($plan - $fact);
+
           $data[] = array("data"=>$line,"id"=>$i['id'],"type"=>$type,"name"=>$i['name'],"employeeid"=>$employee);
         }
       }
