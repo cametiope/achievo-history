@@ -1,17 +1,24 @@
 <?php
-  useattrib("atkattribute");
-  useattrib("atkdateattribute");
-  useattrib("atknumberattribute");
-  useattrib("atkdummyattribute");
-  useattrib("project.projectmanytoonerelation");
-
-  userelation("atkmanytoonerelation");
 
   atkimport("module.project.utils.projectutils");
   atkimport("module.timereg.hours");
 
   class timereg_advanced extends atkNode
   {
+
+  	/**
+  	 * Hours.
+  	 *
+  	 * @var array
+  	 */
+  	private $m_hours = array();
+
+    /**
+     * Errors.
+     *
+     * @var array
+     */
+    private $m_errors = array();
 
   	/**
   	 * Constructor.
@@ -21,76 +28,37 @@
   	 */
     public function __construct($name="timereg_advanced", $flags=0)
     {
-      $this->atkNode($name);
-
-      $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
-
-      $this->add(new atkDateAttribute("activitydate","","", 0, (atkconfig("timereg_allowfuture", false)?0:date("Ymd")), AF_OBLIGATORY|AF_FORCE_LOAD|($this->m_weekview?0:AF_HIDE_LIST)),null,10);
-      //$this->add(new to_date());
-      $this->add(new atkDummyAttribute("dayfilter", "", AF_HIDE), null, 11);
-
-      // force_load flag is set for userid, since several features rely on the
-      // userid, even if it's not displayed on screen.
-      $this->add(new atkManyToOneRelation("userid","employee.employee", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
-
-      //phaseid must be added before the project id to make sure the join works
-      //we need the projectid to sort on
-      $phase = &new atkManyToOneRelation("phaseid","project.phaseselector",AF_OBLIGATORY|AF_FORCE_LOAD);
-      $phase->setDestinationFilter("phase.projectid='[projectid.id]'");
-      $oneActivity = (projectutils::getActivityCount() == 1);
-      if(!$oneActivity)
-        $phase->addDependee("activityid");
-      $this->add($phase,null, 30);
-
-      $project = &new projectManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_FORCE_LOAD);
-      $project->addDependee("phaseid");
-      $project->setUserId($this->m_user);
-
-      if(atkconfig::get("timereg","timereg_contact_link",false))
-      {
-        $project->addDependee("contact_id");
-      }
-
-      $this->add($project,null,20);
-
-      if($oneActivity)
-        $activity_flag = AF_HIDE|AF_FORCE_LOAD;
-      else
-        $activity_flag = AF_LIST_OBLIGATORY_NULL_ITEM;
-      $activity = &new atkManyToOneRelation("activityid","project.activity",AF_OBLIGATORY|$activity_flag);
-      $this->add($activity);
-
-      if(atkconfig::get("timereg","timereg_contact_link",false))
-      {
-        $this->add(new atkManyToOneRelation("contact_id","organization.contact"));
-      }
-
-      $this->add(new atkTextAttribute("remark", atkconfig("timereg_remark_lines", 1), 0));
-      $this->add(new atkDurationAttribute("time",atkconfig("timereg_resolution", "15m"), atkconfig("max_bookable",10).'h'));
-
-      // If we don't use duration, then we won't need this
-      // Because we can set the rates with the billing module
-      if (atkconfig("use_duration", true))
-      {
-        $relation = &new atkManyToOneRelation("workperiod","timereg.workperiod", AF_HIDE_LIST|AF_RELATION_NO_NULL_ITEM);
-        $relation->setHideWhenEmpty(true);
-        $this->add($relation);
-      }
-
-      $this->add(new atkDateAttribute("entrydate",AF_HIDE|AF_OBLIGATORY));
-      $this->setTable("hours","hours");
+      $this->atkNode($name, $flags);
     }
 
-
-    public function action_add()
+    /*
+     * Override of the add action.
+     */
+    public function action_add(&$handler)
     {
       $page = &$this->getPage();
       $ui = &$this->getUi();
       $smarty = &atkinstance('atk.ui.atksmarty');
       $theme = &atkTheme::getInstance();
 
-      $rows = $this->getActivePhases();
-      $smarty->assign('rows', $rows);
+      $vars = atkGetPostVar();
+
+      $this->setHours($vars);
+      if ( count($this->m_hours) > 0 && $this->validate_timereg() )
+      {
+    		$this->processTimereg();
+        $redirect = dispatch_url('timereg_advanced.timereg_advanced', 'report');
+	      $this->redirect($redirect, $this->m_hours);
+      }
+
+      $smarty->assign('rows', $this->getActivePhases());
+      $smarty->assign('completed', $this->getCompletedValues());
+      $smarty->assign('times', $this->getRegistrationTimes());
+      $smarty->assign('formstart', $this->getFormStart($handler));
+      $smarty->assign('formend', $this->getFormEnd());
+      $smarty->assign('buttons', $this->getFormButtons('add', ''));
+      $smarty->assign('values', $vars);
+      $smarty->assign('errors', $this->m_errors);
 
       $content = $smarty->fetch(moduleDir('timereg_advanced').'templates/timereg.tpl');
 
@@ -102,15 +70,234 @@
       $output = $ui->renderBox(array("title"=>atktext('advanced_time_registration'),
                                    "content"=>$content));
 
-      $page->addContent($this->renderActionPage("showhelloworld", $output));
+      $page->addContent($this->renderActionPage('add', $output));
     }
 
+    /**
+     * The add mode only needs a save button.
+     *
+     * @param string $mode
+     * @param array $record
+     * @return array $buttons
+     */
+	  function getFormButtons($mode, $record)
+	  {
+	  	$buttons = array();
+	    $controller = &atkcontroller::getInstance();
+	    $controller->setNode($this);
 
+	    if ($mode == 'add') $buttons[] = $controller->getButton('save');
+	    else $button = $controller->getFormButtons($mode, $record);
+
+	    return $buttons;
+	  }
+
+    /**
+     * Report action.
+     *
+     */
+    public function action_report()
+    {
+      $page = &$this->getPage();
+      $ui = &$this->getUi();
+      $smarty = &atkinstance('atk.ui.atksmarty');
+      $theme = &atkTheme::getInstance();
+
+      $content = atktext('timereg_finished');
+      $backurl = dispatch_url('timereg_advanced.timereg_advanced', 'add');
+      $content .= '<br/><br/><input type="button" name="back" value="&laquo; '.atktext('back').'" onclick="location.href=\''.$backurl.'\'" />';
+
+      $page->register_style($theme->stylePath("style.css"));
+      $page->register_style($theme->stylePath("tabs.css"));
+      $page->register_style($theme->stylePath("recordlist.css"));
+
+      $output = $ui->renderBox(array("title"=>atktext('advanced_time_registration'),
+                                   "content"=>$content));
+
+      $page->addContent($this->renderActionPage('report', $output));
+    }
+
+    /**
+     * Select the active phases for the loggedin user.
+     *
+     * @return Array
+     */
     private function getActivePhases()
     {
       $node = atkGetNode('project.phase');
       $rows = $node->select($node->getTable().'.startdate < NOW() AND '.$node->getTable().'.enddate > NOW()')
                    ->allRows();
+
+      for ($i=0, $_i=count($rows); $i<$_i; $i++)
+      {
+      	$rows[$i]['activities'] = $this->getActivities($rows[$i]['id']);
+      }
+
       return $rows;
     }
+
+    /**
+     * Get the activities by phase.
+     *
+     * @param integer $phase Phase Id
+     * @return array
+     */
+    private function getActivities($phase)
+    {
+      $node = atkGetNode('project.phase_activity');
+      return $node->select('phaseid='.$phase)
+                  ->excludes('phaseid')
+                  ->allRows();
+    }
+
+    /**
+     * Get a list with completed values.
+     *
+     * @return Array List of completed values
+     */
+    private function getCompletedValues()
+    {
+      return range(0, 100, atkConfig::get('project','completed_parts'));
+    }
+
+    /**
+     * Get a list with hours and minutes for time registration.
+     *
+     * @return Array List with hours and minutes
+     */
+    private function getRegistrationTimes()
+    {
+    	return array('hours'   => range(0, atkconfig("max_bookable", 10) , 1),
+    	             'minutes' => range(0, 59, 15));
+    }
+
+    /**
+     * Get the start of the form.
+     *
+     * @return String HTML The forms' start
+     */
+    private function getFormStart(&$handler)
+    {
+      $controller = &atkcontroller::getInstance();
+      $controller->setNode($this->m_node);
+
+      $node = &$this->m_node;
+
+      $formIdentifier = ((isset($this->m_partial) && $this->m_partial!="")) ? "dialogform" : "entryform";
+      $formstart ='<form id="'.$formIdentifier.'" name="'.$formIdentifier.'" enctype="multipart/form-data" action="'.$controller->getPhpFile().'?'.SID.'"'.
+                     ' method="post" onsubmit="return globalSubmit(this)">';
+
+      $formstart .= session_form(SESSION_DEFAULT, $handler->getReturnBehaviour(), parent::getEditFieldPrefix());
+      $formstart .= $controller->getHiddenVarsString();
+
+      if (isset($node->m_postvars['atkfilter']))
+      {
+        $formstart .= '<input type="hidden" name="atkfilter" value="'.$node->m_postvars['atkfilter'].'">';
+      }
+
+      return $formstart;
+    }
+
+    /**
+     * Validate the registered hours.
+     *
+     * @return boolean
+     */
+    private function validate_timereg()
+    {
+    	$i = 0;
+      foreach ($this->m_hours as $hour)
+      {
+      	$j = 0;
+
+      	if ($hour['time']['hours'] == 0 && $hour['time']['minutes'] == 0 )
+      	{
+      		$this->m_errors[$i] = array();
+      		$this->m_errors[$i]['name'] = $hour['name'];
+      		$this->m_errors[$i]['err'] = array();
+      		$this->m_errors[$i]['err'][$j++] = atktext('time').': ' . atktext('error_obligatoryfield');
+      	}
+
+        if (trim($hour['remark']) == '')
+        {
+        	if ($j == 0)
+        	{
+	          $this->m_errors[$i] = array();
+	          $this->m_errors[$i]['name'] = $hour['name'];
+	          $this->m_errors[$i]['err'] = array();
+        	}
+          $this->m_errors[$i]['err'][$j++] = atktext('comment').': ' . atktext('error_obligatoryfield');
+        }
+
+        $i++;
+      }
+
+      if (count($this->m_errors) > 0 ) return false;
+      return true;
+    }
+
+    /**
+     * Get the end of the form.
+     *
+     * @return String HTML The forms' end
+     */
+    private function getFormEnd()
+    {
+      return '</form>';
+    }
+
+    /**
+     * Store the enabled time registrations in a private member.
+     *
+     * @param array $vars
+     */
+    private function setHours($vars)
+    {
+    	$nHours = count($vars['timereg']);
+    	if ($nHours > 0)
+    	{
+    		$timereg = $vars['timereg'];
+    		foreach ($timereg as $item)
+    		{
+    			if ($item['id'] == 'on') $this->m_hours[] = $item;
+    		}
+    	}
+    }
+
+    /**
+     * Save the time registrations to the database.
+     */
+    private function processTimereg()
+    {
+      $node = atkGetNode('timereg.hours');
+      $db = $this->getDb();
+      $userid = atkGetUserId();
+
+      foreach ($this->m_hours as $hour)
+      {
+        $item = array();
+        $item['activitydate'] = array('day' => date('d'), 'month' => date('m'), 'year' => date('Y'));
+        $item['userid']       = $userid;
+        $item['phaseid']      = $hour['phaseid'];
+        $item['activityid']   = $hour['activity'];
+        $item['remark']       = $db->escapeSQL($hour['remark']);
+        $item['time']         = ($hour['time']['hours'] * 60) + $hour['time']['minutes'];
+        $item['workperiod']   = 0;
+        $item['entrydate']    = array('day' => date('d'), 'month' => date('m'), 'year' => date('Y'));
+        $node->addDb($item);
+        $this->updatePhase($hour['phaseid'], $hour['completed']);
+      }
+    }
+
+    /**
+     * Update phaseid with new completed value
+     *
+     * @param integer $phaseid
+     * @param integer $completed
+     */
+    private function updatePhase($phaseid, $completed)
+    {
+    	$this->getDb()->query("UPDATE phase SET completed=".$completed." WHERE id=".$phaseid);
+    }
+
   }

@@ -597,6 +597,7 @@
   "timereg_reminder_hoursnotblocked_coormail_mailsubject" => "Een of meer medewerkers hebben bepaalde weken nog niet geblokkeerd.", // Missing string!!!
   "timereg_reminder_hoursnotblocked_employeemail_mailbody" => "Een of meer weken die geblokkeerd zouden moeten zijn, zijn niet geblokkerd. Het betreft de volgende weken:", // Missing string!!!
   "timereg_reminder_hoursnotblocked_employeemail_mailsubject" => "Een of meer weken nog niet geblokkeerd.", // Missing string!!!
+  "timereg_finished" => "Time registration finished", // Missing string!!!
   "timespan" => "Zeitraum",
   "title" => "Titel",
   "title_activitystats" => "Aktivitätenstatistiken",

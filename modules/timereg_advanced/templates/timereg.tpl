@@ -1,6 +1,21 @@
 <table cellspacing="0" cellpadding="0" class="recordListContainer">
   <tr>
     <td>
+    {if count($errors)}
+      <div style="color: red;">
+        <strong>{atktext id="error_formdataerror"}</strong><br/><br/>
+		    {section name=i loop=$errors}
+		    <u>{$errors[i].name}:</u><br/>
+		    {foreach from=$errors[i].err item=err}
+		      {$err}<br/>
+		    {/foreach}
+		    <br/>
+        {/section}
+		  </div>
+		{/if}
+    
+      {$formstart}
+    
       <table class="recordList" cellpadding="0" cellspacing="0">    
           
           <!-- header -->
@@ -18,44 +33,71 @@
           <!-- records -->
 
           {foreach from=$rows item=row}
-            <tr id="r1_{$row.id}" class="row{if $row.rownum % 2 == 0 }1{else}2{/if}" onmouseover="highlightrow(this, '#eeeeee')" onmouseout="resetrow(this)">
-              <td class="recordListTdFirst">
-                <input type="checkbox" name="timereg[{$row.id}][id]" />
-              </td>
-              <td class="recordListTd">
-                {$row.projectid.name}
-              </td>
-              <td class="recordListTd">
-                {$row.name}
-              </td>
-              <td class="recordListTd">
-                {$row.enddate.day}-{$row.enddate.month}-{$row.enddate.year}
-              </td>
-              <td class="recordListTd">
-                <input type="text" size="4" maxlength="2" name="timereg[{$row.id}][hours]" /> : <input type="text" size="4" maxlength="2" name="timereg[{$row.id}][minuted]" />
-              </td>
-              <td class="recordListTd">
-                <select name="timereg[{$row.id}][completed]">
-                  <option value="0">0%</option>
-                </select>
-              </td>
-              <td class="recordListTd">
-                <input type="text" size="30" name="timereg[{$row.id}][description]" />
-              </td>
-              <td class="recordListTd">
-                <select name="timereg[{$row.id}][activity]">
-                  <option value="x">Actvity X</option>
-                  <option value="y">Actvity Y</option>
-                  <option value="z">Actvity Z</option>
-                </select>
-              </td>
+           <tr id="r1_{$row.id}" class="row{if $row.rownum % 2 == 0 }1{else}2{/if}" onmouseover="highlightrow(this, '#eeeeee')" onmouseout="resetrow(this)">
+             <td class="recordListTdFirst">
+               <input type="checkbox" name="timereg[{$row.id}][id]"{if $values.timereg[$row.id].id == "on"} checked="checked"{/if} />
+             </td>
+             <td class="recordListTd">
+               {$row.projectid.name}
+             </td>
+             <td class="recordListTd">
+               {$row.name}
+               <input type="hidden" name="timereg[{$row.id}][name]" value="{$row.name}" />               
+               <input type="hidden" name="timereg[{$row.id}][phaseid]" value="{$row.id}" />
+             </td>
+             <td class="recordListTd">
+               {$row.enddate.day}-{$row.enddate.month}-{$row.enddate.year}
+             </td>
+             <td class="recordListTd">
+               <select name="timereg[{$row.id}][time][hours]">
+               {section name=h loop=$times.hours}
+                 <option value="{$times.hours[h]}"{if $values.timereg[$row.id].time.hours == $times.hours[h]} selected="selected"{/if}>{$times.hours[h]} {atktext id="hours"}</option>
+               {/section}
+               </select> : 
+               <select name="timereg[{$row.id}][time][minutes]">
+               {section name=m loop=$times.minutes}
+                 <option value="{$times.minutes[m]}"{if $values.timereg[$row.id].time.minutes == $times.minutes[m]} selected="selected"{/if}>{$times.minutes[m]} {atktext id="minutes"}</option>
+               {/section}
+               </select>
+             </td>
+             <td class="recordListTd">
+               <select name="timereg[{$row.id}][completed]">
+                {section name=c loop=$completed}
+                 {if '' != $values.timereg[$row.id].completed}
+                   {assign var="progress" value=$values.timereg[$row.id].completed}
+                 {else}
+                   {assign var="progress" value=$row.completed}
+                 {/if}
+                 <option value="{$completed[c]}"{if $completed[c] == $progress} selected="selected"{/if}>{$completed[c]}%</option>
+                {/section}
+               </select>
+             </td>
+             <td class="recordListTd">
+               <input type="text" size="30" name="timereg[{$row.id}][remark]" value="{$values.timereg[$row.id].remark}" />
+             </td>
+             <td class="recordListTd">
+               <select name="timereg[{$row.id}][activity]">
+               {foreach from=$row.activities item=activity}
+                 <option value="{$activity.activityid.id}"{if $values.timereg[$row.id].activity == $activity.activityid.id} selected="selected"{/if}>{$activity.activityid.name}</option>
+               {/foreach}
+               </select>
+             </td>
           </tr>
           {/foreach}
 
       </table>
+      
+      <br/><br/>
+      
+			<div id="action-buttons">
+	      {foreach from=$buttons item=button}
+	        &nbsp;{$button}&nbsp;
+	      {/foreach}
+			</div>
+      
+      {$formend}
     </td>
   </tr>
   
 </table>
 
-<input type="submit" name="submit" value="{atktext id="submit"}" />
