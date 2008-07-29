@@ -12,7 +12,11 @@ class packageProjectSelector extends atkListAttribute
   {
     if( false !== ( $options = $this->getOptionArray() ) )
     {
-      $this->atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_FORCE_LOAD|AF_HIDE_LIST, $size=0);
+      $this->atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
+    }
+    else
+    {
+    	$this->atkListAttribute($name, array(), array(), AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
     }
   }
 
