@@ -37,6 +37,19 @@
 
       foreach ($node->m_resourceHours['project'][$id] as $key=>$r)
       {
+        $node->getProjectChild($key, $id);
+
+        foreach ($node->m_parentChild['project.project'][$key]['project'] as $child)
+        {
+          $node->handleSubProject($child['id'],$employee);
+
+          $value = $node->getPlan("project",$key,$id) + $node->getPlan("project",$child['id'],$id);
+          $node->setPlan("project",$key,$id,$value);
+
+          $value = $node->getFact("project",$key,$id) + $node->getFact("project",$child['id'],$id);
+          $node->setFact("project",$key,$id,$value);
+        }
+
         $line = array();
         $line[] = "&nbsp;";
 

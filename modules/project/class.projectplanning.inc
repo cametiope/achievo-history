@@ -163,6 +163,14 @@ include_once("achievotools.inc");
       }
     }
 
+    /**
+     * Calculate employees availability at period of time
+     *
+     * @param string $start - start of period yyyy-mm-dd
+     * @param string $end- end of period yyyy-mm-dd
+     * @param int $employee - employees id
+     * @return string html code - image with title
+     */
     function getAvailability($start,$end,$employee)
     {
       $rows = $this->getDb()->getrows("
@@ -206,6 +214,11 @@ include_once("achievotools.inc");
           $image = "user_red.png";
           $alt = 'red';
         }
+        else
+        {
+          $image = "error.png";
+          $alt = 'error';
+        }
 
         return "<img src='images/$image' alt='$alt' title='".number_format($availability,2)."%' />";
       }
@@ -220,9 +233,27 @@ include_once("achievotools.inc");
       foreach ($this->m_parentChild['project.package'][$id]['package'] as $child)
       {
         $this->handleSubPackage($child['id'],$employee);
-        $value = $this->getPlan("package",$id,$employee) + $this->getPlan("package",$child['id'],$employee);
 
+        $value = $this->getPlan("package",$id,$employee) + $this->getPlan("package",$child['id'],$employee);
         $this->setPlan("package",$id,$employee,$value);
+
+        $value = $this->getFact("package",$id,$employee) + $this->getFact("package",$child['id'],$employee);
+        $this->setFact("package",$id,$employee,$value);
+      }
+    }
+
+    function handleSubProject($id,$employee)
+    {
+      $this->getProjectChild($id,$employee);
+      foreach ($this->m_parentChild['project.project'][$id]['project'] as $child)
+      {
+        $this->handleSubProject($child['id'],$employee);
+
+        $value = $this->getPlan("project",$id,$employee) + $this->getPlan("project",$child['id'],$employee);
+        $this->setPlan("project",$id,$employee,$value);
+
+        $value = $this->getFact("project",$id,$employee) + $this->getFact("project",$child['id'],$employee);
+        $this->setFact("project",$id,$employee,$value);
       }
     }
 
