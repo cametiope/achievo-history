@@ -31,7 +31,7 @@
         $target_planning = dispatch_url("project.project","planning",array("selectedprojectid"=>"[id]"));
         $this->menuitem("project_admin", dispatch_url("project.project", "admin"), "projectmanagement", array("project.project", "admin"));
         $this->menuitem("project_planning",  dispatch_url("project.project", "select", array("atktarget" => atkurlencode($target_planning))), "projectmanagement", array("project.project", "planning"));
-        $this->menuitem("projectplanning", dispatch_url("project.projectplanning", "report"), "projectmanagement", array("project.projectplanning", "admin"));        
+        $this->menuitem("projectplanning", dispatch_url("project.projectplanning", "report"), "projectmanagement", array("project.projectplanning", "admin"));
         $this->menuitem("-","","projectmanagement");
         $this->menuitem("project_stats", dispatch_url("project.projectstats", "stats"), "projectmanagement", array("project.project", "stats"));
         $this->menuitem("activity_stats", dispatch_url("project.activity", "stats"), "projectmanagement", array("project.activity", "stats"));
@@ -79,14 +79,20 @@
     }
 
     /**
-     * Adds a listener to the timereg.hours node
+     * Adds listeners to the timereg.hours node
      *
-     * @param hours $atknode hours node instance
+     * @param atkNode $node hours node instance
      */
     function timereg_hours_modifier(&$node)
     {
       atkimport("module.project.hourslistener");
       $node->addListener(new hoursListener());
+
+      atkimport("module.project.planninglistener");
+      $node->addListener(new planningListener());
+
+      atkimport("module.project.trafficlightlistener");
+      $node->addListener(new trafficlightListener());
     }
 
   }
