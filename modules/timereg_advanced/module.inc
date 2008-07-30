@@ -8,8 +8,8 @@
 
     public function getNodes()
     {
-      //registerNode("timereg_advanced.timereg_advanced", array("admin", "add", "edit", "delete"));
-      //registerNode("timereg_advanced.timereg_phase", array("add"));
+      registerNode("timereg_advanced.timereg_advanced", array("add", "report"));
+      registerNode("timereg_advanced.timereg_phase", array("add"));
     }
 
 
