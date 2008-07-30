@@ -22,9 +22,9 @@
   class resourceplanning extends atkNode
   {
 //    var $m_employeeId;
-    private $m_projectId;
-    private $m_resourceHours = array();
-    private $m_parentChild =  array();
+    public $m_projectId;
+    public $m_resourceHours = array();
+    public $m_parentChild =  array();
 
     /**
      * Project identifier
