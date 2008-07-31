@@ -62,7 +62,7 @@
 
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
-      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('m', 'a'), AF_HIDE_LIST|AF_DISPLAY_VERT));
+      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_HIDE_LIST|AF_FORCE_LOAD|AF_DISPLAY_VERT));
       $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST));
 
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
@@ -87,7 +87,6 @@
 
       $completed = $this->getCompletedValues();
       $this->add(new atkListAttribute("completed", $completed['options'], $completed['values'], AF_HIDE_ADD|AF_FORCE_LOAD|AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM));
-
 
       $this->add(new atkDurationAttribute("initial_planning"));
       $this->add(new atkDurationAttribute("current_planning"));
@@ -216,9 +215,8 @@
         $activity = $activitynode->selectDb("", "", "", "", array("id"));
         $initial_values["phase_activity"] = array(array("activityid"=>$activity[0]["id"]));
       }
-
+      $initial_values["trafficlight_updatestyle"] = "A";
       $initial_values['completed'] = 0;
-
       // Return the initual values:
       return $initial_values;
     }

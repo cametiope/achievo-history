@@ -54,8 +54,8 @@
 
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
-      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('m', 'a'), AF_HIDE_LIST|AF_DISPLAY_VERT));
-      $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST));
+      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_FORCE_LOAD|AF_HIDE_LIST|AF_HIDE_ADD|AF_DISPLAY_VERT));
+      $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST|AF_FORCE_LOAD|AF_HIDE_ADD));
 
       $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));
       $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));
@@ -115,12 +115,12 @@
         $reportnodetype = $g_sessionManager->stackVar("reportnodetype");
       else
         $reportnodetype = "";
-
-
-
-      $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
-      $deliverable->setDestinationFilter('project_id=[id]');
-
+      
+      if( atkGetPostVar('atkaction') != 'add' && atkGetPostVar('atkprevaction') != 'add' )
+      { 
+        $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
+        $deliverable->setDestinationFilter('project_id=[id]');
+      }
       $this->setColumnAttribs(array('deliverable'));
 
 
@@ -279,7 +279,8 @@
                    "initial_planning" => 0,
                    "current_planning" => 0,
                    "remaining_effort_time" => 0,
-                   "coordinator"=>getUser());
+                   "coordinator"=>getUser(),
+                   "trafficlight_updatestyle" => "A",);
     }
 
     /**

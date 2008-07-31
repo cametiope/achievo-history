@@ -60,7 +60,9 @@
     public static function meta(atkMetaPolicy $policy)
     {
     	$policy->setType('trafficlight', 'trafficlightattribute');
-    	$policy->setTypeAndParams('trafficlight_updatestyle', 'atkradioattribute', array('options' => array('manual', 'automatic'), 'values' => array('m', 'a')));
+    	$policy->setTypeAndParams('trafficlight_updatestyle', 'atkradioattribute', array('options' => array('manual', 'automatic'), 'values' => array('M', 'A')));
+    	
+    	$policy->addFlag('trafficlight_updatestyle', AF_FORCE_LOAD);
     	$policy->setTypeAndParams('trafficlight_memo', 'trafficlightmemoattribute', array('size' => array('rows' => '4')));
 
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
@@ -72,8 +74,8 @@
 
       $policy->addFlag('id', AF_FORCE_LOAD);
       $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );
-      $policy->addFlags("master", AF_HIDE_ADD|AF_HIDE_EDIT);
-      $policy->addFlags("master_id", AF_HIDE);
+      $policy->addFlags("master", AF_HIDE_ADD|AF_HIDE_EDIT|AF_FORCE_LOAD);
+      $policy->addFlags("master_id", AF_HIDE|AF_FORCE_LOAD);
 
       $policy->setTypeAndParams("status","atk.attributes.atklistattribute",array(array("active","nonactive","archived")));
       $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time", "spend_hours"),"atk.attributes.atkdurationattribute",array("15m"));
@@ -302,7 +304,9 @@
       $nextyear = strtotime("+1 year");
       return array("status"=>1,
                    "coordinator_id"=>getUser(),
-                   "projectid" => $selectedproject[1]);
+                   "projectid" => $selectedproject[1],
+                   "trafficlight_updatestyle" => "A",
+                   "trafficlight" => "0",);
     }
 
 
