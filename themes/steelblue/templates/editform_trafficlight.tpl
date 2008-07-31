@@ -8,6 +8,7 @@
           <table border="0" width="100%">
             <tr>
               <td width="50">{$fields[0].full}</td>
+              <td>{$fields[1].full}</td>
               <td>{$test}<br/>{$fields[2].full}</td>
             </tr>
           </table>        
