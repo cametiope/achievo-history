@@ -28,3 +28,4 @@
   
   
   $setup->addColumn("package","projectid","int(11)");
+?>
