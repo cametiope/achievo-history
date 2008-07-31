@@ -66,6 +66,7 @@
       $page->register_style($theme->stylePath("tabs.css"));
       $page->register_style($theme->stylePath("recordlist.css"));
       $page->register_script("./atk/javascript/recordlist.js");
+      $page->register_script(moduleDir('timereg_advanced')."javascript/timereg_advanced.js");
 
       $output = $ui->renderBox(array("title"=>atktext('advanced_time_registration'),
                                    "content"=>$content));
@@ -183,8 +184,7 @@
 
       $node = &$this->m_node;
 
-      $formIdentifier = ((isset($this->m_partial) && $this->m_partial!="")) ? "dialogform" : "entryform";
-      $formstart ='<form id="'.$formIdentifier.'" name="'.$formIdentifier.'" enctype="multipart/form-data" action="'.$controller->getPhpFile().'?'.SID.'"'.
+      $formstart ='<form id="entryform" name="entryform" enctype="multipart/form-data" action="'.$controller->getPhpFile().'?'.SID.'"'.
                      ' method="post" onsubmit="return globalSubmit(this)">';
 
       $formstart .= session_form(SESSION_DEFAULT, $handler->getReturnBehaviour(), parent::getEditFieldPrefix());
