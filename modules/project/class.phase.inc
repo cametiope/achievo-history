@@ -62,11 +62,11 @@
 
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
-      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_HIDE_LIST|AF_FORCE_LOAD|AF_DISPLAY_VERT));
-      $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST));
+      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_HIDE_LIST|AF_HIDE_ADD|AF_FORCE_LOAD|AF_DISPLAY_VERT));
+      $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST|AF_HIDE_ADD));
 
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
-
+      
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE|AF_FORCE_LOAD, 50));
       $this->add(new atkTextAttribute("description", TEXT_LARGE, AF_HIDE_LIST));
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY|AF_HIDE_LIST));
