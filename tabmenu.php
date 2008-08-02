@@ -31,7 +31,7 @@
 
   if(isset($_GET['parentId']))
   {
-    atkimport("menu.atktabmenu");
-    echo atkTabMenu::renderSubMenu($_GET['parentId'],$_GET['parentType']);
+    atkimport("menu.achievotabmenu");
+    echo achievoTabMenu::renderSubMenu($_GET['parentId'],$_GET['parentType']);
   }
 ?>
