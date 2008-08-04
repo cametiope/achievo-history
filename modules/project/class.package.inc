@@ -99,6 +99,15 @@
                               'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
     }
 
+    
+    public function postAdd($rec)
+    {
+    	$teamNode = &atkGetNode('project.package_person');
+    	$team['package_id'] = $rec['id'];
+    	$team['person_id'] = $rec['coordinator_id']['id'];
+    	$teamNode->addDb($team);
+    	return true;
+    }
 
     /**
      * Call custom validation methods for the startdate field
