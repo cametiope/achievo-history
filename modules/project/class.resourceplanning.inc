@@ -335,7 +335,7 @@
     private function getProjectMenu()
     {
       atkimport('module.project.projectmenu');
-      $pm = new projectmenu($this->atkNodeType(), $this->m_project);
+      $pm = new projectmenu('project.resourceplanning', $this->m_project);
       return $pm->getTabHtml();
     }
 

@@ -867,7 +867,7 @@
     function getProjectMenu()
     {
       atkimport('module.project.projectmenu');
-      $pm = new projectmenu('project.package', $this->project);
+      $pm = new projectmenu('project.project', $this->project);
       return $pm->getTabHtml();
     }
 

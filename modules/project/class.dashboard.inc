@@ -149,7 +149,7 @@
     private function getProjectMenu()
     {
       atkimport('module.project.projectmenu');
-      $pm = new projectmenu($this->atkNodeType(), $this->project);
+      $pm = new projectmenu('project.dashboard', $this->project);
       return $pm->getTabHtml();
     }
 

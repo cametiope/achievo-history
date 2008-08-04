@@ -90,7 +90,7 @@
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
       $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
-      $policy->addFlags('trafficlight_updatestyle', AF_DISPLAY_VERT);
+      $policy->addFlags('trafficlight_updatestyle', AF_DISPLAY_VERT|AF_HIDE);
 
       $policy->hasMany('deliverable_package', array('source' => 'package_id'));
       $policy->addFlags('package_person', 'deliverable_package', AF_NO_LABEL);
