@@ -57,8 +57,10 @@
 	  {
 	    $db = &atkGetDb();
 	    $ui = &atkinstance("atk.ui.atkui");
+	    
+	    $node = &atkGetNode("project.project");
 
-	    $res = $db->getrows("
+	    $query = "
 	      SELECT
 	        p.id,p.name,'project' as type, p1.sub, p.id as projectid
 	      FROM
@@ -81,7 +83,17 @@
 	          ) a
 	         GROUP BY master_id
 	        ) p1 ON p.id=p1.master_id
-	    ");
+	    ";
+
+	    if (!$node->allowed("any_project"))
+      {
+        $userId = atkGetUserId();
+        $pids = implode(",", $node->get_user_projects());
+
+        $query .= " WHERE p.id IN ($pids) OR p.coordinator='".$userId."'";
+      }
+	    
+      $res = $db->getrows($query);
 
 	    self::_addUrl($res,"project");
 	    $box = $ui->renderBox(array("tabmenu"=>$res),"treemenu");
