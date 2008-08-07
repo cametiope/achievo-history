@@ -75,7 +75,7 @@ class usercontracts extends atkNode
     {
       if ($record["userid"]["id"]!="")
       {
-       $previous = $this->selectDb("userid=".$record["userid"]["id"], "enddate DESC", 1, "", array("enddate", "workingdays", "uc_hours"));
+       $previous = $this->selectDb("userid.id='".$record["userid"]["id"]."'", "enddate DESC", 1, "", array("enddate", "workingdays", "uc_hours","userid"));
 
         if (count($previous))
         {
