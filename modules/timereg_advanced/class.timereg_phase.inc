@@ -189,7 +189,7 @@
     {
       global $ATK_VARS;
 
-      $ATK_VARS['projectid'] = 'projectid=\'1\'';
+  //    $ATK_VARS['projectid'] = 'projectid=\'1\'';
       $projectid = decodeKeyValueSet( $ATK_VARS['projectid'] );
 
       $node    = atkGetNode('project.project');
