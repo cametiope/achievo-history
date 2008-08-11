@@ -150,11 +150,11 @@ function showTab(tab){
 }
 
 function getTab(){
-  return parent.document.tab;
+  return parent.document.menutab;
 }
 
 function setTab(value){
-  parent.document.tab = value;
+  parent.document.menutab = value;
 }
 
 showTab()
