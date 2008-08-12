@@ -1032,6 +1032,8 @@
       {
         $p_attr->setDestinationFilter("");
       }
+      $p_attr->setUseFilterForAddLink(false);
+      $p_attr->setUseFilterForEditLink(false);
       return $p_attr->edit($record, $fieldprefix, $mode);
     }
 
