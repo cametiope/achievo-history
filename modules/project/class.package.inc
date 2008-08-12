@@ -62,9 +62,10 @@
     	$policy->setType('trafficlight', 'trafficlightattribute');
     	$policy->setTypeAndParams('trafficlight_updatestyle', 'atkradioattribute', array('options' => array('manual', 'automatic'), 'values' => array('M', 'A')));
     	
-    	$policy->addFlag('trafficlight_updatestyle', AF_FORCE_LOAD);
+    	$policy->addFlag('trafficlight_updatestyle', AF_FORCE_LOAD|AF_HIDE_ADD);
     	$policy->setTypeAndParams('trafficlight_memo', 'trafficlightmemoattribute', array('size' => array('rows' => '4')));
 
+    	$policy->addFlag('trafficlight_memo', AF_HIDE_ADD);
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
 
       $policy->hasMany("package_person");

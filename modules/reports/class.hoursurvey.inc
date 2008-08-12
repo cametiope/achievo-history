@@ -219,6 +219,9 @@ class hoursurvey extends atkNode
     $phasepair =          explode("=",$g_sessionManager->pageVar("phaseid"));
     $phaseid =            stripQuotes($phasepair[1]);
 
+    $packagepair =          explode("=",$g_sessionManager->pageVar("packageid"));
+    $packageid =            stripQuotes($packagepair[1]);
+    
     //if we only have a phaseid, retrieve the projectid.
     if(!empty($phaseid) && empty($projectid))
     {
@@ -444,6 +447,7 @@ class hoursurvey extends atkNode
       "projectid"     =>array("id"=>$projectid),
       "project_category" => array("id"=>$category),
       "organizationid"=>array("id"=>$organizationid), // manytoonerelation needs subarray
+      "packageid"     =>array("id"=>$packageid),
       "phaseid"       =>array("id"=>$phaseid),
       "activityid"    =>array("id"=>$activity_id),
       "startdate"     =>array("year"=>substr($startdate,0,4),
@@ -480,10 +484,12 @@ class hoursurvey extends atkNode
           }
         }
       }
-
-      $projectatt = &$hoursnode->m_attribList["projectid"];
-      $projectatt->addDependee("phaseid");
-
+      
+      
+      $projectatt = &$hoursnode->m_attribList["projectid"];     
+      //$projectatt->addDependee("phaseid");
+      $projectatt->addDependee("packageid");
+      
       if(atkconfig::get("timereg","timereg_contact_link",false))
       {
         $projectatt->addDependee("contact_id");
@@ -509,19 +515,32 @@ class hoursurvey extends atkNode
       
       $text = atktext("add_project");
       $link = atkHref(dispatch_url("reports.hoursurvey", "report",array("add_project"=>1)), $text,SESSION_DEFAULT,true);
-
+  
       $data[] = array(atktext('project','project').':',$projectatt->edit($dummyrec)." ".$link);
 
       if(atkConfig::get("project","use_subprojects"))
       {      
         $p_attr = new atkBoolAttribute("subproject");
-        $p_attr->addDependee("phaseid");
+        //$p_attr->addDependee("phaseid");
         $p_attr->m_ownerInstance = &$hoursnode;
         $p_attr->_registerDependees();
   
         $data[] = array(atktext('subproject','project').':',$p_attr->edit($dummyrec));
       }
       
+      // Add the package attribute to the node
+      $packageatt = &$hoursnode->m_attribList["packageid"];
+      $packageatt->setDestinationFilter("package.projectid='[projectid.id]'");      
+      $packageatt->addDependee("phaseid");
+      $packageatt->m_ownerInstance = &$hoursnode;      
+      $packageatt->_registerDependees( );
+
+      $data[] = array(atktext('package','project').':',
+        array('value'=>$packageatt->edit($dummyrec),
+        'id'=>str_replace(".","_",$this->getHoursNodeName())."_".$packageatt->m_name),
+        );
+      $this->_addOr($data);
+     
       $phaseatt = &$hoursnode->m_attribList["phaseid"];
       $phaseatt->setDestinationFilter("phase.projectid='[projectid.id]'");
       $phaseatt->m_ownerInstance = &$hoursnode;
@@ -783,7 +802,7 @@ class hoursurvey extends atkNode
 
     if(!empty($activity_id)&&$activity_id!="")
       $filterarray[] = $this->_addFilterArrayItem("activityid","='$activity_id'","hours");
-
+    
     //If we use multi project, we don't take into account project/phase,
     //selected in other controls
     if(!empty($list))
@@ -801,6 +820,13 @@ class hoursurvey extends atkNode
     }
     else 
     {
+      // Add package to the condition list
+      if( !empty( $packageid ) && $packageid != '')
+      {
+        $condition = 'phaseid.master = "project.package" AND phaseid.master_id = '.(int) $packageid;              
+        $filterarray[] = $this->_addFilterArrayItem('', $condition, '');  
+      }    
+      
       if(!empty($phaseid)&&$phaseid!="")
         $filterarray[] = $this->_addFilterArrayItem("phaseid","='$phaseid'","hours");
   

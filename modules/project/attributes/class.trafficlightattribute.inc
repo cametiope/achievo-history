@@ -20,6 +20,7 @@
       $this->atkAttribute($name, $flags|AF_READONLY|AF_HIDE_ADD);
     }
 
+    
     /**
      * Display override for traffic light
      *
@@ -32,6 +33,18 @@
       return $this->getTrafficLight($record, $mode);
     }
 
+    
+    /**
+     * Ensure the attribute will be updated
+     *
+     * @return unknown
+     */
+    public function needsUpdate()
+    {
+      return true;
+    }
+    
+    
     /**
      * Generate trafficlight based on configuration options
      *

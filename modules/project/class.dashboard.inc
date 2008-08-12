@@ -34,7 +34,7 @@
 
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight'));
-      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('m', 'a')));
+      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A')));
       $this->add(new trafficLightMemoAttribute('trafficlight_memo'));
 
       $this->add(new atkAttribute("name",AF_READONLY));

@@ -64,7 +64,7 @@
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
       $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_HIDE_LIST|AF_HIDE_ADD|AF_FORCE_LOAD|AF_DISPLAY_VERT));
       $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST|AF_HIDE_ADD));
-
+                 
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
       
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE|AF_FORCE_LOAD, 50));
@@ -72,8 +72,8 @@
       $this->add(new atkListAttribute("status",array("active","nonactive"), "", AF_OBLIGATORY|AF_HIDE_LIST));
 
       $this->add(new packageProjectSelector('project_package'));
-      $this->add(new atkNumberAttribute("master_id", AF_HIDE));
-      $this->add(new atkAttribute("master", AF_HIDE_ADD|AF_HIDE_EDIT));
+      $this->add(new atkAttribute("master", AF_HIDE_ADD|AF_HIDE_EDIT|AF_FORCE_LOAD));
+      $this->add(new atkNumberAttribute("master_id", AF_HIDE|AF_FORCE_LOAD));
 
       $this->add(new dependencyAttribute("dependencies",AF_HIDE_ADD|AF_HIDE_LIST|AF_BLANKLABEL|AF_HIDE_VIEW));
 
@@ -89,8 +89,8 @@
       $this->add(new atkListAttribute("completed", $completed['options'], $completed['values'], AF_HIDE_ADD|AF_FORCE_LOAD|AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM));
 
       $this->add(new atkDurationAttribute("initial_planning"));
-      $this->add(new atkDurationAttribute("current_planning"));
-      $this->add(new atkDurationAttribute("remaining_effort_time"));
+      $this->add(new atkTextAttribute("current_planning"));
+      $this->add(new atkTextAttribute("remaining_effort_time"));
 
       // deliverable dependency
       $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable", AF_HIDE_LIST));

@@ -64,7 +64,10 @@
     private function calculateHours($record)
     {
     	$db = atkGetDb();
-    	$selectPhase = "SELECT id, master, master_id FROM phase WHERE id=".$record['phaseid']." LIMIT 0,1";
+    	
+    	$phase = is_array( $record['phaseid'] ) ? $record['phaseid']['id'] : $record['phaseid'];    	
+    	$selectPhase = "SELECT id, master, master_id FROM phase WHERE id=".$phase." LIMIT 0,1";
+    	      
     	$phase = $db->getrows($selectPhase);
     	$this->setUpdater($phase[0], $db);
     }

@@ -15,6 +15,7 @@
       $this->atkTextAttribute($name, $size, $flags);
     }
 
+    
     /**
      * Adds slashes and a timestamp prefix
      *
@@ -23,9 +24,9 @@
      */
     public function value2db($rec)
     {
-    	$db   = &$this->getDb();
-    	$previousContent = $db->escapeSQL(atkGetPostVar( 'memo_previous_content' ));
-
+      $db   = &$this->getDb();      
+      $previousContent = isset( $rec['atkorgrec']['trafficlight_memo'] ) ? $db->escapeSQL($rec['atkorgrec']['trafficlight_memo']) : '';
+    	
       if( $rec[$this->fieldName()] == '' )
       {
         return $previousContent;
@@ -59,7 +60,7 @@
      * @param $size array with field rows and cols for additional size of the text box
      * @return piece of html code with a textarea
      */
-    public function edit( $record="", $fieldprefix="", $mode='add' )
+    public function edit( &$record="", $fieldprefix="", $mode='add' )
     {
       $text = (isset($record[$this->fieldName()]) && $mode != 'edit') ? $record[$this->fieldName()] : '';
       $text_previous = (isset($record[$this->fieldName()]))           ? $record[$this->fieldName()] : '';
@@ -85,12 +86,22 @@
       $result.=$this->getCSSClassAttribute();
       $result.=">\n".htmlspecialchars($text)."</textarea>";
       // Add previous content of the memo in an hidden input field
-      $result.="\n<input type='hidden' name='memo_previous_content' value='".$text_previous."' />";
+      $result.="\n<input type='hidden' name='memo_previous_content' value='".htmlspecialchars($text_previous)."' />";
       return $result;
     }
 
     public function display( $record, $mode)
     {
     	return preg_replace('/<br\\\\s*?\\/??>/i', "\\n", $record[$this->fieldName()]);
+    }
+    
+    /**
+     * Ensure the attribute will be updated
+     *
+     * @return unknown
+     */
+    public function needsUpdate()
+    {
+      return true;
     }
   }

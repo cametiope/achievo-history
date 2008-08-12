@@ -59,8 +59,6 @@
     }
 
 
-
-
     function edit(&$record, $fieldprefix="", $mode="")
     {
       $filter=$this->parseFilter($this->m_destinationFilter,$record);

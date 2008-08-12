@@ -64,7 +64,9 @@
     private function calculateTrafficLight($record)
     {
       $db = atkGetDb();
-      $selectPhase = "SELECT id, trafficlight, current_planning, master, master_id FROM phase WHERE id=".$record['phaseid']." LIMIT 0,1";
+    	$phase = is_array( $record['phaseid'] ) ? $record['phaseid']['id'] : $record['phaseid'];    	
+  
+      $selectPhase = "SELECT id, trafficlight, current_planning, master, master_id FROM phase WHERE id=".$phase." LIMIT 0,1";
       $phase = $db->getrows($selectPhase);
       $this->updatePhase($phase[0], $db);
       $this->setUpdater($phase[0], $db);
@@ -99,10 +101,13 @@
     	$qryHours = sprintf("SELECT SUM(time) AS spend_minutes FROM hours WHERE phaseid=%d", $phase['id']);
     	$hours = $db->getValue($qryHours);
 
-    	$percentage = round((($hours/$phase['current_planning']) * 100), 0);
-
-    	$qryUpdateTrafficlight = sprintf("UPDATE phase SET trafficlight=%d WHERE id=%d", $percentage, $phase['id']);
-    	$db->query($qryUpdateTrafficlight);
+    	// We cannot calculate a percentage if no current_planning has been set
+    	if( (int) $phase['current_planning'] > 0)
+    	{
+    	  $percentage = round((($hours/(int)$phase['current_planning']) * 100), 0);
+      	$qryUpdateTrafficlight = sprintf("UPDATE phase SET trafficlight=%d WHERE id=%d", $percentage, $phase['id']);
+      	$db->query($qryUpdateTrafficlight);    	  
+    	}
     }
 
     /**

@@ -2,6 +2,7 @@
 
 include_once("achievotools.inc");
 useattrib("project.projectmanytoonerelation");
+useattrib("project.packagemanytoonerelation");
 useattrib("project.projectattrib");
 useattrib("atkdateattribute");
 useattrib("atklistattribute");
@@ -230,20 +231,26 @@ class hours extends atkNode
     // force_load flag is set for userid, since several features rely on the
     // userid, even if it's not displayed on screen.
     $this->add(new atkManyToOneRelation("userid","employee.employee", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
-
+        
     //phaseid must be added before the project id to make sure the join works
     //we need the projectid to sort on
     $phase = &new atkManyToOneRelation("phaseid","project.phaseselector",AF_OBLIGATORY|AF_FORCE_LOAD);
-    $phase->setDestinationFilter("phase.projectid='[projectid.id]'");
+    $phase->setDestinationFilter('phase.`master` = "project.project" AND phase.master_id = "[projectid.id]" ) OR ( phase.`master` = "project.package" AND phase.master_id = "[packageid.id]"');
     $oneActivity = (projectutils::getActivityCount() == 1);
     if(!$oneActivity)
       $phase->addDependee("activityid");
-    $this->add($phase,null, 30);
+    $this->add($phase,null, 30);       
 
+    $package = &new packageManyToOneRelation("packageid", "project.package",AF_OBLIGATORY|AF_FORCE_LOAD);
+    $package->setDestinationFilter('package.projectid="[projectid.id]"');
+    $package->addDependee('phaseid');
+    $this->add($package,null,29);       
+        
     $project = &new projectManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_FORCE_LOAD);
-    $project->addDependee("phaseid");
-    $project->setUserId($this->m_user);
-
+    //$project->addDependee("phaseid");
+    $project->addDependee("packageid");
+    $project->setUserId($this->m_user);    
+    
     if(atkconfig::get("timereg","timereg_contact_link",false))
     {
       $project->addDependee("contact_id");
@@ -541,7 +548,8 @@ class hours extends atkNode
     $this->setLock();
 
     $this->addFilter("hours.userid",$this->m_user);
-
+    $this->addFilter("phaseid.master = 'project.package'");
+      
     //we need to make sure the activitydate has the same value as $this->m_viewdate.
     $this->updatesessionrecordviewdate();
 

@@ -9,13 +9,19 @@ class surveyhours extends hours
     {
       $attr = &$this->getAttribute($attrName);
       if (is_a($attr, 'atkmanytoonerelation'))
-      {
+      {     
         $attr->removeFlag(AF_RELATION_AUTOCOMPLETE);
-        //we remove all dependee - hoursurvey will add own
-        $attr->m_dependees = array();
+                
+        // we remove all dependee - hoursurvey will add own
+        // we don't do this for packageid, because that would cause the dependee to be lost
+        if( $attrName !== 'packageid' )
+        {
+          $attr->m_dependees = array();        
+        }
+
       }
 
-      if($attrName == "phaseid")
+      if( in_array($attrName, array('phaseid', 'packageid') ) )
       {
         $attr->removeFlag(AF_OBLIGATORY);
       }
@@ -101,4 +107,3 @@ class surveyhours extends hours
   }
 
 }
-?>

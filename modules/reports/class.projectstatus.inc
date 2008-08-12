@@ -184,6 +184,8 @@
 
         $rows = $db->getrows("SELECT
                                 p.name as project,
+                                CASE ph.master WHEN 'project.package' THEN ( SELECT name FROM package WHERE id = ph.master_id )
+                                ELSE '-' END AS package,
                                 ph.name as phase,
                                 ph.initial_planning,
                                 ph.current_planning,
@@ -217,7 +219,7 @@
                               ORDER BY
                                 p.name, ph.name");
 
-         $data[] = array(atktext("project"), atktext("phase"), atktext("initial_planning"), atktext("current_planning"), atktext("booked"), atktext("diff_planning"));
+         $data[] = array(atktext("project"), atktext("package"), atktext("phase"), atktext("initial_planning"), atktext("current_planning"), atktext("booked"), atktext("diff_planning"));
 
          $total_time = 0;
          $total_current = 0;
@@ -241,7 +243,8 @@
            {
              $line[] = "";
            }
-
+           
+           $line[] = $rows[$i]["package"];
            $line[] = $rows[$i]["phase"];
            $line[] = time_format($rows[$i]["initial_planning"]);
            $line[] = time_format($rows[$i]["current_planning"]);
@@ -275,7 +278,7 @@
            $data[] = $line;
          }
 
-         $data[] = array(atktext("total"), "", time_format($total_initial), time_format($total_current), time_format($total_time), $this->diffToHtml($total_diff));
+         $data[] = array(atktext("total"), "", "", time_format($total_initial), time_format($total_current), time_format($total_time), $this->diffToHtml($total_diff));
 
          $tr = &atknew("atk.utils.atktablerenderer");
          $output.= $tr->render($data, TBL_DATA|TBL_FOOTER, "recordlist")."<br/>";
