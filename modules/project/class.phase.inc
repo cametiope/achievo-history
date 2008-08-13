@@ -88,9 +88,9 @@
       $completed = $this->getCompletedValues();
       $this->add(new atkListAttribute("completed", $completed['options'], $completed['values'], AF_HIDE_ADD|AF_FORCE_LOAD|AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM));
 
-      $this->add(new atkDurationAttribute("initial_planning"));
-      $this->add(new atkTextAttribute("current_planning"));
-      $this->add(new atkTextAttribute("remaining_effort_time"));
+      $this->add(new atkNumberAttribute("initial_planning"));
+      $this->add(new atkNumberAttribute("current_planning"));
+      $this->add(new atkNumberAttribute("remaining_effort_time"));
 
       // deliverable dependency
       $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable", AF_HIDE_LIST));
