@@ -27,15 +27,27 @@ useattrib("atkupdatedbyattribute");
 useattrib("atkupdatestampattribute");
 useattrib("atktabbedpane");
 
-class organization extends atkNode
+userelation("atkmanytoonetreerelation");
+
+atkimport("atk.atktreenode");
+  
+class organization extends atkTreeNode
 {
   function organization()
   {
-    $this->atkNode("organization", NF_EDITAFTERADD|NF_EXPORT);
+    //$this->atkNode("organization", NF_EDITAFTERADD|NF_EXPORT);
+    $this->atkTreeNode("organization", NF_TREE_NO_ROOT_COPY|NF_TREE_NO_ROOT_DELETE|NF_EDITAFTERADD|NF_EXPORT|NF_TREE_AUTO_EXPAND);    
+    
     $listener = &atknew("modules.crm.listeners.eventlistener");
     $this->addListener($listener);
 
-    $this->add(new atkNumberAttribute("id" ,AF_AUTOKEY));
+    $this->add(new atkNumberAttribute("id" ,AF_AUTOKEY));    
+
+    $this->add(new atkManyToOneTreeRelation("parent_id","organization.organization", AF_PARENT|AF_FORCE_LOAD));
+          
+    $this->add(new atkManyToOneRelation("manager_id", "person.person", AF_HIDE_LIST|AF_LARGE));
+    $this->add(new atkOneToManyRelation("representatives","organization.organization_representative", "organization_id", AF_HIDE_LIST|AF_HIDE_ADD));
+    
     $this->add(new atkAttribute("organizationcode", AF_SEARCHABLE));
     $this->add(new atkAttribute("name",AF_SEARCHABLE|AF_OBLIGATORY, 100));
     $this->add(new atkListAttribute("type", array("customer", "supplier"), "", AF_HIDE_LIST));

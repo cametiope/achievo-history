@@ -7,7 +7,7 @@
       registerNode("organization.organization", array("admin", "add", "edit", "delete", "document"));
       registerNode("organization.contact", array("admin", "add","edit","delete"));
       registerNode("organization.contracts", array("admin","add","edit","delete"));
-      registerNode("organization.contracttype", array("admin","add","edit","delete"));
+      registerNode("organization.contracttype", array("admin","add","edit","delete"));   
     }
 
     function getMenuItems()
