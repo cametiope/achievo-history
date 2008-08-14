@@ -325,7 +325,6 @@
      */
     public function postMeta()
     {
-      $this->getAttribute("master")->addDependee("master_id");
       $this->setColumnAttribs(array('deliverable_package', 'package_person'));
       //$this->setProjectId();
     }
