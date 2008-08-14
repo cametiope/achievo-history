@@ -43,6 +43,13 @@
      */
   	private $project;
 
+    /**
+     * Memo attribute object
+     *
+     * @var object
+     */
+    private $memo_attr;
+      	
   	/**
   	 * Constructor.
   	 *
@@ -62,9 +69,17 @@
 
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
-      $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_HIDE_LIST|AF_HIDE_ADD|AF_FORCE_LOAD|AF_DISPLAY_VERT));
-      $this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE_LIST|AF_HIDE_ADD));
-                 
+      $radio = &$this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_FORCE_LOAD|AF_HIDE_LIST|AF_HIDE_ADD|AF_DISPLAY_VERT));
+      
+      // Hide attribute and add it as a class member var so we can manipulate it later
+      $memo = &$this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE|AF_FORCE_LOAD));      
+      $this->memo_attr = $memo;
+            
+      $radio->addDependee('trafficlight_selection');
+      $radio->addDependee('trafficlight_memo_field');
+      $this->add(new atkDummyAttribute('trafficlight_selection', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
+      $this->add(new atkDummyAttribute('trafficlight_memo_field', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
+            
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
       
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE|AF_FORCE_LOAD, 50));
@@ -109,7 +124,7 @@
       $this->add(new atkOneToManyRelation("deliverable_phase","project.deliverable_phase","phase_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
 
       $this->addSecurityMap("view","project.admin");
-      $this->setOrder("phase.startdate, phase.name");
+      $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field');
       $this->setTable("phase","phase");
 
       $this->setColumnAttribs(array('deliverable_phase'));
@@ -126,6 +141,69 @@
         $this->addFlag(NF_NO_VIEW|NF_NO_EDIT|NF_NO_DELETE|NF_NO_SEARCH);
       }
     }
+    
+      /**
+     * Generate output to show or hide a selectlist for the trafficlight attribute
+     * 
+     * @param array
+     * @param string
+     * @return string
+     */
+    public function trafficlight_selection_edit( &$record )
+    {
+      $output = '<div id="project_phase_trafficlight_selection">';
+      if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'M' )
+      {       
+        $red    = atkConfig::get('project', 'trafficlight_red');
+        $yellow = atkConfig::get('project', 'trafficlight_yellow'); 
+        $green  = atkConfig::get('project', 'trafficlight_green'); 
+        
+        $output.= '<select name="trafficlight" '.(!$record['trafficlight'] ? 'selected' : '' ).'>';
+        $output.= '<option value="">'.atktext('list_null_value_obligatory').'</option>';
+        $output.= '<option value="'.$red['start'].'">'.atktext('red').'</option>';
+        $output.= '<option value="'.$yellow['start'].'">'.atktext('yellow').'</option>';
+        $output.= '<option value="'.$green['start'].'">'.atktext('green').'</option>';
+       
+        $output.= '</select></div><br />';
+      }     
+      return $output;
+    }    
+    
+    
+    /**
+     * Generate output to change the memo field attribute depending on the selected updatestyle
+     * 
+     * @param array
+     * @param string
+     * @return string
+     */
+    public function trafficlight_memo_field_edit( &$record, $fieldprefix = '' )
+    {
+      $output = '<div id="project_phase_trafficlight_memo_field">';
+      $this->memo_attr->setForceUpdate( true );
+      
+      if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'A' )
+      {  
+        // Get memo attribute's content by executing a query
+        // This value should probably come directly from $record, but somehow this wont work
+        $db = &atkGetDb();
+        $row = $db->getRows('SELECT trafficlight_memo FROM phase WHERE id = '.(int) $record['id']);
+        $record['trafficlight_memo'] = $row[0]['trafficlight_memo'];
+        
+        $this->memo_attr->addFlag( AF_READONLY );      
+        $output .= '<textarea cols="70" rows="4" disabled="disabled" name="trafficlight_memo">';
+        $output .= $record['trafficlight_memo'];
+        $output .= '</textarea>';
+      }
+      else
+      {
+        $this->memo_attr->removeFlag( AF_READONLY );
+        $output .= $this->memo_attr->getEdit( 'edit', $record, $fieldprefix );        
+      }      
+
+      $output .= '</div>';
+      return $output;
+    }    
 
     public function name_display($record, $mode)
     {

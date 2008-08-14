@@ -66,10 +66,14 @@
       $db = atkGetDb();
     	$phase = is_array( $record['phaseid'] ) ? $record['phaseid']['id'] : $record['phaseid'];    	
   
-      $selectPhase = "SELECT id, trafficlight, current_planning, master, master_id FROM phase WHERE id=".$phase." LIMIT 0,1";
+      $selectPhase = "SELECT id, trafficlight, trafficlight_updatestyle, current_planning, master, master_id FROM phase WHERE id=".$phase." LIMIT 0,1";
       $phase = $db->getrows($selectPhase);
-      $this->updatePhase($phase[0], $db);
-      $this->setUpdater($phase[0], $db);
+      
+      if( $phase[0]['trafficlight_updatestyle'] == 'A') // If updatestyle of phase is not set to (A)utomatic
+      {
+        $this->updatePhase($phase[0], $db);
+      }
+      $this->setUpdater($phase[0], $db);      
     }
 
     /**
@@ -117,13 +121,15 @@
      * @param object $db
      */
     private function updatePackage($package_id, $db)
-    {
-      $qryUpdateTrafficlight = sprintf("UPDATE package SET trafficlight=ROUND((spend_hours/current_planning), 2) WHERE id=%d", $package_id);
-      $db->query($qryUpdateTrafficlight);
-
-      $selectPackage = "SELECT id, trafficlight, current_planning, master, master_id FROM package WHERE id=".$package_id." LIMIT 0,1";
+    {      
+      $selectPackage = "SELECT id, trafficlight, trafficlight_updatestyle, current_planning, master, master_id FROM package WHERE id=".$package_id." LIMIT 0,1";
       $package = $db->getrows($selectPackage);
-
+            
+      if( $package[0]['trafficlight_updatestyle'] == 'A' ) // If updatestyle of package is not set to (A)utomatic
+      {
+        $qryUpdateTrafficlight = sprintf("UPDATE package SET trafficlight=ROUND((spend_hours/current_planning), 2) WHERE id=%d", $package_id);
+        $db->query($qryUpdateTrafficlight);
+      }
       $this->setUpdater($package[0], $db);
     }
 
@@ -135,8 +141,14 @@
      */
     private function updateProject($project_id, $db)
     {
-      $qryUpdateTrafficlight = sprintf("UPDATE project SET trafficlight=ROUND((spend_hours/current_planning), 2) WHERE id=%d", $project_id);
-      $db->query($qryUpdateTrafficlight);
+      $selectProject = "SELECT id, trafficlight_updatestyle FROM project WHERE id=".$project_id." LIMIT 0,1";
+      $project = $db->getrows($selectProject);
+            
+      if( $project[0]['trafficlight_updatestyle'] == 'A' ) // If updatestyle of project is not set to (A)utomatic
+      {            
+        $qryUpdateTrafficlight = sprintf("UPDATE project SET trafficlight=ROUND((spend_hours/current_planning), 2) WHERE id=%d", $project_id);
+        $db->query($qryUpdateTrafficlight);
+      }
     }
 
   }

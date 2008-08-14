@@ -71,8 +71,8 @@
             
       $radio->addDependee('trafficlight_selection');
       $radio->addDependee('trafficlight_memo_field');
-      $this->add(new atkDummyAttribute('trafficlight_selection', '', AF_NO_LABEL|AF_HIDE_LIST));     
-      $this->add(new atkDummyAttribute('trafficlight_memo_field', '', AF_NO_LABEL|AF_HIDE_LIST));     
+      $this->add(new atkDummyAttribute('trafficlight_selection', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
+      $this->add(new atkDummyAttribute('trafficlight_memo_field', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
               
       $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));
       $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));
@@ -141,7 +141,7 @@
 
       $this->setTable("project","project");
 
-      $this->setOrder("project.abbreviation, project.name");
+      $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field');
       $this->setIndex("name");
 
       
@@ -239,9 +239,8 @@
         $row = $db->getRows('SELECT trafficlight_memo FROM project WHERE id = '.(int) $record['id']);
         $record['trafficlight_memo'] = $row[0]['trafficlight_memo'];
         
-        $this->memo_attr->addFlag( AF_READONLY );
-        //$output .= $this->memo_attr->getEdit( 'edit', $record, $fieldprefix );        
-        $output .= '<textarea style="width: 100%; height: 80px;" disabled="disabled">';
+        $this->memo_attr->addFlag( AF_READONLY );      
+        $output .= '<textarea cols="70" rows="4" disabled="disabled" name="trafficlight_memo">';
         $output .= $record['trafficlight_memo'];
         $output .= '</textarea>';
       }

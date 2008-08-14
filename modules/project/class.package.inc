@@ -22,7 +22,6 @@
 
   userelation("atkmanytoonerelation");
   useattrib("atklistattribute");
-  useattrib("atkradioattribute");
   useattrib("project.packageprojectselector");
 
   useattrib("project.trafficlightattribute");
@@ -44,6 +43,13 @@
     private $project;
 
     /**
+     * Memo attribute object
+     *
+     * @var object
+     */
+    private $memo_attr;
+    
+    /**
      * Constructor.
      */
     public function __construct()
@@ -59,13 +65,15 @@
      */
     public static function meta(atkMetaPolicy $policy)
     {
-    	$policy->setType('trafficlight', 'trafficlightattribute');
-    	$policy->setTypeAndParams('trafficlight_updatestyle', 'atkradioattribute', array('options' => array('manual', 'automatic'), 'values' => array('M', 'A')));
-    	
-    	$policy->addFlag('trafficlight_updatestyle', AF_FORCE_LOAD|AF_HIDE_ADD);
-    	$policy->setTypeAndParams('trafficlight_memo', 'trafficlightmemoattribute', array('size' => array('rows' => '4')));
+      // The next three attributes have to be the first three attributes in this node
+      $policy->add('trafficlight','trafficLightAttribute', array(), AF_HIDE_LIST);
+      $policy->add('trafficlight_updatestyle', 'atkradioattribute', array(array('manual', 'automatic'), array('M', 'A')), AF_FORCE_LOAD|AF_HIDE_LIST|AF_DISPLAY_VERT|AF_HIDE_ADD);
+      
+      $policy->add('trafficlight_memo', 'trafficlightmemoattribute', array('rows' => '4'), AF_HIDE|AF_FORCE_LOAD);      
+    
+      $policy->add('trafficlight_selection', 'atkdummyattribute', array(), AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD);
+      $policy->add('trafficlight_memo_field', 'atkdummyattribute', array(), AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD);          
 
-    	$policy->addFlag('trafficlight_memo', AF_HIDE_ADD);
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
 
       $policy->hasMany("package_person");
@@ -91,15 +99,79 @@
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
       $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
-      $policy->addFlags('trafficlight_updatestyle', AF_DISPLAY_VERT|AF_HIDE);
 
       $policy->hasMany('deliverable_package', array('source' => 'package_id'));
       $policy->addFlags('package_person', 'deliverable_package', AF_NO_LABEL);
 
-      $policy->setOrder(array('trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'abbreviation_package', 'name', 'projectid',
+      $policy->setOrder(array('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field',  'abbreviation_package', 'name', 'projectid',
                               'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
+      
+      $policy->addFlag('trafficlight',AF_HIDE_ADD);
+                              
     }
 
+      /**
+     * Generate output to show or hide a selectlist for the trafficlight attribute
+     * 
+     * @param array
+     * @param string
+     * @return string
+     */
+    public function trafficlight_selection_edit( &$record )
+    {
+      $output = '<div id="project_package_trafficlight_selection">';
+      if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'M' )
+      {       
+        $red    = atkConfig::get('project', 'trafficlight_red');
+        $yellow = atkConfig::get('project', 'trafficlight_yellow'); 
+        $green  = atkConfig::get('project', 'trafficlight_green'); 
+        
+        $output.= '<select name="trafficlight" '.(!$record['trafficlight'] ? 'selected' : '' ).'>';
+        $output.= '<option value="">'.atktext('list_null_value_obligatory').'</option>';
+        $output.= '<option value="'.$red['start'].'">'.atktext('red').'</option>';
+        $output.= '<option value="'.$yellow['start'].'">'.atktext('yellow').'</option>';
+        $output.= '<option value="'.$green['start'].'">'.atktext('green').'</option>';
+       
+        $output.= '</select></div><br />';
+      }     
+      return $output;
+    }    
+    
+    
+    /**
+     * Generate output to change the memo field attribute depending on the selected updatestyle
+     * 
+     * @param array
+     * @param string
+     * @return string
+     */
+    public function trafficlight_memo_field_edit( &$record, $fieldprefix = '' )
+    {
+      $output = '<div id="project_package_trafficlight_memo_field">';
+      $this->memo_attr->setForceUpdate( true );
+      
+      if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'A' )
+      {  
+        // Get memo attribute's content by executing a query
+        // This value should probably come directly from $record, but somehow this wont work
+        $db = &atkGetDb();
+        $row = $db->getRows('SELECT trafficlight_memo FROM package WHERE id = '.(int) $record['id']);
+        $record['trafficlight_memo'] = $row[0]['trafficlight_memo'];
+        
+        $this->memo_attr->addFlag( AF_READONLY );
+        $output .= '<textarea cols="70" rows="4" disabled="disabled" name="trafficlight_memo">';
+        $output .= $record['trafficlight_memo'];
+        $output .= '</textarea>';
+      }
+      else
+      {
+        $this->memo_attr->removeFlag( AF_READONLY );
+        $output .= $this->memo_attr->getEdit( 'edit', $record, $fieldprefix );        
+      }      
+
+      $output .= '</div>';
+      return $output;
+    }    
     
     public function postAdd($rec)
     {
@@ -326,7 +398,9 @@
     public function postMeta()
     {
       $this->setColumnAttribs(array('deliverable_package', 'package_person'));
-      //$this->setProjectId();
+      
+      $this->memo_attr = $this->getAttribute("trafficlight_memo");
+      $this->getAttribute("trafficlight_updatestyle")->addDependee('trafficlight_memo_field')->addDependee('trafficlight_selection');
     }
 
     /**
@@ -389,7 +463,7 @@
       }
       return parent::getTemplate($action, $record, $tab);
     }
-
+     
     /**
      * Edit action handler override.
      *
