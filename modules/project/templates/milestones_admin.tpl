@@ -53,7 +53,7 @@
     {$milestones[i].name}
   </div>      
   <div style="width: 120px; position: relative; float: left">{$milestones[i].duedate.day}.{$milestones[i].duedate.month}.{$milestones[i].duedate.year}</div>
-  <div style="width: 120px; position: relative; float: left">x x</div>
+  <div style="width: 120px; position: relative; float: left">{$milestones[i].progress}</div>
   <div style="width: 120px; position: relative; float: left">{$milestones[i].userid.lastname}</div>
   <div style="width: 120px; position: relative; float: left">{$milestones[i].status}</div>
   <div style="width: 60px; position: relative; float: left">{$milestones[i].editlink} {$milestones[i].deletelink}</div>

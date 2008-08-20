@@ -112,7 +112,7 @@
     $children = $milestone->getMilestoneChildren( $vars['milestone'] );
     
     echo paintPackages( $children['packages'], 0 ) .
-         paintPhases( $children['phases'], 0 ) .
+         paintPhases( $children['phases'], -1 ) .
          paintDocuments( $children['documents'] );
     exit;
   }

@@ -80,6 +80,8 @@
 
       $policy->hasOne("project.project",array("source"=>"projectid"),array(),AF_HIDE);
       $policy->addFlags('projectid', AF_HIDE);
+      
+      $policy->addFlags('completed', AF_FORCE_LOAD);
 
       $policy->addFlag('id', AF_FORCE_LOAD);
       $policy->setTypeAndParams('project_package','module.project.attributes.packageprojectselector' );

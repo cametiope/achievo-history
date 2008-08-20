@@ -101,7 +101,7 @@
 
       $milestones = array();
       $results = $this->selectDb($vars['atkfilter']);
-
+      
       for ($i=0,$_i=count($results);$i<$_i;$i++)
       {
         $dispatch_params = array( 'atkselector'    => 'deliverable.id='.$results[$i]['id'],
@@ -112,6 +112,7 @@
         $milestones[$i]['id']       = $results[$i]['id'];
         $milestones[$i]['name']     = $results[$i]['name'];
         $milestones[$i]['status']   = $results[$i]['status'];
+        $milestones[$i]['progress'] = '&nbsp;';
         $milestones[$i]['duedate']  = $results[$i]['duedate'];
         $milestones[$i]['userid']['lastname'] = $results[$i]['userid']['lastname'];
         $theme->iconPath( 'edit', 'recordlist');
@@ -185,10 +186,11 @@
         {
           $packages[] = array( 'id'       => $package['package_id']['id'],
                                'name'     => $package['package_id']['name'],
-                               'progress' => 'xx', );
+                               'progress' => (int) $package['package_id']['completed']  .' %',
+                             );
         }
       }
-
+      
       return $packages;
     }
 
@@ -211,7 +213,8 @@
         {
           $phases[] = array( 'id'       => $phase['phase_id']['id'],
                              'name'     => $phase['phase_id']['name'],
-                             'progress' => 'xx', );
+                             'progress' => (int) $phase['phase_id']['completed'].' %',
+                            );
         }
       }
 
@@ -238,7 +241,8 @@
         {
           $packages[] = array( 'id'       => $package['id'],
                                'name'     => $package['name'],
-                               'progress' => 'xx', );
+                               'progress' => ( int ) $package['completed'].' %',
+                             );
         }
       }
 
@@ -265,7 +269,8 @@
         {
           $phases[] = array( 'id'       => $phase['id'],
                              'name'     => $phase['name'],
-                             'progress' => 'xx', );
+                             'progress' => ( int ) $phase['completed'].' %',
+                           );
         }
       }
 
@@ -280,7 +285,7 @@
      * @return array
      */
     private function fetchDocumentsByMilestone( $milestone_id )
-    {
+    {      
       $documents = array();
       $node = &atkGetNode( 'project.deliverable_document' );
       $results = $node->selectDb( 'deliverable_document.deliverable_id = '.(int) $milestone_id );
