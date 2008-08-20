@@ -125,6 +125,9 @@
 
       $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
 
+      $this->add( new atkBoolAttribute( 'description_obligatory', AF_HIDE_ADD ) );
+      $this->add( new atkBoolAttribute( 'use_activities', AF_HIDE_ADD ) );     
+      
       // If we are in project administration mode, we show all projects. Otherwise, we only
       // show active projects.
       if (!isset($_SERVER["PWD"]))
@@ -394,7 +397,7 @@
       $projectid = $this->m_postvars["selectedprojectid"];
 
       // Compose the image html code
-      $imageurl = moduleDir("project")."ganttchart.php?projectid=".$projectid;
+      //$imageurl = moduleDir("project")."ganttchart.php?projectid=".$projectid;
       $image = '<img src="'.$imageurl.'" alt="'.atktext("title_projectplanning").'"><br>';
 
       // Select the name and coordinator of the selected project

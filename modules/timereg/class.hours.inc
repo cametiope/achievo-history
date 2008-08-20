@@ -149,6 +149,8 @@ class hours extends atkNode
 
   function hours($type="hours", $flags=0)
   {
+    $this->getPage()->register_script(moduledir('timereg').'/javascript/toggle_attributerow.js');
+    $this->getPage()->register_loadscript( 'toggle_attributerow(\'projectid\', \'activityid\');' );
     // weekview and viewdate are variables that we need to remember..
     $this->m_weekview = $this->processGlobalVar("weekview");
     $this->m_viewdate = $this->processGlobalVar("viewdate");
@@ -236,9 +238,9 @@ class hours extends atkNode
     //we need the projectid to sort on
     $phase = &new atkManyToOneRelation("phaseid","project.phaseselector",AF_OBLIGATORY|AF_FORCE_LOAD);
     $phase->setDestinationFilter('phase.`master` = "project.project" AND phase.master_id = "[projectid.id]" ) OR ( phase.`master` = "project.package" AND phase.master_id = "[packageid.id]"');
-    $oneActivity = (projectutils::getActivityCount() == 1);
+    $oneActivity = (projectutils::getActivityCount( ) == 1);
     if(!$oneActivity)
-      $phase->addDependee("activityid");
+      $phase->addDependee("activityid");      
     $this->add($phase,null, 30);       
 
     $package = &new packageManyToOneRelation("packageid", "project.package",AF_OBLIGATORY|AF_FORCE_LOAD);
@@ -247,7 +249,7 @@ class hours extends atkNode
     $this->add($package,null,29);       
         
     $project = &new projectManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_FORCE_LOAD);
-    //$project->addDependee("phaseid");
+    $project->addOnChangeHandler( 'toggle_attributerow(\'projectid\', \'activityid\');' );
     $project->addDependee("packageid");
     $project->setUserId($this->m_user);    
     
@@ -293,16 +295,18 @@ class hours extends atkNode
     $this->setTable("hours","hours");
     $this->addSecurityMap("mra_move", "edit");
   }
-
+  
   function action_mra_move(&$handler)
   {
     $selector = atkArrayNvl($this->m_postvars, "atkselector", array());
     $this->redirect(session_url(dispatch_url("timereg.movehours", "add", array("atkselector"=>$selector)), SESSION_DEFAULT));
   }
-
+ 
+  
   function activityid_selection($record, $mode="")
-  {
+  {   
     $attr = &$this->getAttribute('activityid');
+      
     $attr->createDestination();
     $node = $attr->m_destInstance;
     $filter = $attr->createFilter($record);
@@ -317,7 +321,7 @@ class hours extends atkNode
         $filter .= "(activity.id IN (NULL))";
     }
     $result = $node->selectDb($filter, "", "", "", atk_array_merge($node->descriptorFields(), $node->m_primaryKey), $mode);
-    return $result;
+    return $result;   
   }
 
   function processGlobalVar($name, $value="")
@@ -548,7 +552,6 @@ class hours extends atkNode
     $this->setLock();
 
     $this->addFilter("hours.userid",$this->m_user);
-    $this->addFilter("phaseid.master = 'project.package'");
       
     //we need to make sure the activitydate has the same value as $this->m_viewdate.
     $this->updatesessionrecordviewdate();
@@ -1075,29 +1078,43 @@ class hours extends atkNode
   }
 
   function validateActivityId(&$record)
-  {
-    // If no activities available, trigger an error:
-    if (projectutils::getActivityCount() == 0) {
-      triggerError($record, "activityid", "Please add one or more activities first");
-    }
-    else {
-      $obj = &atkGetNode("project.activity");
-      $act = $obj->selectDb("id='".$record["activityid"]["id"]."'");
-      if (count($act)==1)
-      {
-        if ($act[0]["remarkrequired"]==1)
+  {    
+    $attr = &$this->getAttribute('activityid');
+    
+    // Add obligatory flag if the project settings require us to select an activity
+    if( 1 == $record['projectid']['use_activities'] )
+    {         
+      $attr->addFlag( AF_OBLIGATORY );
+      
+      // If no activities available, trigger an error:
+      if (projectutils::getActivityCount() == 0) {
+        triggerError($record, "activityid", "Please add one or more activities first");
+      }
+      else {
+        $obj = &atkGetNode("project.activity");
+        $act = $obj->selectDb("id='".$record["activityid"]["id"]."'");
+        if (count($act)==1)
         {
-          // Specification is required. So we set the obligatory flag.
-          // The validation of this flag is done later on by the default
-          // ::validate() method of the base class.
-          $this->m_attribList["remark"]->m_flags |= AF_OBLIGATORY;
+          if ($act[0]["remarkrequired"]==1)
+          {
+            // Specification is required. So we set the obligatory flag.
+            // The validation of this flag is done later on by the default
+            // ::validate() method of the base class.
+            $this->m_attribList["remark"]->m_flags |= AF_OBLIGATORY;
+          }
         }
-      }
-      else // something is wrong with the chosen activity if we can't find
-           // a record for it.
-      {
-        triggerError($record, "activityid", "error_obligatoryfield");
-      }
+        else // something is wrong with the chosen activity if we can't find
+             // a record for it.
+        {
+          triggerError($record, "activityid", "error_obligatoryfield");
+        }
+      }     
+      
+    }
+    // Remove flag, activities aren't obligatory
+    else 
+    {
+      $attr->removeFlag( AF_OBLIGATORY );
     }
   }
 
@@ -1364,9 +1381,9 @@ class hours extends atkNode
     sort($excludelist);
     return $excludelist;
   }
-
-  function preAdd(&$record)
-  {
+  
+  function preAdd( &$record )
+  {    
     $this->modifyfortime($record);
     return true;
   }
@@ -1376,7 +1393,7 @@ class hours extends atkNode
     $this->modifyfortime($record);
     return true;
   }
-
+    
   function modifyfortime(&$record)
   {
     // if we don't have duration, then we have a begin and an end time
@@ -1500,5 +1517,3 @@ class hours extends atkNode
   }
 
 }
-
-?>

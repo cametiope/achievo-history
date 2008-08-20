@@ -1,6 +1,5 @@
 <?php
   // Add modifier
-  $modifiers[] = 'project.project';
   $modifiers[] = 'project.phase';
 
   class mod_timereg_advanced extends achievoModule
@@ -17,20 +16,6 @@
     {
       //$this->menuitem("time_registration_advanced", dispatch_url("timereg_advanced.timereg_advanced", "admin"), 'time_registration');
       $this->menuitem("time_registration_advanced", dispatch_url("timereg_advanced.timereg_advanced", "add"), 'time_registration');
-    }
-
-
-    /**
-     * Include modifier to the project.project node
-     * This enables us to change the node, without actually having to change the node itself
-     *
-     * @param $node node instance
-     */
-    public function project_project_modifier( &$node )
-    {
-      useattrib('atkboolattribute');
-      $node->add( new atkBoolAttribute( 'description_obligatory' ) );
-      $node->add( new atkBoolAttribute( 'use_activities' ) );
     }
 
 
