@@ -15,9 +15,8 @@
     { 
       $this->atkNode("deliverable_document");
      
-      $this->add(new atkManyToOneRelation("document_id","docmanager.document",AF_PRIMARY))->
-        addListColumns("duedate"); 
-      $this->add(new atkManyToOneRelation("deliverable_id","project.deliverable",AF_PRIMARY));  
+      $this->add(new atkManyToOneRelation("document_id","docmanager.document",AF_PRIMARY));
+      $this->add(new atkManyToOneRelation("deliverable_id","project.deliverable",AF_PRIMARY))->addListColumns("duedate");
              
       $this->setTable("deliverable_document");   
         
