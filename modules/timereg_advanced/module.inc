@@ -36,14 +36,14 @@
     /**
      * Fetch html which displays a link to the add-dialog for timeregistration
      *
-     * @todo create a custom dialog link that actually works. Set the lower two lines in project_phase_modifier
-     *       to use this method
      * @return string
      */
     private function getPhaseTimeRegistration( &$node )
     {
+      global $ATK_VARS;
+
       atkimport('atk.ui.atkdialog');
-      $dialog = new atkDialog('timereg_advanced.timereg_phase', 'add', 'dialog');
+      $dialog = new atkDialog('timereg_advanced.timereg_phase', 'add', 'dialog', array('atkfilter' => 'phaseid="'.array_shift( decodeKeyValuePair( $ATK_VARS['atkselector'] ) ).'"'));
       $dialog->setModifierObject('timereg_advanced.timereg_phase');
       $onClick = $dialog->getCall();
 

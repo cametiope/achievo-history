@@ -35,7 +35,7 @@
       $this->add( new atkTextAttribute( 'remark', atkconfig( 'timereg_remark_lines', 1 ), ( true === $this->remark_obligatory ? AF_OBLIGATORY : 0 ) ) );
 
       $phase = &new atkNumberAttribute( 'phaseid', AF_OBLIGATORY|AF_FORCE_LOAD );
-
+      
       // Only add activities if the project requires these to be specified
       if( true === $this->use_activities )
       {
@@ -43,7 +43,6 @@
         if(!$oneActivity)
         {
           $phase->addDependee('activityid');
-          $this->add($phase,null, 30);
         }
         if($oneActivity)
         {
@@ -57,6 +56,8 @@
 
         $this->add($activity);
       }
+      
+      $this->add($phase,null, 30);
 
       $this->setSecurityAlias('project.phase');
 
@@ -189,11 +190,8 @@
     {
       global $ATK_VARS;
 
-  //    $ATK_VARS['projectid'] = 'projectid=\'1\'';
-      $projectid = decodeKeyValueSet( $ATK_VARS['projectid'] );
-
       $node    = atkGetNode('project.project');
-      $project = $node->selectDb( 'project.id =' . (int) $projectid );
+      $project = $node->selectDb( 'project.id =' . array_shift( decodeKeyValueSet( $ATK_VARS['projectid'] ) ) );
 
       $this->remark_obligatory = ( $project[0]['description_obligatory'] == 1 );
       $this->use_activities    = ( $project[0]['use_activities'] == 1 );
