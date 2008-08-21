@@ -295,13 +295,12 @@ class hours extends atkNode
     $this->setTable("hours","hours");
     $this->addSecurityMap("mra_move", "edit");
   }
-  
+    
   function action_mra_move(&$handler)
   {
     $selector = atkArrayNvl($this->m_postvars, "atkselector", array());
     $this->redirect(session_url(dispatch_url("timereg.movehours", "add", array("atkselector"=>$selector)), SESSION_DEFAULT));
   }
- 
   
   function activityid_selection($record, $mode="")
   {   
@@ -1050,6 +1049,17 @@ class hours extends atkNode
   {
     $this->validateActivityId($record);
 
+    $remark = &$this->getAttribute('remark');
+    // Add obligatory flag if the project settings require us to fill out a description
+    if( 1 == $record['projectid']['description_obligatory'] )
+    {         
+      $remark->addFlag( AF_OBLIGATORY );
+    }
+    else 
+    {
+      $remark->removeFlag( AF_OBLIGATORY );
+    }
+        
     // when inserting multiple days at once, we don't break on invalid days
     // (we will just skip them later on).
     if ($record["activitydate"]["multi"]!=1)

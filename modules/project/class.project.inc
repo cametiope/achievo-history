@@ -125,8 +125,8 @@
 
       $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
 
-      $this->add( new atkBoolAttribute( 'description_obligatory', AF_HIDE_ADD ) );
-      $this->add( new atkBoolAttribute( 'use_activities', AF_HIDE_ADD ) );     
+      $this->add( new atkBoolAttribute( 'description_obligatory', AF_HIDE_ADD|AF_FORCE_LOAD ) );
+      $this->add( new atkBoolAttribute( 'use_activities', AF_HIDE_ADD|AF_FORCE_LOAD ) );     
       
       // If we are in project administration mode, we show all projects. Otherwise, we only
       // show active projects.
@@ -146,9 +146,8 @@
 
       $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field');
       $this->setIndex("name");
-
       
-      // NOTE, Ruud: commented because these attributes aren't needed in the General tab.
+      // @todo: commented because these attributes aren't needed in the General tab.
       //if (($ATK_VARS['atkaction'] == "edit" || $ATK_VARS['atkaction'] == "update") && atkconfig("project_contact_obligatory"))
       //{
       //  $flags = AF_OBLIGATORY;
