@@ -65,8 +65,18 @@
     {
     	$db = atkGetDb();
     	
-    	$phase = is_array( $record['phaseid'] ) ? $record['phaseid']['id'] : $record['phaseid'];    	
-    	$selectPhase = "SELECT id, master, master_id FROM phase WHERE id=".$phase." LIMIT 0,1";
+    	$phase_id = 0;
+    	// If called from the phase node, the id will be in $record['id']
+      if( $this->m_node->getType() == 'phase' )
+      {
+        $phase_id = $record['id'];
+      }      
+      else
+      {
+        $phase_id = is_array( $record['phaseid'] ) ? $record['phaseid']['id'] : $record['phaseid'];
+      }
+           
+    	$selectPhase = "SELECT id, master, master_id FROM phase WHERE id=".$phase_id." LIMIT 0,1";
     	      
     	$phase = $db->getrows($selectPhase);
     	$this->setUpdater($phase[0], $db);
@@ -127,6 +137,7 @@
     	                             $totalCurrent, 
     	                             $totalRemaining, 
     	                             $package_id);
+    	                             
     	$db->query($qryUpdatePackage);
 
       $selectPackage = "SELECT id, master, master_id FROM package WHERE id=".$package_id." LIMIT 0,1";
@@ -159,7 +170,7 @@
       $total = $totalHours[0]['ph_hours'] + $totalHours[0]['pa_hours'];
       $totalCurrent = $totalHours[0]['ph_current_planning'] + $totalHours[0]['pa_current_planning'];
       $totalRemaining = $totalHours[0]['ph_remaining_effort_time'] + $totalHours[0]['pa_remaining_effort_time'];
-      
+     
       $qryUpdateProject = sprintf("UPDATE
                                      project
                                    SET
