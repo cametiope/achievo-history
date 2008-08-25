@@ -79,8 +79,8 @@
       $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
       $this->add(new atkManyToOneRelation("project_group_id","project.project_group",AF_HIDE_LIST|AF_HIDE_ADD));
 
-      $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employee",AF_MANYTOONE_AUTOCOMPLETE|AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
-      $attr->setDestinationFilter("person.status='active'");
+      $this->add(new atkManyToOneRelation("coordinator","employee.employee",AF_MANYTOONE_AUTOCOMPLETE|AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK))
+      	->setDestinationFilter("person.status='active'");
 
       $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_MANYTOONE_AUTOCOMPLETE|AF_HIDE_ADD|AF_HIDE_LIST));
 
@@ -460,7 +460,8 @@
      */
     function postAdd($rec)
     {
-      $this->handleTemplateMatrix($rec);
+			$this->addCoordinatorToTeam($rec);
+    	$this->handleTemplateMatrix($rec);
 
       $skel = atkconfig('project_dir_skel');
       $dest = atkconfig('project_dir_destination');
@@ -1029,7 +1030,8 @@
 
     function postUpdate($record)
     {
-      $this->updatePhaseFields($record, "update");
+      $this->addCoordinatorToTeam($record);
+    	$this->updatePhaseFields($record, "update");
       return true;
     }
 
@@ -1172,6 +1174,28 @@
       {
         $this->project = sessionLoad('projectid');
       }
+    }
+    
+    /**
+     * Add coordinator from current record to team
+     *
+     * @param array $rec - current project record 
+     */
+    private function addCoordinatorToTeam($rec)
+    {
+    	if($rec['coordinator']['id'])
+    	{
+    		$role_id = atkGetNode("project.role")->getCoordinatorId();
+    		$this->_addMemberRecord($rec["id"], $rec['coordinator']['id'], $role_id);
+    		//delete old coordinator from team
+    		$this->getDb()->query("
+    			DELETE FROM project_person 
+    			WHERE
+    				projectid='".$rec["id"]."' AND 
+    				personid!='".$rec['coordinator']['id']."' AND
+    				role='".$role_id."'
+    		");
+    	}
     }
 
   }
