@@ -64,5 +64,24 @@
         unset($actions["delete"]);
       }
     }
+    
+    /**
+     * Get coordinator role id
+     *
+     * @return int
+     */
+    public function getCoordinatorId()
+    {
+    	list($rec) = $this->getDb()->getrows("SELECT id FROM role WHERE name='coordinator'",-1,1);
+    	if($rec['id'])
+    	{
+	    	return $rec['id'];
+    	}
+    	else 
+    	{
+    		atkerror("Coordinator role is not set!");
+    		return "";
+    	}
+    }
   }
 ?>
