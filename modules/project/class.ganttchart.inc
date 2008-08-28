@@ -71,8 +71,11 @@
     
     /**
      * Preset values and filter the record
+     *
+     * @param array $record
+     * @return array
      */
-    private function getFilterRecord( )
+    private function getFilterRecord( $project = array() )
     {
       static $s_record = NULL;
       global $g_sessionManager;
@@ -96,10 +99,11 @@
         $go = $g_sessionManager->pageVar( "go" );
         if( $go != 1 )
         {
-          // Initial loading. We'll put the from/until fields to reasonable defaults.
-          $s_record["from"] = dateUtil::str2arr( dateUtil::startOfWeek( date( "Ymd" ) ) );
-          $next_month       = mktime( 12, 0, 0, date( "m" ) + 1, date( "d" ), date( "Y" ) );
-          $s_record["until"]= dateUtil::str2arr( dateUtil::endOfWeek( date( "Ymd", $next_month ) ) );
+          if( count( $project ) > 0 )
+          {
+            $s_record['from']  = $project[0]['startdate']; 
+            $s_record['until'] = $project[0]['enddate'];
+          }
           $s_record["projectid"] = $this->getProjectId();
         }
       }
@@ -110,7 +114,7 @@
     /**
      * Set needed attributes
      *
-     * @return unknown
+     * @return array
      */
     private function &getFilterAttrs()
     {
@@ -127,11 +131,12 @@
     /**
      * Return HTML that will draw the filterbar
      *
+     * @param array $project
      * @return string
      */
-    private function getHTMLFilterBar()
+    private function getHTMLFilterBar( $project )
     {
-      $record = $this->getFilterRecord();
+      $record = $this->getFilterRecord( $project );
 
       $attrs = &$this->getFilterAttrs();
 
@@ -157,22 +162,15 @@
     /**
      * Return HTML that will display the projectinfo
      *
+     * @param array $record
      * @return string
      */    
-    private function getHTMLProjectInfo()
-    {
-      // Determine the selected project
-      $projectid = $this->getProjectId( );
-
-      // Select the name and coordinator of the selected project
-      $node    = atkGetNode( 'project.project' );
-      $records = $node->selectDb( "project.id=".$projectid, "", "", "", array( "abbreviation", "name", "coordinator" ) );
-      $record  = $records[0];
-      
+    private function getHTMLProjectInfo( $record )
+    {      
       // Put the projectname and coordinator in a html layout
       $output = '<table border="0">';
-      $output.= '<tr><td align="right"><b>'.atktext("name").': </b></td><td>'.$record["abbreviation"].': '.$record['name'].'</td></tr>';
-      $output.= '<tr><td align="right"><b>'.atktext("coordinator").': </b></td><td>'.$record['coordinator']['lastname'].', '.$record['coordinator']['firstname'].'</td></tr>';
+      $output.= '<tr><td align="right"><b>'.atktext("name").': </b></td><td>'.$record[0]["abbreviation"].': '.$record[0]['name'].'</td></tr>';
+      $output.= '<tr><td align="right"><b>'.atktext("coordinator").': </b></td><td>'.$record[0]['coordinator']['lastname'].', '.$record[0]['coordinator']['firstname'].'</td></tr>';
       $output.= '</table>';  
       
       return $output;  
@@ -201,21 +199,27 @@
      *
      */
     public function action_planning()
-    {       
-      $filter = $this->getFilterRecord();
-      
+    {            
       atkimport("atk.ui.atktheme");
       // Get a singleton reference to the page, theme and ui
       $page  = &$this->getPage();
       $theme = &atkTheme::getInstance();
       $ui    = &$this->getUi();
 
+      // Determine the selected project
+      $projectid = $this->getProjectId( );
+
+      // Select projectdetails
+      $node    = atkGetNode( 'project.project' );
+      $project = $node->selectDb( "project.id=".$projectid, "", "", "", array( "abbreviation", "name", "coordinator", "startdate", "enddate" ) );
+           
       // Register the default style with this page
       $page->register_style($theme->stylePath("style.css"));
-
+      
+      $filter = $this->getFilterRecord( $project );
       // Compose the complete content
-      $content = $this->getHTMLProjectInfo() . '<br>';
-      $content.= $this->getHTMLFilterBar() .'<br>';
+      $content = $this->getHTMLProjectInfo( $project ) . '<br>';
+      $content.= $this->getHTMLFilterBar( $project ) .'<br>';
       
       // Add the image if the filter has been set
       if( atkArrayNvl( $this->m_postvars, "go", 0 ) == 1 )
@@ -227,7 +231,6 @@
           'projectid' => $filter['projectid'],
         );
         $imgurl = session_url( dispatch_url( "{$this->m_module}.{$this->m_type}", "planninggraph", $params ) );   
-        atk_var_dump($imgurl);
         $content.= '<br/><br/><img src="'.$imgurl.'" border="0"/><br/><br/>';
       }
 
