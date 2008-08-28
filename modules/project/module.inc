@@ -53,12 +53,12 @@
         if (moduleExists('history'))
           $this->menuitem("history", dispatch_url("history.history", "admin", array("atkfilter" => "project_id='".$selectedproject."'")), 'projectmanagement', array("history.history", "admin"));
 
-          //$this->menuitem("project_view", dispatch_url("project.project", "view", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
-        $this->menuitem("project_planning",  dispatch_url("project.project", "planning", array("selectedprojectid" => $selectedproject)), "projectmanagement", array("project.project", "planning"));
+         $this->menuitem("project_planning", dispatch_url("project.ganttchart", "planning", array("atkselector" => "project.id='".$selectedproject."'")), "projectmanagement", array("project.project", "admin"));
+         
         $this->menuitem("-","","projectmanagement");
         //$this->menuitem("project_stats", dispatch_url("project.projectstats", "stats", array("projectid" => $selectedproject)), "projectmanagement", array("project.project", "stats"));
       }
-      //$this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement", array("project.project", "planning"));
+      $this->menuitem("mastergantt", dispatch_url("project.mastergantt", "planning"), "projectmanagement", array("project.project", "planning"));
       $this->menuitem("activity_admin", dispatch_url("project.activity", "admin"), "setup", array("project.activity", "admin"));
       $this->menuitem("project_group", dispatch_url("project.project_group", "admin"), "setup", array("project.activity", "admin"));
       $this->menuitem("project_categories", dispatch_url("project.project_category", "admin"), "setup", array("project.activity", "admin"));
