@@ -20,6 +20,9 @@
    * @author ruud <ruud@ibuildings.nl>
    * @package achievo
    * @subpackage reports
+   * @todo: - improve data storage, remove redundancy: packages will be fetches (recursively) at least twice:
+   *        once for the shuttle filter field and once for the graph itself
+   *        - formatShuttleArray and fromatGraphArray are candidates for refactoring
    */
   class ganttchart extends atkNode
   {
@@ -43,7 +46,17 @@
     
     
     /**
+     * Holds array to be used for the shuttle relation filter
+     *
+     * @var array
+     */
+    private $shuttle_data;
+    
+    
+    /**
      * Counter to be used when formatting the jpgraph array
+     * Declared as class variable since it will be used in a recursive method and is 
+     * thereby called from different scopes
      *
      * @var integer
      */
@@ -72,7 +85,7 @@
     /**
      * Preset values and filter the record
      *
-     * @param array $record
+     * @param array $project
      * @return array
      */
     private function getFilterRecord( $project = array() )
@@ -87,13 +100,22 @@
         $s_record["until"]         = $g_sessionManager->pageVar( "until" );
         $s_record["display"]       = $g_sessionManager->pageVar( "display" );
         $s_record["projectid"]     = $g_sessionManager->pageVar( "projectid" );
+        $s_record['packages']      = $g_sessionManager->pageVar( 'packages' );
 
         // Convert attribute html values to internal values
         $attrs = &$this->getFilterAttrs( );
         foreach( array_keys( $attrs ) as $attribname )
         {
           $p_attrib = &$attrs[$attribname];
-          $s_record[$attribname] = &$p_attrib->fetchValue( $s_record );
+          
+          if( $attribname == 'packages' ) // @todo: remove dependency
+          {
+            $s_record[$attribname] == $this->m_postvars['packages'];
+          }
+          else
+          {
+            $s_record[$attribname] = &$p_attrib->fetchValue( $s_record );
+          }
         }
 
         $go = $g_sessionManager->pageVar( "go" );
@@ -112,17 +134,23 @@
     
     
     /**
-     * Set needed attributes
+     * Set attributes for the filterform
      *
      * @return array
      */
     private function &getFilterAttrs()
     {
       useattrib("atklistattribute");
+      
       $attrs["display"] = &new atkListAttribute("display", array('project', 'package', 'all'), array( atktext("project"), atktext("package"), atktext("all") ), "", AF_OBLIGATORY|AF_LIST_NO_NULL_ITEM);
+      
+      atkimport("module.project.relations.nodefree_shuttlerelation");
 
+      $attrs["packages"] = &new Nodefree_ShuttleRelation( $this->shuttle_data );
+      
       $attrs["from"]  = &new atkDateAttribute("from");
       $attrs["until"] = &new atkDateAttribute("until");
+      
       
       return $attrs;
     }
@@ -138,6 +166,8 @@
     {
       $record = $this->getFilterRecord( $project );
 
+      $packages['packages'] = $this->getPackages( $this->getProjectId(), '0000-00-00', '3000-12-31', 'project.project', 0, false );    
+      $this->formatShuttleArray( $packages );      
       $attrs = &$this->getFilterAttrs();
 
       $output = '<form action="'.getDispatchFile().'" method="get">';
@@ -146,13 +176,14 @@
       $output.= '<input type="hidden" name="atkselector" value="project.id='.$this->getProjectId().'">';
       $output.= '<input type="hidden" name="projectid" value="'.$this->getProjectId().'">';
       $output.= '<input type="hidden" name="go" value="1">'; // Trigger to prevent loading the first time
-
-      $output.= atktext("display").": ".$attrs["display"]->edit($record)."<br/>";
-
+      
+      // The display attribute is currently unused
+      //$output.= atktext("display").": ".$attrs["display"]->edit($record)."<br/>";
       $output.= atktext("showonlyphasesfrom", "reports")." ".$attrs["from"]->edit($record)." ";
       $output.= atktext("until")." ".$attrs["until"]->edit($record)."<br/>";
-
-      $output.= '<input type="submit" value="'.atktext("refresh").'">';
+      $output.= atktext("packages")." ".$attrs["packages"]->edit($record);
+      
+      $output.= '<input type="submit" value="'.atktext("refresh").'" onclick="javascript:globalSubmit(this)">';
       $output.= '</form>';
 
       return $output;
@@ -260,12 +291,13 @@
     /**
      * Wrapper function which fetches all info concerning a project
      *
-     * @param integer $project
+     * @param integer $project_id
      * @param string $from
      * @param string $until
+     * @param array $packages
      * @return array
      */
-    private function getProject($project_id, $from, $until )
+    private function getProject($project_id, $from, $until, $packages )
     {
       $db = &atkGetDb();
      
@@ -287,7 +319,7 @@
       if( !empty( $project) )
       {
         $result['project']  = $project[0];
-        $result['packages'] = $this->getPackages( $project_id, $from, $until, 'project.project', 0 );
+        $result['packages'] = $this->getPackages( $project_id, $from, $until, 'project.project', 0, true, $packages );
         $result['tasks']    = $this->getTasks( $project_id, $from, $until, 'project.project', 0 );
       }
             
@@ -302,17 +334,25 @@
      * @param string $from
      * @param string $until
      * @param string $master
+     * @param integer $level
+     * @param boolean $include_tasks
+     * @param array $packages
      * @return array
      */
-    private function getPackages( $id, $from, $until, $master, $level )
+    private function getPackages( $id, $from, $until, $master, $level, $include_tasks = true, $packages = array() )
     {
       $db = &atkGetDb();
       
       $masterClause = 
-        ($master == 'project.project') 
+        ( $master == 'project.project' ) 
           ? '( package.master = "project.project" AND package.master_id = '.$id.')' 
           : '( package.master = "project.package" AND package.master_id = '.$id.')';
-          
+
+      $packagesClause =
+        ( 0 !== count( $packages ) )
+          ? 'package.id IN ('. implode(', ', $packages ) .')'
+          : '(1 = 1)';
+      
       $query = '
         SELECT 
           package.id,
@@ -329,18 +369,24 @@
         WHERE
           '.$masterClause.'
         AND
+          '.$packagesClause.'
+        AND
           ( package.enddate IS NULL OR package.enddate >= "'.$from.'")
         AND
           ( package.startdate IS NULL OR package.startdate <= "'.$until.'")'; 
       
-      $packages = $db->getRows( $query );      
+      $resultset = $db->getRows( $query );      
       
       $result = array();
-      for( $i=0; $i < count( $packages ); $i++ )
+      for( $i=0; $i < count( $resultset ); $i++ )
       {
-        $result[$packages[$i]['id']] = $packages[$i]; 
-        $result[$packages[$i]['id']]['packages'] = $this->getPackages( $packages[$i]['id'], $from, $until, 'project.package', ($level+1) );
-        $result[$packages[$i]['id']]['tasks']    = $this->getTasks( $packages[$i]['id'], $from, $until, 'project.package', ($level+1) );
+        $result[$resultset[$i]['id']] = $resultset[$i]; 
+        $result[$resultset[$i]['id']]['packages'] = $this->getPackages( $resultset[$i]['id'], $from, $until, 'project.package', ($level+1), $include_tasks, $packages );
+        
+        if( true === $include_tasks )
+        {
+          $result[$resultset[$i]['id']]['tasks']    = $this->getTasks( $resultset[$i]['id'], $from, $until, 'project.package', ($level+1) );
+        }
       }  
       
       return $result;                 
@@ -354,6 +400,7 @@
      * @param string $from
      * @param string $until
      * @param string $master
+     * @param integer $level
      * @return array
      */
     private function getTasks( $id, $from, $until, $master, $level )
@@ -445,6 +492,32 @@
     
     /**
      * Recursive function to format the data array, so that it can be fed to 
+     * the shuttle relation
+     *
+     * @param array $data
+     * @return array
+     */    
+    private function formatShuttleArray( $data )
+    {
+      if( count( $data['packages'] ) > 0 )
+      {
+        foreach( $data['packages'] AS $key => $val )
+        {      
+          $this->shuttle_data[] = array(  
+                                  'id' => $val['id'], 
+                                  'name' => $val['name'],);
+                                                                       
+          if( count( $val['packages'] ) > 0 )
+          {
+            $this->formatShuttleArray( $val );  // Recursive iteration
+          }
+        }
+      }
+    }
+    
+    
+    /**
+     * Recursive function to format the data array, so that it can be fed to 
      * the jpgraph library
      *
      * @param array $data
@@ -496,8 +569,7 @@
                                   'id' => $val['id'],
                                   'type' => 'phase'); 
                                   
-          $this->graph_completed[] = array( $this->i, '0.'.$val['completed'] );                       
-                                                              
+          $this->graph_completed[] = array( $this->i, '0.'.$val['completed'] );  
         }
       } 
     }
@@ -543,11 +615,11 @@
     /**
      * Draw the graph chart
      *
-     * @param unknown_type $handler
+     * @param object $handler
      */
     public function action_planninggraph(&$handler)
-    {         
-      $params['project'] = $_REQUEST['projectid'];
+    {  
+      $params['project'] = $_REQUEST['projectid'];      
       $params['from']    = $this->dashDate(dateUtil::startOfWeek($_REQUEST['from']));
       $params['until']   = $this->dashDate(dateUtil::endOfWeek($_REQUEST['until']));
       $params['display'] = $_REQUEST['display'];
@@ -556,8 +628,13 @@
         $params['display'] = 'project';
       }
       
+      $params['packages'] = 
+        array_key_exists( 'packages', $this->m_postvars )
+          ? $this->m_postvars['packages']
+          : array(); 
+
       // Get the gantt details 
-      $gantt = $this->getProject( $params['project'], $params['from'], $params['until'] );
+      $gantt = $this->getProject( $params['project'], $params['from'], $params['until'], $params['packages'] );
       // Display the graph
       $this->showGraph( $gantt, $params['from'], $params['until'], $params['display'] );
     }
