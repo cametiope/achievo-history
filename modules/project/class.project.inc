@@ -50,6 +50,8 @@
     {
       global $ATK_VARS, $g_sessionManager;
 
+      $this->setProjectId();
+      
       $this->atkNode($name,$flags|NF_ADD_LINK|NF_EDITAFTERADD|NF_IMPORT);
       if($name=="project")
       {
@@ -57,16 +59,19 @@
         $this->addListener($listener);
       }
 
-      $this->setProjectId();
-
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
 
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
       $radio = &$this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_FORCE_LOAD|AF_HIDE_LIST|AF_HIDE_ADD|AF_DISPLAY_VERT));
       
-      // Hide attribute and add it as a class member var so we can manipulate it later
-      $memo = &$this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE|AF_FORCE_LOAD));      
+      // Hide attribute and add it as a class member var so we can manipulate it later, if not in view mode
+      $memo_flags = AF_READONLY;      
+      if( $ATK_VARS['atkaction'] != 'view' )
+      {
+        $memo_flags = AF_HIDE|AF_FORCE_LOAD;
+      }   
+      $memo = &$this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), $memo_flags));      
       $this->memo_attr = $memo;
             
       $radio->addDependee('trafficlight_selection');
@@ -90,7 +95,7 @@
         $p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
       }
 
-      $this->add(new atkTextAttribute("description",TEXT_LARGE|AF_HIDE_LIST|AF_HIDE_ADD));
+      $this->add(new atkTextAttribute("description",AF_TEXT_LARGE|AF_HIDE_LIST|AF_HIDE_ADD));
 
       $this->add(new atkAttribute("quotation_number", AF_HIDE_LIST|AF_HIDE_ADD));
 
@@ -139,8 +144,13 @@
       { 
         $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
         $deliverable->setDestinationFilter('project_id=[id]');
+      
+        $team = &$this->add(new atkOneToManyRelation("team", "project.project_personemployee_projectview", "projectid", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
+  
+        $contacts = $this->add( new atkOneToManyRelation( 'contacts', 'organization.contact_projectview', 'company', AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
+        $contacts->setOwnerFields( array( 'customer' ) );
       }
-      $this->setColumnAttribs(array('deliverable'));
+      $this->setColumnAttribs(array('deliverable', 'team', 'contacts'));
 
       $this->setTable("project","project");
 
@@ -1113,7 +1123,7 @@
     * Set the project id.
     */
     private function setProjectId()
-    {
+    {    
       $vars = atkGetPostVar();
       if ($vars['atknodetype'] == 'project.project' && array_key_exists('atkselector', $vars) && $vars['atkselector'] != '')
       {

@@ -42,7 +42,7 @@ class person extends atkNode
     $this->add(new atkAttribute("phone", 0, 20));
     $this->add(new atkAttribute("cellular", AF_HIDE_LIST|AF_FORCE_LOAD, 20));
     $this->add(new atkAttribute("fax", AF_HIDE_LIST|AF_FORCE_LOAD, 20));
-    $this->add(new atkEmailAttribute("email", false, 0, 50));
+    $this->add(new atkEmailAttribute("email", false, AF_FORCE_LOAD, 50));
     $this->add(new atkAttribute("function", AF_HIDE_LIST, 50));
     $this->add(new atkTextAttribute("remark", TEXT_LARGE, AF_HIDE_LIST));
     $this->add(new atkAttribute("role", AF_OBLIGATORY|AF_HIDE, 15)); //discriminator

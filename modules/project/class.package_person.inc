@@ -33,4 +33,24 @@
 	    $policy->hasOne("project.package",array("source"=>"package_id"));
 	    $policy->hasOne("employee.employee",array("source"=>"person_id"));
 	  }
+	  
+	  /**
+     * Override recordactions to remove the view and edit icons
+     * @todo: for some reason the email action is not shown in the actionlist, fix this
+     *
+     * @param array $record
+     * @param array $actions
+     * @param array $mraactions
+     */
+    public function recordActions($record, &$actions, &$mraactions) 
+    {
+      $delete = $actions['delete']; // temp store delete action to change the order of recordlist icons
+      $actions = array();
+            
+      if( '' != $record['person_id']['email'] )
+      {
+        $actions['email'] = 'javascript:document.location.href=\'mailto:'.$record['person_id']['email'].'\';';
+      }
+      $actions['delete'] = $delete;
+    }
 	}

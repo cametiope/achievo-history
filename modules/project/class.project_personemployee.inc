@@ -29,9 +29,9 @@
      */
     private $project;
 
-    public function __construct()
+    public function __construct( $nodename = 'project_personemployee' )
     {
-      $this->atkNode("project_personemployee");
+      $this->atkNode( $nodename );
 
       $this->project = sessionLoad('projectid');
 

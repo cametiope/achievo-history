@@ -5,6 +5,7 @@
   $setup->installNode("organization.contracts");
   $setup->installNode("organization.organization");
   $setup->installNode("organization.organization_representative");
+  $setup->installNode("employee.department_representative");  
   
   $setup->setVersion(22);
 
