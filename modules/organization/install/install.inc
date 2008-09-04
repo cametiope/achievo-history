@@ -6,6 +6,6 @@
   $setup->installNode("organization.organization");
   $setup->installNode("organization.organization_representative");
   
-  $setup->setVersion(20);
+  $setup->setVersion(22);
 
 ?>
