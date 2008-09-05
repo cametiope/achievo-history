@@ -12,11 +12,11 @@ class packageProjectSelector extends atkListAttribute
   {
     if( false !== ( $options = $this->getOptionArray() ) )
     {
-      $this->atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
+      parent::atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_READONLY_EDIT|AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
     }
     else
     {
-    	$this->atkListAttribute($name, array(), array(), AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
+    	parent::atkListAttribute($name, array(), array(), AF_READONLY_EDIT|AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
     }
   }
 
@@ -181,5 +181,21 @@ class packageProjectSelector extends atkListAttribute
     $value = $db->getValue("SELECT projectid FROM phase WHERE " . $selector);
     return "projectid='".$value."'";
   }
+  
+  
+  /**
+   * Override display method
+   *
+   * @param array $record
+   * @return string
+   */
+  public function display( $record )
+  {
+    $this->m_selected = ( false !== strpos( $record['master'], 'pack') ) ? 'packages' : 'projects';
+    $this->m_selected .=  '_' . $record['master_id'];
+        
+    $values   = $this->getValues( $record );
+    return $this->_translateValue( $this->m_selected, $record);
+  }  
 
 }
