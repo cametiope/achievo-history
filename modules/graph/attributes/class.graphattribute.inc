@@ -236,6 +236,8 @@
     function search() {}
     function getSearchModes() {}
     function searchCondition() {}
+    function storageType() { return NOSTORE; }
+    function loadType() { return POSTLOAD; }
   }
 
   /**
