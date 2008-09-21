@@ -286,22 +286,22 @@
       {
         return 0;
       }
-      elseif($starttask < $startperiod)
+      elseif($starttask <= $startperiod)
       {
-        if(($endtask > $startperiod) && ($endtask < $endperiod))
+        if(($endtask >= $startperiod) && ($endtask < $endperiod))
         {
           $start = $startperiod;
           $end = $endtask;
         }
-        elseif($endtask > $endperiod)
+        elseif($endtask >= $endperiod)
         {
           $start = $startperiod;
           $end = $endperiod;
         }
       }
-      elseif(($starttask > $startperiod) && ($starttask < $endperiod))
+      elseif(($starttask > $startperiod) && ($starttask <= $endperiod))
       {
-        if(($endtask > $startperiod) && ($endtask < $endperiod))
+        if(($endtask > $startperiod) && ($endtask <= $endperiod))
         {
           $start = $starttask;
           $end = $endtask;
