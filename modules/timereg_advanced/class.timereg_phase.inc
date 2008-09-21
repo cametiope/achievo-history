@@ -191,10 +191,16 @@
       global $ATK_VARS;
 
       $node    = atkGetNode('project.project');
-      $project = $node->selectDb( 'project.id =' . array_shift( decodeKeyValueSet( $ATK_VARS['projectid'] ) ) );
-
-      $this->remark_obligatory = ( $project[0]['description_obligatory'] == 1 );
-      $this->use_activities    = ( $project[0]['use_activities'] == 1 );
+      //during setup $ATK_VARS['projectid'] is not set, so I add check for prevent Critical: Unknown error: 1064 
+      //(You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the 
+      //right syntax to use near ') AND (project.status='active') ORDER BY id' at line 1).
+      if($ATK_VARS['projectid'])
+      {
+        $project = $node->selectDb( 'project.id =' . array_shift( decodeKeyValueSet( $ATK_VARS['projectid'] ) ) );
+  
+        $this->remark_obligatory = ( $project[0]['description_obligatory'] == 1 );
+        $this->use_activities    = ( $project[0]['use_activities'] == 1 );
+      }
 
       return null;
     }
