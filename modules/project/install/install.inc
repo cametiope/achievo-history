@@ -35,6 +35,7 @@
   `current_planning` int(11) default 0,
   `spend_hours` int(11) default 0,
   `remaining_effort_time` int(11) default 0,
+  `projectid` int(11) not null,
   PRIMARY KEY  (`id`),
   KEY `master` (`master_id`),
   KEY `coordinator_id` (`coordinator_id`)
