@@ -12,6 +12,7 @@
       
       $this->add(new atkManyToOneRelation("phaseid_row", "project.phase", AF_PRIMARY));
       $this->add(new atkManyToOneRelation("phaseid_col", "project.phase", AF_PRIMARY));
+      $this->add(new atkAttribute('dep_type',AF_PRIMARY,100));
 
       $this->setTable("dependency");
     }
