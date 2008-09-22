@@ -3,7 +3,7 @@
   
   class department_representative extends atkMetaNode
   {
-    public $securityAlias = "person.person";    
+    public $securityAlias = "employee.employee";    
     
     public static function meta(atkMetaPolicy $policy)
     {
