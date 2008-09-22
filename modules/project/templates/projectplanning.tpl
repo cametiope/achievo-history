@@ -1,6 +1,9 @@
 {literal}
 <script type="text/javascript">
     function toggle_tree(id, image_id, employeeId, depth) {
+        var nr_id = id.substr(id.lastIndexOf("_") +1 );
+        var item_type = id.substr(0, id.lastIndexOf("_"));
+        id = 'emp_'+employeeId+'_'+id;
         var img = $(image_id).src;
         var extension = img.substr(img.lastIndexOf(".")+1, img.length);
         var filename = img.substr(0, img.lastIndexOf("."));
@@ -8,8 +11,6 @@
         {
           if( '' == $(id).innerHTML )
           {
-            var nr_id = id.substr(id.lastIndexOf("_") +1 );
-            var item_type = id.substr(0, id.lastIndexOf("_"));
             var start = $('startdate[year]').value+'-'+$('startdate[month]').value+'-'+$('startdate[day]').value;
             var end = $('enddate[year]').value+'-'+$('enddate[month]').value+'-'+$('enddate[day]').value;
 
