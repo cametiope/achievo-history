@@ -8,7 +8,11 @@
                     `organization_id` int(11) NOT NULL,
                     `representative_id` int(11) NOT NULL,
                     PRIMARY KEY  (`organization_id`,`representative_id`))");
-  $setup->installNode("employee.department_representative");  
+  $setup->executeSQL("CREATE TABLE `department_representative` (
+                    `department_id` int(11)  NOT NULL,
+                    `representative_id` int(11)  NOT NULL,
+                    PRIMARY KEY (`department_id`,`representative_id`))
+  "); 
   
   $setup->setVersion(22);
 
