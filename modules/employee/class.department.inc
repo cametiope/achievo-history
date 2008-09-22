@@ -16,8 +16,6 @@ class department extends atkTreeNode
     $this->add(new atkOneToManyRelation("representatives","employee.department_representative", "department_id", AF_HIDE_LIST));   
     $this->add(new atkTextAttribute("description"));
     
-    $this->add(new atkOneToManyRelation("representatives","employee.department_representative", "department_id", AF_HIDE_LIST));
-    
     $this->setOrder("name");
     $this->setTable("employee_department");
   }
