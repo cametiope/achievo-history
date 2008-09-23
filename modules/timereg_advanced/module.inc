@@ -7,7 +7,7 @@
 
     public function getNodes()
     {
-      registerNode("timereg_advanced.timereg_advanced", array("add", "report"));
+      registerNode("timereg_advanced.timereg_advanced", array("add", "favorites", "times"));
       registerNode("timereg_advanced.timereg_phase", array("add"));
     }
 
@@ -28,7 +28,9 @@
     public function project_phase_modifier( &$node )
     {
       useattrib( 'atkdummyattribute' );
+      useattrib( 'atkboolattribute' );
       $node->add( new atkDummyAttribute( 'timereg_phase', $this->getPhaseTimeRegistration($node), AF_HIDE_LIST|AF_NO_LABEL ) );
+      $node->add( new atkBoolAttribute( 'is_favorite'));
       $node->setColumnAttribs(array('timereg_phase'));
     }
 

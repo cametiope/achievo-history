@@ -1,3 +1,20 @@
+<table border="0" cellpadding="0" cellspacing="0" class="tabsTabs mainTabs">
+  <tr>         
+    <td id="tab_1" valign="middle" align="left" nowrap="nowrap" class="{if $activetab == 'add'}activetab{else}passivetab{/if}">  
+      <a href="{$taburl.add}" title="{atktext id="timereg_advanced"}">{atktext id="timereg_advanced"}</a>
+    </td>          
+    <td>&nbsp;</td>
+    <td id="tab_1" valign="middle" align="left" nowrap="nowrap" class="{if $activetab == 'favorites'}activetab{else}passivetab{/if}">  
+      <a href="{$taburl.favorites}" title="{atktext id="timereg_favorites"}">{atktext id="timereg_favorites"}</a>
+    </td>          
+    <td>&nbsp;</td>
+    <td id="tab_1" valign="middle" align="left" nowrap="nowrap" class="{if $activetab == 'times'}activetab{else}passivetab{/if}">  
+      <a href="{$taburl.times}" title="{atktext id="timereg_hours"}">{atktext id="timereg_hours"}</a>
+    </td>          
+  </tr>
+</table>
+
+
 <table cellspacing="0" cellpadding="0" class="recordListContainer">
   <tr>
     <td>
@@ -28,6 +45,7 @@
           <th class="recordListThFirst"><b>{atktext id="completed"}</b></th>
           <th class="recordListThFirst"><b>{atktext id="comment"}</b></th>
           <th class="recordListThFirst"><b>{atktext id="activity"}</b></th>
+          <th class="recordListThFirst"><b>{atktext id="favorite"}</b></th>
         </tr>
 
         <!-- records -->
@@ -38,10 +56,10 @@
              <input type="checkbox" id="cb_{$row.id}" name="timereg[{$row.id}][id]"{if $values.timereg[$row.id].id == "on"} checked="checked"{/if} />
            </td>
            <td class="recordListTd">
-             {$row.projectid.name}
+             <a href="{$project_url}&atkselector=project.id%3D%27{$row.projectid.id}%27">{$row.projectid.name}</a>
            </td>
            <td class="recordListTd">
-             {$row.name}
+             <a href="{$phase_url}&atkselector=phase.id%3D%27{$row.id}%27&atkfilter=projectid%3D{$row.projectid.id}">{$row.name}</a>
              <input type="hidden" name="timereg[{$row.id}][name]" value="{$row.name}" />               
              <input type="hidden" name="timereg[{$row.id}][phaseid]" value="{$row.id}" />
            </td>
@@ -81,6 +99,18 @@
                <option value="{$activity.activityid.id}"{if $values.timereg[$row.id].activity == $activity.activityid.id} selected="selected"{/if}>{$activity.activityid.name}</option>
              {/foreach}
              </select>
+           </td>
+           <td class="recordListTdFirst">
+             {if $activetab == 'add'}
+               {if '' != $values.timereg[$row.id].is_favorite}
+                 {assign var="active" value=$values.timereg[$row.id].is_favorite}
+               {else}
+                 {assign var="active" value=$row.is_favorite}
+               {/if}
+               <input type="checkbox" id="timereg[{$row.id}][is_favorite]" name="timereg[{$row.id}][is_favorite]"{if $active == 1} checked="checked"{/if} />
+             {elseif $activetab == 'favorites'}
+               <a href="javascript:void(0)" onclick="Timereg_Advanced.removeFavorite('{$row.delete_url}',{$row.id}); return false;"><img src="{$removeIcon}" alt="" style="border:0;" /></a>
+             {/if}
            </td>
         </tr>
         {/foreach}

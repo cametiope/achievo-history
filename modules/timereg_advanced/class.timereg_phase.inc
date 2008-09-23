@@ -7,6 +7,8 @@
   useattrib('atkdummyattribute');
   //useattrib('atklistattribute');
 
+  userelation('atkmanytoonerelation');
+
   atkimport('module.project.utils.projectutils');
 
   class Timereg_Phase extends atkNode

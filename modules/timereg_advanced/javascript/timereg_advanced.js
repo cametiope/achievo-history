@@ -16,12 +16,24 @@ var Timereg_Advanced = {
     h = 'timereg['+id+'][time][hours]';
     m = 'timereg['+id+'][time][minutes]';
     this.completed_time = ($(h).value == 0 && $(m).value == 0) ? 0 : 1;
-    
   }, 
   
   validateTimeregRemark : function( id ) {
     r = 'timereg['+id+'][remark]';
     this.completed_remark = ($(r).value == '') ? 0 : 1;
+  },
+  
+  removeFavorite : function( url, phase ) {
+    new Ajax.Request(url,
+    {
+      method:'get',
+      onSuccess: function(request){
+        row = 'r1_'+phase;
+        $(row).style.display = 'none';
+      },
+      asynchronous: false,
+      onFailure: function(){}
+    });
   }
   
 }
