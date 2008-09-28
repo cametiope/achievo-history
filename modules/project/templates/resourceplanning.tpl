@@ -1,6 +1,9 @@
 {literal}
 <script type="text/javascript">
-    function toggle_tree(id, image_id, employee, depth) {
+    function toggle_tree(id, image_id, employeeId, depth) {
+        var nr_id = id.substr(id.lastIndexOf("_") +1 );
+        var item_type = id.substr(0, id.lastIndexOf("_"));
+        id = 'emp_'+employeeId+'_'+id;
         var img = $(image_id).src;
         var extension = img.substr(img.lastIndexOf(".")+1, img.length);
         var filename = img.substr(0, img.lastIndexOf("."));
@@ -8,13 +11,11 @@
         {
           if( '' == $(id).innerHTML )
           {
-            var nr_id = id.substr(id.lastIndexOf("_") +1 );
-            var item_type = id.substr(0, id.lastIndexOf("_"));
             var start = $('startdate[year]').value+'-'+$('startdate[month]').value+'-'+$('startdate[day]').value;
             var end = $('enddate[year]').value+'-'+$('enddate[month]').value+'-'+$('enddate[day]').value;
             var viewmode = $('view').value;
 
-            new Ajax.Updater($(id), 'modules/project/update_resourceplan.php?'+ 'type='+ item_type +'&id=' + nr_id + '&action=unfold' + '&startdate=' + start + '&enddate=' + end + '&view=' + viewmode + '&employeeId=' + employee + '&depth=' + (depth+1));
+            new Ajax.Updater($(id), 'modules/project/update_resourceplan.php?'+ 'type='+ item_type +'&id=' + nr_id + '&action=unfold' + '&startdate=' + start + '&enddate=' + end + '&view=' + viewmode + '&employeeId=' + employeeId + '&depth=' + (depth+1));
           }
           $(id).style.display = 'block';
           $(image_id).src = ( filename.substr(0, filename.length-4) + 'minus' + '.' + extension);

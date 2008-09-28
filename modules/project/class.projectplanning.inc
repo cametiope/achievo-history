@@ -23,7 +23,7 @@ include_once("achievotools.inc");
    */
   class projectplanning extends atkNode
   {
-    var $m_employeeId;
+    public $m_employeeId;
 
     /**
      * Array with plan/fact hours
@@ -36,7 +36,7 @@ include_once("achievotools.inc");
      *
      * @var array()
      */
-    var $m_resourceHours = array();
+    public $m_resourceHours = array();
 
     /**
      * Parent-child hierarchy
@@ -50,7 +50,7 @@ include_once("achievotools.inc");
      *
      * @var array()
      */
-    var $m_parentChild =  array();
+    public $m_parentChild =  array();
 
     public function __construct()
     {
@@ -347,22 +347,22 @@ include_once("achievotools.inc");
       {
         return 0;
       }
-      elseif($starttask < $startperiod)
+      elseif($starttask <= $startperiod)
       {
-        if(($endtask > $startperiod) && ($endtask < $endperiod))
+        if(($endtask >= $startperiod) && ($endtask < $endperiod))
         {
           $start = $startperiod;
           $end = $endtask;
         }
-        elseif($endtask > $endperiod)
+        elseif($endtask >= $endperiod)
         {
           $start = $startperiod;
           $end = $endperiod;
         }
       }
-      elseif(($starttask > $startperiod) && ($starttask < $endperiod))
+      elseif(($starttask > $startperiod) && ($starttask <= $endperiod))
       {
-        if(($endtask > $startperiod) && ($endtask < $endperiod))
+        if(($endtask > $startperiod) && ($endtask <= $endperiod))
         {
           $start = $starttask;
           $end = $endtask;
