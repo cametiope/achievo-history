@@ -2,6 +2,7 @@
 
   $config_atkroot = "./../../";
   include_once($config_atkroot."atk.inc");
+  include_once($config_atkroot."achievotools.inc");
   atkimport("module.utils.dateutil");
 
   atksession();
@@ -18,17 +19,20 @@
   $node = &atkGetNode("project.resourceplanning");
   $projectid = $node->m_projectId;
   $node->handleDateBound($startdate, $enddate, $startweek, $endweek);
-  
+
+  //get weeks info
+  $weeks = dateutil::weeksBetween($startdate,$enddate);
+
   switch($type)
   {
     case "employee":
-  
+
       //data collection
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId);
-  
+
       // We can see package and task (phase) hear, but not subproject
       $node->getProjectChild($projectid, $employeeId);
-      
+
       //data collection for subpackage
       foreach ($node->m_parentChild['project.project'][$projectid]['package'] as $child)
       {
@@ -44,10 +48,13 @@
           $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employeeId));
           $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employeeId));
 
-          for($w=$startweek;$w<=$endweek;$w++)
+          $items = $node->{'getLine'.$type}($weeks, $i['id'], $employeeId);
+
+          foreach ($items as $item)
           {
-            $line[] = $w;
+            $line[] = atkDurationAttribute::_minutes2string($item);
           }
+
           $data[] = array("data"=>$line,"id"=>$i['id'],"type"=>$type,"name"=>$i['name'],"employeeid"=>$employeeId);
         }
       }
@@ -56,14 +63,20 @@
     case "package":
       //data collection for parent and child
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $id);
-      $node->getPackageChild($projectid,$employeeId);
+      $node->getPackageChild($id, $employeeId);
+      
+      //data collection for subpackage
+      foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
+      {
+        $node->handleSubPackage($child['id'],$employeeId);
+      }
 
-      foreach ($node->m_parentChild['project.package'][$projectid]['package'] as $child)
+      foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
       {
         $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $child['id']);
       }
 
-      foreach ($node->m_parentChild['project.package'][$projectid] as $type=>$child)
+      foreach ($node->m_parentChild['project.package'][$id] as $type=>$child)
       {
         foreach ($child as $i)
         {
@@ -71,16 +84,19 @@
           $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employeeId));
           $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employeeId));
 
-          for($w=$startweek;$w<=$endweek;$w++)
+          $items = $node->{'getLine'.$type}($weeks, $i['id'], $employeeId);
+
+          foreach ($items as $item)
           {
-            $line[] = $w;
+            $line[] = atkDurationAttribute::_minutes2string($item);
           }
+
           $data[] = array("data"=>$line,"id"=>$i['id'],"type"=>$type,"name"=>$i['name'],"employeeid"=>$employeeId);
         }
-        break;
       }
+      break;
   }
-  
+
   $min_width = ($endweek - $startweek +3)*50+190;
 
   $vars = array('plan'=>$data,
@@ -96,7 +112,7 @@
 
   echo $content;
   exit;
-  
+
   function fixdate($date)
   {
     list($year,$month,$day) = explode('-',$date);

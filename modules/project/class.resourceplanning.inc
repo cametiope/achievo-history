@@ -15,7 +15,8 @@
   atkimport("module.utils.dateutil");
   atkimport("module.timereg.overtime_balance");
   useattrib("atkdurationattribute");
-  include_once("achievotools.inc");
+  include_once(atkConfig("atkroot")."achievotools.inc");
+
 
   /**
    * Constructor.
@@ -65,15 +66,15 @@
       $this->project = sessionLoad('projectid');
       list($name,$id) = explode("=", $this->project);
       $this->m_projectId = stripQuotes($id);
-      
-      
+
+
       $this->m_mode = $this->getView();
     }
 
     public function action_report(&$handler)
     {
       $view = $this->getView();
-      
+
       $this->getDateBounds($view, $startdate, $enddate);
 
       $dummyrec = array("startdate"=>$startdate, "enddate"=>$enddate);
@@ -264,7 +265,7 @@
         $plandays = resourceutils::getWorkingDays($r['startdate'],$r['enddate']);
         $plan = $factdays*$r['plan']/$plandays;
 
-        $this->m_resourceHours['task'][$r['employee']][$r['id']] = array("plan"=>$plan,"fact"=>$r['fact'],"name"=>$r['name']);
+        $this->m_resourceHours['task'][$r['employee']][$r['id']] = array("plan"=>$plan,"fact"=>$r['fact'],"name"=>$r['name'],"startdate"=>$r['startdate'],"enddate"=>$r['enddate']);
 
         //per package
         if($r['master'] == 'project.package')
@@ -282,7 +283,7 @@
 
     function getWorkingDaysFromTask($starttask,$endtask,$startperiod,$endperiod)
     {
-      if($starttask > $endperiod)
+      if( ($starttask > $endperiod) || ($endtask < $startperiod))
       {
         return 0;
       }
@@ -337,7 +338,7 @@
     {
       $this->m_resourceHours[$type][$employee][$id]['fact'] = $value;
     }
-    
+
     public function getView()
     {
       if($this->m_mode) return $this->m_mode;
@@ -365,7 +366,7 @@
       {
         $this->m_parentChild['project.project'][$id]["package"][] = $r;
       }
-
+      //@todo: we can get this info from $this->m_resoureceHours
       $rows = $db->getrows("SELECT id,name FROM phase WHERE master='project.project' AND master_id='$id' AND assign_to='$employee'");
       foreach ($rows as $r)
       {
@@ -393,7 +394,7 @@
         $this->m_parentChild['project.package'][$id]["task"][] = $r;
       }
     }
-    
+
     function handleSubPackage($id, $employee)
     {
       $this->getPackageChild($id, $employee);
@@ -408,7 +409,69 @@
         $this->setFact("package",$id,$employee,$value);
       }
     }
-    
+    /**
+     * Calculate employees availability at period of time
+     *
+     * @param string $start - start of period yyyy-mm-dd
+     * @param string $end- end of period yyyy-mm-dd
+     * @param int $employee - employees id
+     * @return string html code - image with title
+     */
+    function getPeriodPlan($start, $end, $employee, $id)
+    {
+      $plan = $this->getPlan('task', $id, $employee);
+      $startdate = $this->getStartDate('task', $id, $employee);
+      $enddate = $this->getEndDate('task', $id, $employee);
+
+      $factdays = $this->getWorkingDaysFromTask($startdate, $enddate, $start, $end);
+      $plandays = resourceutils::getWorkingDays($startdate,$enddate);
+      $res = $factdays*$plan/$plandays;
+      return $res;
+    }
+
+    function getLinepackage($weeks, $id, $employeeId)
+    {
+      if(!isset($this->m_resourceHours['package'][$employeeId][$id]['line']))
+      {
+        $this->m_resourceHours['package'][$employeeId][$id]['line'] = array();
+
+        //subpackage handling
+        foreach ($this->m_parentChild['project.package'][$id]['package'] as $child)
+        {
+          $row = $this->getLinePackage($weeks,$child['id'],$employeeId);
+          for($i=0,$_i=count($row);$i<$_i;$i++)
+          {
+            $this->m_resourceHours['package'][$employeeId][$id]['line'][$i] += $row[$i];
+          }
+        }
+
+        //task handling
+        foreach ($this->m_parentChild['project.package'][$id]['task'] as $child)
+        {
+          $row = $this->getLineTask($weeks,$child['id'],$employeeId);
+          for($i=0,$_i=count($row);$i<$_i;$i++)
+          {
+            $this->m_resourceHours['package'][$employeeId][$id]['line'][$i] += $row[$i];
+          }
+        }
+      }
+      return $this->m_resourceHours['package'][$employeeId][$id]['line'];
+    }
+
+    function getLinetask($weeks, $id, $employeeId)
+    {
+      if(!isset($this->m_resourceHours['task'][$employeeId][$id]['line']))
+      {
+        foreach ($weeks as $w)
+        {
+          //$line[] = atkDurationAttribute::_minutes2string($this->getPeriodPlan(resourceutils::str2str($w['startdate']),resourceutils::str2str($w['enddate']),$employeeId,$id));
+          $line[] = $this->getPeriodPlan(resourceutils::str2str($w['startdate']),resourceutils::str2str($w['enddate']),$employeeId,$id);
+        }
+        $this->m_resourceHours['task'][$employeeId][$id]['line'] = $line;
+      }
+      return $this->m_resourceHours['task'][$employeeId][$id]['line'];
+    }
+
     /**
      * Calculate employees availability at period of time
      *
@@ -522,7 +585,7 @@
         }
       }
     }
-    
+
     function handleDateBound(&$startdate, &$enddate,&$start,&$end)
     {
       switch($this->getView())
@@ -530,7 +593,7 @@
         case "week":
           $start = date("W",dateutil::str2stamp($startdate));
           $end = date("W",dateutil::str2stamp($enddate));
-    
+
           $startdate = dateutil::startOfWeek(dateutil::arr2str((dateutil::str2arr($startdate))));
           $enddate = dateutil::endOfWeek(dateutil::arr2str((dateutil::str2arr($enddate))));
           break;
@@ -562,7 +625,7 @@
       $daylink = href(dispatch_url($this->atknodetype(),"report",array("view"=>"day")),$this->text("daymode"));
       $weeklink = href(dispatch_url($this->atknodetype(),"report",array("view"=>"week")),$this->text("weekmode"));
       $monthlink = href(dispatch_url($this->atknodetype(),"report",array("view"=>"month")),$this->text("monthmode"));
-      
+
       switch($view)
       {
         case "day":
@@ -575,8 +638,18 @@
           $ret .= $daylink." ".$weeklink." ".$this->text("monthmode");
           break;
       }
-      return $ret;      
+      return $ret;
     }
-    
-   }
+
+    public function getStartDate($type,$id,$employee)
+    {
+      return $this->m_resourceHours[$type][$employee][$id]['startdate'];
+    }
+
+    public function getEndDate($type,$id,$employee)
+    {
+      return $this->m_resourceHours[$type][$employee][$id]['enddate'];
+    }
+
+  }
 ?>
