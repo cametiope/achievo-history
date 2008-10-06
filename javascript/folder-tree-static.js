@@ -126,7 +126,7 @@ Owner of DHTMLgoodies.com
 			}
 			var aTag = menuItems[no].getElementsByTagName('IMG')[0];
 
-			menuItems[no].insertBefore(img,aTag);
+      if(aTag) menuItems[no].insertBefore(img,aTag);
 			menuItems[no].id = 'dhtmlgoodies_treeNode' + nodeId;
 
 			var tmpParentId = menuItems[no].getAttribute('parentId');
@@ -207,7 +207,7 @@ Owner of DHTMLgoodies.com
 
 			for(var no=0;no<menuItems.length;no++)
 			{
-				nodeId++;
+			  nodeId++;
 				var subItems = menuItems[no].getElementsByTagName('UL');
 
 				var img = document.createElement('IMG');
@@ -220,9 +220,8 @@ Owner of DHTMLgoodies.com
 					subItems[0].id = 'tree_ul_' + treeUlCounter;
 					treeUlCounter++;
 				}
-
 				var aTag = menuItems[no].getElementsByTagName('IMG')[0];
-				menuItems[no].insertBefore(img,aTag);
+        if(aTag) menuItems[no].insertBefore(img,aTag);
 
 				if(!menuItems[no].id)menuItems[no].id = 'dhtmlgoodies_treeNode' + nodeId;
 			}
