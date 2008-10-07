@@ -30,7 +30,7 @@
       useattrib( 'atkdummyattribute' );
       useattrib( 'atkboolattribute' );
       $node->add( new atkDummyAttribute( 'timereg_phase', $this->getPhaseTimeRegistration($node), AF_HIDE_LIST|AF_NO_LABEL ) );
-      $node->add( new atkBoolAttribute( 'is_favorite'));
+      $node->add( new atkBoolAttribute( 'is_favorite',AF_HIDE_LIST));
       $node->setColumnAttribs(array('timereg_phase'));
     }
 
