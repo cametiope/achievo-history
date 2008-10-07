@@ -111,7 +111,7 @@
       $depends = &$this->add(new atkManyToOneRelation("dependsondeliverable", "project.deliverable", AF_HIDE_LIST));
       $depends->setDestinationFilter("project_id=[projectid.id]");
 
-      $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL|AF_HIDE_LIST));
+      $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));
 
       //$this->add(new atkOneToManyRelation("phaseplanning", "project.phaseplanning", "phaseid", AF_HIDE_LIST));
       //$this->add(new atkFuzzySearchAttribute("phaseplanning_add", "employee.employee", "storePhaseplanning", "multiselect", AF_HIDE_ADD|AF_BLANK_LABEL, 20));
