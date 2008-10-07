@@ -53,4 +53,37 @@
       }
       $actions['delete'] = $delete;
     }
+    
+    /**
+     * We can add employees only from the project-team 
+     *
+     */
+    public function person_id_selection($record=array(), $mode="select")
+    {
+      /*@var $sm atkSessionManager*/ 
+      $sm = atkGetSessionManager();
+      $projectId = $sm->getValue('projectid');
+      $p_attr = &$this->getAttribute('person_id');
+      
+      if($projectId)
+      {
+        list($key,$id) = explode("=",$projectId);
+        $node = atkGetNode("project.project_personemployee");
+        $rows = $node->selectDb("projectid=$id","","","",array("personid"));
+        foreach ($rows as $row)
+        {
+          $ids[] = $row['personid']['id'];
+        }
+        if(count($ids))
+        {
+          $filter = "id IN(".implode(",",$ids).")";
+        }
+        else 
+        {
+          $filter = '1=0';
+        }
+        $p_attr->addDestinationFilter($filter);
+      }
+      return $p_attr->getSelectableRecords($record, $mode); 
+    }
 	}
