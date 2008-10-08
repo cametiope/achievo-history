@@ -14,6 +14,6 @@
                     PRIMARY KEY (`department_id`,`representative_id`))
   "); 
   
-  $setup->setVersion(22);
+  $setup->setVersion(23);
 
 ?>

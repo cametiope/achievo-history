@@ -35,8 +35,7 @@ class organization extends atkTreeNode
 {
   function organization()
   {
-    //$this->atkNode("organization", NF_EDITAFTERADD|NF_EXPORT);
-    $this->atkTreeNode("organization", NF_TREE_NO_ROOT_COPY|NF_TREE_NO_ROOT_DELETE|NF_EDITAFTERADD|NF_EXPORT|NF_TREE_AUTO_EXPAND);    
+    $this->atkTreeNode("organization", NF_TREE_NO_ROOT_COPY|NF_EXPORT|NF_TREE_AUTO_EXPAND);    
     
     $listener = &atknew("modules.crm.listeners.eventlistener");
     $this->addListener($listener);
