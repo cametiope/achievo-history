@@ -1063,8 +1063,9 @@ class hoursurvey extends atkNode
 
   function getHourRecordsFromDB($hoursnode, $filter, $orderby, $col)
   {
+    unset($hoursnode->m_postvars["atkfilter"]);
     $records = $hoursnode->selectDb($filter,implode(",",$orderby), "", "", $col);
-
+    
     if (is_array($records) && count($records) > 0)
       return $records;
 

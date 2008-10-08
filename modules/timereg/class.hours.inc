@@ -243,7 +243,7 @@ class hours extends atkNode
       $phase->addDependee("activityid");      
     $this->add($phase,null, 30);       
 
-    $package = &new packageManyToOneRelation("packageid", "project.package",AF_OBLIGATORY|AF_FORCE_LOAD);
+    $package = &new packageManyToOneRelation("packageid", "project.package",AF_FORCE_LOAD|AF_HIDE_LIST);
     $package->setDestinationFilter('package.projectid="[projectid.id]"');
     $package->addDependee('phaseid');
     $this->add($package,null,29);       

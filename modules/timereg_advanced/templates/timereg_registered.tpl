@@ -17,7 +17,7 @@
 
 {if $rows|count == 0}
 
-Geen uren geboek
+{atktext id="no_hours_registered"}
 
 {else}
 
@@ -53,7 +53,7 @@ Geen uren geboek
              {$row.activitydate.day}-{$row.activitydate.month}-{$row.activitydate.year}
            </td>
            <td class="recordListTd">
-             {$row.time}
+             {$row.time_full}
            </td>
            <td class="recordListTd">
              {$row.phaseid.completed} %
