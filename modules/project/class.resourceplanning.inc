@@ -255,7 +255,8 @@
           ".($employee ? " h.assign_to='$employee' AND " : "" )."
           ".($package ? " h.master_id='$package' AND h.master='project.package' AND " : "" )."
           ( (h.startdate BETWEEN '$start' AND '$end') OR
-          (h.enddate BETWEEN '$start' AND '$end') )
+          (h.enddate BETWEEN '$start' AND '$end')  OR
+          (h.startdate<='$start' AND h.enddate>='$end') )
       ");
 
       foreach ($rows as $r)
@@ -265,7 +266,7 @@
         $plandays = resourceutils::getWorkingDays($r['startdate'],$r['enddate']);
         $plan = $factdays*$r['plan']/$plandays;
 
-        $this->m_resourceHours['task'][$r['employee']][$r['id']] = array("plan"=>$plan,"fact"=>$r['fact'],"name"=>$r['name'],"startdate"=>$r['startdate'],"enddate"=>$r['enddate']);
+        $this->m_resourceHours['task'][$r['employee']][$r['id']] = array("plan"=>$plan,"fact"=>$r['fact'],"name"=>$r['name'],"startdate"=>$r['startdate'],"enddate"=>$r['enddate'],"taskplan"=>$r['plan']);
 
         //per package
         if($r['master'] == 'project.package')
@@ -419,7 +420,7 @@
      */
     function getPeriodPlan($start, $end, $employee, $id)
     {
-      $plan = $this->getPlan('task', $id, $employee);
+      $plan = $this->getTaskPlan('task', $id, $employee);
       $startdate = $this->getStartDate('task', $id, $employee);
       $enddate = $this->getEndDate('task', $id, $employee);
 
@@ -649,6 +650,11 @@
     public function getEndDate($type,$id,$employee)
     {
       return $this->m_resourceHours[$type][$employee][$id]['enddate'];
+    }
+
+    public function getTaskPlan($type,$id,$employee)
+    {
+      return $this->m_resourceHours[$type][$employee][$id]['taskplan'];
     }
 
   }
