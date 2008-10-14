@@ -105,7 +105,6 @@
 
       $vars = array('session_form'=>atkSessionManager::formState(),
                     'projectmenu' => $this->getProjectMenu(),
-                    'dispatch'=>getDispatchFile(),
                     'timerange'=>$timerange,
                     'planheader'=>$header,
                     'plan'=>$data,
