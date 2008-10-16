@@ -32,7 +32,24 @@
       {
         return substr($strdate, 0, 4)."-".substr($strdate, 4, 2)."-".substr($strdate, 6, 2);
       }
-
+    }
+    
+    static function monthsBetween($datestart, $dateend)
+    {
+      $ret = array();
+      
+      $start = mktime(0, 0, 0, date("m",$datestart), 1, date("Y", $datestart));
+      $end =   mktime(0, 0, 0, date("m",$dateend)+1, 0, date("Y", $dateend));
+      
+      $i = 0;
+      while($start < $end)
+      {
+        $ret[] = date("y",$start).date("m",$start);
+        $i++;
+        $start =  mktime(0, 0, 0, date("m",$datestart)+$i, 1, date("Y", $datestart));
+      }
+      
+      return $ret;
     }
   }
 ?>

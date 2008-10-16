@@ -155,10 +155,10 @@
       //Header creation
       $header[] = $this->text("plan");
       $header[] = $this->text("fact");
-      //Header row
-      $min_width = ($endweek - $startweek +3)*50+190;
 
+      //Header columns
       $weeks = dateutil::weeksBetween($startdate,$enddate);
+      $min_width = $this->getMinWidth(count($weeks));
 
       foreach ($weeks as $w)
       {
@@ -193,11 +193,12 @@
       $header[] = $this->text("plan");
       $header[] = $this->text("fact");
       //Header row
-      $min_width = ($endmonth - $startmonth +3)*50+190;
+      $months = resourceutils::monthsBetween(dateutil::str2stamp($startdate), dateutil::str2stamp($enddate));
+      $min_width = $this->getMinWidth(count($months));
 
-      for($w=$startmonth;$w<=$endmonth;$w++)
+      foreach ($months as $month)
       {
-        $header[] = sprintf("%02d",$w);
+        $header[] = $month;
       }
 
       //Data rows
@@ -654,6 +655,11 @@
     public function getTaskPlan($type,$id,$employee)
     {
       return $this->m_resourceHours[$type][$employee][$id]['taskplan'];
+    }
+    
+    public function getMinWidth($count)
+    {
+       return ($count +2)*50+190;
     }
 
   }

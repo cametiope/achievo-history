@@ -97,7 +97,7 @@
       break;
   }
 
-  $min_width = ($endweek - $startweek +3)*50+190;
+  $min_width = (count($weeks) +2)*50+190;
 
   $vars = array('plan'=>$data,
                 'min_width'=>$min_width,
