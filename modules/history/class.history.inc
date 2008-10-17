@@ -38,9 +38,20 @@
       $this->add( new atkDateTimeAttribute( 'timestamp', AF_READONLY ) );
       $this->add( new atkAttribute( 'action', AF_READONLY ) );
 
+     
       // Only show recent events
-      //$this->addFilter("timestamp >= '".$user['previous_login']."'" );
-
+      //$this->addFilter("timestamp >= '".$user['previous_login']."'" );   
+        
+      $this->add( new atkNumberAttribute( 'project', AF_HIDE|AF_FORCE_LOAD) );
+      
+      // Only show events of the current selected project      
+      if ( '' != ( $project = atkGetPostVar('atkfilter') ) )
+      {
+        $id = decodeKeyValuePair( $project ); 
+        sort( $id ); // Sort to make sure the key has value 0
+        $this->addFilter( 'project = '.$id[0] );
+      }      
+      
       $this->setTable('history','history');
       $this->setOrder('timestamp DESC');
     }

@@ -17,13 +17,14 @@
      */
     public function actionPerformed( $action, $record )
     {
+      $project = isset( $record['projectid']['id'] ) ? $record['projectid']['id'] : '';   
       switch( $action )
       {
         case 'update':
           $changes = $this->determineChanges( $record );
           if( ! empty( $changes ) )
           {
-            $this->storeChangesToHistory( $record['id'], $changes );
+            $this->storeChangesToHistory( $record['id'], $changes, $project );
           }
         break;
       }
@@ -75,7 +76,7 @@
      * @param string $changes
      * @return void
      */
-    private function storeChangesToHistory( $id, $changes )
+    private function storeChangesToHistory( $id, $changes, $project )
     {      
       $user = atkGetUser( );
       $node = atkGetNode( 'history.history' );
@@ -84,6 +85,7 @@
       {
         $record = array(
           'master'    => 'project.phase',
+          'project'   => $project,
           'master_id' => $id,
           'person_id' => $user['id'],
           'timestamp' => array('year'    => date('Y'),

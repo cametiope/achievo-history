@@ -87,6 +87,7 @@
                                'seconds' => date('s'),
                          ),
           'action'    => $msg,
+          'project'   => $id,
         );          
         
         $node->addDb( $record );

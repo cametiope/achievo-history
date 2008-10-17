@@ -16,14 +16,16 @@
      * @return void
      */
     public function actionPerformed( $action, $record )
-    {      
+    {  
+      $project = isset( $record['projectid']['id'] ) ? $record['projectid']['id'] : '';   
       switch( $action )
-      {
-        case 'update':          
+      {        
+        case 'update':
+        
           $changes = $this->determineChanges( $record );
           if( ! empty( $changes ) )
           {
-            $this->storeChangesToHistory( $record['id'], $changes );
+            $this->storeChangesToHistory( $record['id'], $changes, $project );
           }          
         break;
       }      
@@ -39,7 +41,6 @@
     private function determineChanges( $record )
     {      
       $changes = array( );
-      
       // Proceed if we have an atkorgrec, which will be available if the project node has the flag NF_TRACK_CHANGES
       if( array_key_exists( 'atkorgrec', $record ) )
       {        
@@ -73,7 +74,7 @@
      * @param string $changes
      * @return void
      */
-    private function storeChangesToHistory( $id, $changes )
+    private function storeChangesToHistory( $id, $changes, $project )
     {
       $user = atkGetUser( );
       $node = atkGetNode( 'history.history' );
@@ -82,7 +83,7 @@
       {
         $record = array(
           'master'    => 'project.package',
-          'master_id' => $id,
+          'master_id' => $id,         
           'person_id' => $user['id'],
           'timestamp' => array('year'    => date('Y'),
                                'month'   => date('m'),
@@ -92,6 +93,7 @@
                                'seconds' => date('s'),
                          ),
           'action'    => $msg,
+          'project'   => $project,
         );          
         
         $node->addDb( $record );
