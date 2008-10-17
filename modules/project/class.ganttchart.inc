@@ -371,9 +371,9 @@
         AND
           '.$packagesClause.'
         AND
-          ( package.enddate IS NULL OR package.enddate >= "'.$from.'")
+          ( package.enddate IS NOT NULL AND package.enddate >= "'.$from.'")
         AND
-          ( package.startdate IS NULL OR package.startdate <= "'.$until.'")'; 
+          ( package.startdate IS NOT NULL AND package.startdate <= "'.$until.'")'; 
       
       $resultset = $db->getRows( $query );      
       
