@@ -268,7 +268,11 @@
       if ($project['startdate']<$from) $project['startdate']=$from;
       if ($project['enddate']>$to || $project['enddate']=='') $project['enddate']=$to;
 
-      $caption = "[".time_format($project[$plannedbooked], true)."]";
+
+      if($project['enddate'] != $to )
+      {
+        $caption = "[".time_format($project[$plannedbooked], true)."]";
+      }
       $activity = new GanttBar($index, $project['name'], $project['startdate'], $project['enddate'], $caption);
 
       $colorbase = $project[$plannedbooked];
