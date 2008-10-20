@@ -545,18 +545,23 @@ class weekreport extends atkNode
                   id, lastname, firstname
                 FROM
                   person
+                WHERE 
+                  person.role='employee'
+                AND 
+                  person.status='active'
                  ";
       if ($employeeswitch=="supervisor" && $userid!="all")
       {
-        $query.= "WHERE supervisor = '".$userid."'";
+        $query.= "AND supervisor = '".$userid."'";
       }
       if ($employeeswitch=="name" && $userid!="all")
       {
-        $query.= "WHERE id = '".$userid."'";
+        $query.= "AND id = '".$userid."'";
       }
       $db = &atkGetDb();
       $persons = $db->getrows($query);
 
+      atk_var_dump($persons);
       $end = endOfWeek(date("Y-m-d", $endstamp));
       $newendstamp = adodb_mktime(0,0,0,substr($end,5,2),substr($end,8,2)+1,substr($end,0,4));
       $balancenode = &atkGetNode("timereg.overtime_balance");
