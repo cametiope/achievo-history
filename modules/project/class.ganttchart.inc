@@ -294,10 +294,9 @@
      * @param integer $project_id
      * @param string $from
      * @param string $until
-     * @param array $packages
      * @return array
      */
-    private function getProject($project_id, $from, $until, $packages )
+    private function getProject($project_id, $from, $until )
     {
       $db = &atkGetDb();
      
@@ -319,7 +318,7 @@
       if( !empty( $project) )
       {
         $result['project']  = $project[0];
-        $result['packages'] = $this->getPackages( $project_id, $from, $until, 'project.project', 0, true, $packages );
+        $result['packages'] = $this->getPackages( $project_id, $from, $until, 'project.project', 0, true );
         $result['tasks']    = $this->getTasks( $project_id, $from, $until, 'project.project', 0 );
       }
             
@@ -452,12 +451,13 @@
      * @param string $from
      * @param string $until
      * @param string $display
+     * @param array $filter
      */
-    function showGraph($gantt, $from, $until, $display)
+    function showGraph($gantt, $from, $until, $display, $filter )
     {      
       // Format the Graph array into a format that the jpgraph library will understand
       $this->i = -1;
-      $this->formatGraphArray( $gantt );
+      $this->formatGraphArray( $gantt, $filter );
 
       // Load jpgraph gantt chart library files
       include_once(moduleDir("graph")."jpgraph/jpgraph.php");
@@ -521,38 +521,42 @@
      * the jpgraph library
      *
      * @param array $data
+     * @param array $filter
      * @return array
      */
-    private function formatGraphArray( $data )
-    {         
+    private function formatGraphArray( $data, $filter )
+    {  
       // Add packages         
       if( count( $data['packages'] ) > 0 )
       {
         foreach( $data['packages'] AS $key => $val )
         {
-          $this->i++;          
-          $this->graph_data[] = array(  
-                                  $this->i, 
-                                  $val['ganttbartype'], 
-                                  str_repeat(' ', ( $val['level'] * 2 ) ) . $val['name'], 
-                                  $val['startdate'],
-                                  $val['enddate'],
-                                  '['.$val['spend_hours'] .'/'. $val['current_planning'].']');
-                                  
-          $this->graph_lookup[] = array( 
-                                  'id' => $val['id'],
-                                  'type' => 'package' 
-                                );
-                                       
+          if( in_array( $key, $filter ) )
+          {
+            $this->i++;          
+            $this->graph_data[] = array(  
+                                    $this->i, 
+                                    $val['ganttbartype'], 
+                                    str_repeat(' ', ( $val['level'] * 2 ) ) . $val['name'], 
+                                    $val['startdate'],
+                                    $val['enddate'],
+                                    '['.$val['spend_hours'] .'/'. $val['current_planning'].']');
+                                    
+            $this->graph_lookup[] = array( 
+                                    'id' => $val['id'],
+                                    'type' => 'package' 
+                                  );
+          }
+                                         
           if( count( $val['packages'] ) > 0 || count( $val['tasks'] ) > 0 )
           {
-            $this->formatGraphArray( $val );  // Recursive iteration
-          }
+            $this->formatGraphArray( $val, $filter );  // Recursive iteration
+          }          
         }
       }
       
       // Add tasks
-      if( count( $data['tasks'] ) > 0 )
+      if( count( $data['tasks'] ) > 0 && ( ( $data['level'] > 0 ) && in_array( $data['id'], $filter) ) )
       {
         foreach( $data['tasks'] AS $key => $val )
         {
@@ -634,8 +638,10 @@
           : array(); 
 
       // Get the gantt details 
-      $gantt = $this->getProject( $params['project'], $params['from'], $params['until'], $params['packages'] );
+      $gantt = $this->getProject( $params['project'], $params['from'], $params['until'] );
+            
       // Display the graph
-      $this->showGraph( $gantt, $params['from'], $params['until'], $params['display'] );
-    }
+      $this->showGraph( $gantt, $params['from'], $params['until'], $params['display'], $params['packages'] );
+    }    
+    
   }
