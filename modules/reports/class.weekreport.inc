@@ -273,8 +273,8 @@ class weekreport extends atkNode
     if ($nameswitch == 'supervisor')
     {
       $employees = $repUtils->getEmployeesArray($user_id); // get all users below this user
-      $employees[]['id'] = $user_id;                       // add current user to employees
-
+      $employees[]['id'] = $user_id;                       // add current user to employees 
+      
       $hourrecords = array();
 
       foreach ($employees as $employee)
@@ -535,7 +535,7 @@ class weekreport extends atkNode
           $weekdata[$key]["enddate"] = strftime("%d-%m-%Y",$curstamp+(6*ONEDAY));
           $i+=6;
         }
-      }
+      } 
 
       $report_start_week = weekstamp($startstamp);
       $report_end_week = weekstamp($endstamp);
@@ -557,11 +557,23 @@ class weekreport extends atkNode
       if ($employeeswitch=="name" && $userid!="all")
       {
         $query.= "AND id = '".$userid."'";
-      }
+      }      
+
       $db = &atkGetDb();
       $persons = $db->getrows($query);
 
-      atk_var_dump($persons);
+      // hack: if all users selected, overwrite the persons array with the logged in user
+      if( $userid == 'all' )
+      {
+        $user = atkGetUser();
+        if( array_key_exists( 'id', $user ) )
+        {
+          $persons = $repUtils->getEmployeesArray($user['id']); // get all users below the logged in user
+         // add current user to employees
+          $persons[] = array( 'id' => $user['id'], 'firstname' => $user['firstname'], 'lastname' => $user['lastname'] );
+        }      
+      }
+            
       $end = endOfWeek(date("Y-m-d", $endstamp));
       $newendstamp = adodb_mktime(0,0,0,substr($end,5,2),substr($end,8,2)+1,substr($end,0,4));
       $balancenode = &atkGetNode("timereg.overtime_balance");
