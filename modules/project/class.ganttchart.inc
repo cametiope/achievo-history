@@ -556,7 +556,8 @@
       }
       
       // Add tasks
-      if( count( $data['tasks'] ) > 0 && ( ( $data['level'] > 0 ) && in_array( $data['id'], $filter) ) )
+      if( !array_key_exists( 'level', $data )  ||                     // include project level tasks
+          (count( $data['tasks'] ) > 0 && ( ( $data['level'] > 0 ) && in_array( $data['id'], $filter) ) ) )
       {
         foreach( $data['tasks'] AS $key => $val )
         {
