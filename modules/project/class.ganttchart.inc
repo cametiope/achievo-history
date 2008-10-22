@@ -69,13 +69,14 @@
      * @var array
      */
     private $graph_completed;
-    
-    
+
+   
     /**
      * Ganttchart constructor
      */
     function ganttchart($name="ganttchart")
     {
+      $this->setProjectId();
       $this->atkNode($name);
       $this->setSecurityAlias("project.project");
       $this->m_securityMap["planninggraph"] = "planning";
@@ -173,7 +174,7 @@
       $output = '<form action="'.getDispatchFile().'" method="get">';
       $output.= session_form();
       $output.= '<input type="hidden" name="atkaction" value="planning">';
-      $output.= '<input type="hidden" name="atkselector" value="project.id='.$this->getProjectId().'">';
+      $output.= '<input type="hidden" name="atkselector" value="project.id=\''.$this->getProjectId().'\'">';
       $output.= '<input type="hidden" name="projectid" value="'.$this->getProjectId().'">';
       $output.= '<input type="hidden" name="go" value="1">'; // Trigger to prevent loading the first time
       
@@ -645,4 +646,17 @@
       $this->showGraph( $gantt, $params['from'], $params['until'], $params['display'], $params['packages'] );
     }    
     
+    
+    /**
+     * Set the project id
+     * @note the code below makes no sense at all, but somehow storing $selector directly in the session won't work
+     *       and this does...
+     */
+    private function setProjectId()
+    { 
+      $selector = atkGetPostVar('atkselector');
+      $val = decodeKeyValuePair($selector);
+      sort($val);     
+      sessionStore('projectid', "project.id='\".$val[0].\"'");    
+    }
   }
