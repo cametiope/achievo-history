@@ -25,8 +25,7 @@
     {
       if(strstr($strdate,'-'))
       {
-
-        return substr($strdate, 0, 4)."-".substr($strdate, 5, 2)."-".substr($strdate, 8, 2);
+        return $strdate;
       }
       else
       {
@@ -37,6 +36,8 @@
     static function monthsBetween($datestart, $dateend)
     {
       $ret = array();
+      $datestart = dateutil::str2stamp($datestart);
+      $dateend = dateutil::str2stamp($dateend);
       
       $start = mktime(0, 0, 0, date("m",$datestart), 1, date("Y", $datestart));
       $end =   mktime(0, 0, 0, date("m",$dateend)+1, 0, date("Y", $dateend));
@@ -44,9 +45,14 @@
       $i = 0;
       while($start < $end)
       {
-        $ret[] = date("y",$start).date("m",$start);
+        $key = date("y",$start).date("m",$start);
+        $tempdate = mktime(0,0,0,date("m",$start)+1,0,date("Y",$start));
+        $ret[$key] =array(
+                        "month" => $key,
+                        "startdate" => date("Ymd",mktime(0,0,0,date("m",$start),1,date("Y",$start))),
+                        "enddate" => date("Ymd",$tempdate));
         $i++;
-        $start =  mktime(0, 0, 0, date("m",$datestart)+$i, 1, date("Y", $datestart));
+        $start =  mktime(0,0,0,date("m",$tempdate),date("d",$tempdate)+1,date("Y",$tempdate));
       }
       
       return $ret;
