@@ -185,7 +185,7 @@
     {
       $this->handleDateBound($startdate, $enddate, $startmonth, $endmonth);
 
-      $this->getTaskHours($startdate, $enddate,$employee);
+      $this->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employee);
 
       $rows = $this->getRows();
 
@@ -193,12 +193,12 @@
       $header[] = $this->text("plan");
       $header[] = $this->text("fact");
       //Header row
-      $months = resourceutils::monthsBetween(dateutil::str2stamp($startdate), dateutil::str2stamp($enddate));
+      $months = resourceutils::monthsBetween($startdate, $enddate);
       $min_width = $this->getMinWidth(count($months));
 
       foreach ($months as $month)
       {
-        $header[] = $month;
+        $header[] = $month['month'];
       }
 
       //Data rows
@@ -207,11 +207,10 @@
         $line = array();
         $line[] = atkDurationAttribute::_minutes2string($this->getPlan($r['type'],$r['id'],$r['employee']));
         $line[] = atkDurationAttribute::_minutes2string($this->getFact($r['type'],$r['id'],$r['employee']));
-        //
-        $year = date("Y");
-        for($w=$startmonth;$w<=$endmonth;$w++)
+        foreach ($months as $month)
         {
-          $line[] = $this->getAvailability(date('Y-m-d',mktime(0,0,0,$w,1,$year)),date('Y-m-d',mktime(0,0,0,$w+1,0,$year)),$r['employee']);
+          $line[] = $this->getAvailability(resourceutils::str2str($month['startdate']),resourceutils::str2str($month['enddate']),$r['employee']);
+          
         }
         $data[] = array("data"=>$line,"id"=>$r['id'],"type"=>$r['type'],"name"=>$r['name'],"employeeid"=>$r['employee']);
       }
@@ -601,6 +600,9 @@
         case "month":
           $start = date("m",dateutil::str2stamp($startdate));
           $end = date("m",dateutil::str2stamp($enddate));
+          
+          $startdate = date("Ymd", mktime(0,0,0,$start,1,date("Y",dateutil::str2stamp($startdate))));
+          $enddate = date("Ymd", mktime(0,0,0,$end+1,0,date("Y",dateutil::str2stamp($enddate))));
           break;
       }
     }
