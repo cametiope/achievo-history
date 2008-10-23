@@ -18,10 +18,19 @@
   /*@var $node resourceplanning*/
   $node = &atkGetNode("project.resourceplanning");
   $projectid = $node->m_projectId;
+  
   $node->handleDateBound($startdate, $enddate, $startweek, $endweek);
 
-  //get weeks info
-  $weeks = dateutil::weeksBetween($startdate,$enddate);
+  //get period info
+  switch($node->getView())
+  {
+    case "week":
+      $periods = dateutil::weeksBetween($startdate,$enddate);
+      break;
+    case "month":
+      $periods = resourceutils::monthsBetween($startdate, $enddate);
+      break;
+  }
 
   switch($type)
   {
@@ -48,7 +57,7 @@
           $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employeeId));
           $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employeeId));
 
-          $items = $node->{'getLine'.$type}($weeks, $i['id'], $employeeId);
+          $items = $node->{'getLine'.$type}($periods, $i['id'], $employeeId);
 
           foreach ($items as $item)
           {
@@ -84,7 +93,7 @@
           $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employeeId));
           $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employeeId));
 
-          $items = $node->{'getLine'.$type}($weeks, $i['id'], $employeeId);
+          $items = $node->{'getLine'.$type}($periods, $i['id'], $employeeId);
 
           foreach ($items as $item)
           {
@@ -97,7 +106,7 @@
       break;
   }
 
-  $min_width = (count($weeks) +2)*50+190;
+  $min_width = (count($periods) +2)*50+190;
 
   $vars = array('plan'=>$data,
                 'min_width'=>$min_width,
