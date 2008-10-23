@@ -54,13 +54,14 @@
         if( $record['enddate'] != $record['atkorgrec']['enddate'] )
         {
           $changes[] = atktext('changed_enddate', 'history');      
-        }   
-        
-        // Has the traffic light been changed         
-        if( $record['traffic_light'] != $record['atkorgrec']['traffic_light'] )
+        } 
+
+        // Has the trafficlight attribute been changed
+        if( $record['trafficlight'] != $record['atkorgrec']['trafficlight'] )        
         {
-          $changes[] = atktext('changed_traffic_light', 'history');     
-        }                   
+          atkimport( 'module.history.utils.trafficlightutils' );
+          $changes[] = atktext('changed_trafficlight', 'history') .' from '. trafficLightUtils::getTrafficLightColor( $record['atkorgrec']['trafficlight'] ).' to '. trafficLightUtils::getTrafficLightColor( $record['trafficlight'] );
+        }
       }
       
       return $changes;      
