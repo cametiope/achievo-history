@@ -126,7 +126,8 @@
       // $this->add(new spendHoursAttribute("spend_hours","id",AF_TOTAL));
       $this->add(new atkDurationAttribute('spend_hours', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
 
-      $this->add(new atkFieldSet('actual_planning', '[current_planning.field] &nbsp; ' . $this->text('booked') . ': [spend_hours.field]', AF_HIDE_LIST|AF_HIDE_ADD));
+      // Disabled the fieldset, because the actual_planning label conflicts with achievo's general search
+      //$this->add(new atkFieldSet('actual_planning', '[current_planning.field] &nbsp; ' . $this->text('booked') . ': [spend_hours.field]', AF_HIDE_LIST|AF_HIDE_ADD));
 
       $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
 
@@ -1158,4 +1159,51 @@
     	}
     }
 
+    
+    /**
+     * Override searchDB, so that we can add an additional filter that determines if the logged in user
+     * may actually see the project
+     *
+     * @param string $expression
+     * @param string $searchmethod
+     * @return array
+     */
+    function searchDb($expression, $searchmethod="OR")
+    {
+      $records = parent::searchDb( $expression, $searchmethod );
+      
+      // User may see all projects
+      if ( $this->allowed("any_project") )
+      {
+        return $records;
+      }
+      
+      // Fetch all projects a user belongs to
+      $user = atkGetUser();
+      if( array_key_exists( 'id', $user ) )
+      {
+        $db       = atkGetDb();
+        $query    = 'SELECT DISTINCT( projectid ) FROM project_person WHERE personid = '.$user['id'];
+        $projects = $db->getRows( $query );
+        
+        foreach( $records AS $key => $record ) // Loop all records that match the expression
+        {
+          $flag = false;
+          foreach( $projects AS $project )     // Loop all projects the user can see
+          {
+            if( $record['id'] == $project['projectid'] )
+            {
+              $flag = true;                    
+            }
+          }
+          
+          // Unset all projects the user can't see
+          if( false == $flag )
+          {
+            unset( $records[$key] );
+          }
+        }
+      }
+      return $records;
+    }
   }
