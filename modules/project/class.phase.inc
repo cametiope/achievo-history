@@ -121,7 +121,8 @@
         $this->add(new atkOneToManyRelation("hours","timereg.hours","phaseid",AF_HIDE|AF_CASCADE_DELETE));
 
       // list of linked deliverables for this phase
-      $this->add(new atkOneToManyRelation("deliverable_phase","project.deliverable_phase","phase_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
+      $this->add(new atkOneToManyRelation("deliverable_phase","project.deliverable_phase","phase_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE))
+        ->setDestinationFilter('deliverable_id.status <> "complete"');
 
       $this->addSecurityMap("view","project.admin");
       $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field');

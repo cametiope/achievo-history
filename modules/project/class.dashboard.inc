@@ -58,7 +58,7 @@
            ->setDestinationFilter("phase.completed < 100 OR phase.completed IS NULL");
 
       $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
-      $deliverable->setDestinationFilter('project_id=[id]');
+      $deliverable->setDestinationFilter('deliverable.project_id=[id] AND deliverable.status <> "complete"');
 
       if (moduleExists('history'))
       {

@@ -403,6 +403,7 @@
       
       $this->memo_attr = $this->getAttribute("trafficlight_memo");
       $this->getAttribute("trafficlight_updatestyle")->addDependee('trafficlight_memo_field')->addDependee('trafficlight_selection');
+      $this->getAttribute('deliverable_package')->setDestinationFilter('deliverable_id.status <> "complete"');
     }
 
     /**

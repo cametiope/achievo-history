@@ -144,7 +144,7 @@
       if( atkGetPostVar('atkaction') != 'add' && atkGetPostVar('atkprevaction') != 'add' )
       { 
         $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
-        $deliverable->setDestinationFilter('project_id=[id]');
+        $deliverable->setDestinationFilter('deliverable.project_id=[id] AND deliverable.status <> "complete"');
       
         $team = &$this->add(new atkOneToManyRelation("team", "project.project_personemployee_projectview", "projectid", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
   
