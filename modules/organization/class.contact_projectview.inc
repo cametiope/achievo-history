@@ -50,7 +50,6 @@
      */
     public function recordActions($record, &$actions, &$mraactions) 
     {
-      atk_var_dump($record);
       $delete = $actions['delete']; // temp store delete action to change the order of recordlist icons
       $actions = array();
             

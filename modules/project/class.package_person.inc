@@ -34,6 +34,12 @@
 	    $policy->hasOne("employee.employee",array("source"=>"person_id"));
 	  }
 	  
+	  public function postMeta()
+	  {     
+      $employee = $this->getAttribute("person_id");
+      $employee->addListColumns("phone", "role", "email");	    
+	  }
+	  
 	  /**
      * Override recordactions to remove the view and edit icons
      * @todo: for some reason the email action is not shown in the actionlist, fix this
@@ -54,6 +60,7 @@
       $actions['delete'] = $delete;
     }
     
+   
     /**
      * We can add employees only from the project-team 
      *

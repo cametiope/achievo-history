@@ -16,7 +16,7 @@
       $this->atkNode("deliverable_phase");
 
       $this->add(new atkManyToOneRelation("deliverable_id","project.deliverable",AF_PRIMARY))->
-        addListColumns("duedate");
+        addListColumns("duedate", "status", "remind_days", "icon");
       $this->add(new atkManyToOneRelation("phase_id","project.phase",AF_PRIMARY));
 
       $this->setTable("deliverable_phase");
