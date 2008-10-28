@@ -14,6 +14,33 @@
   </tr>
 </table>
 
+{if $action == "add"}
+
+{$searchformstart}
+
+<table cellpadding="3" cellspacing="0"> 
+
+  <tr>
+    <td><strong>{atktext id="project"} / {atktext id="phase"}</strong>: <input type="text" name="projectphasename" id="projectphasename" value="" /></td>
+    <td width="100">&nbsp;</td>
+    <td><strong>{atktext id="enddate"}: {$datefilter}</td>
+  </tr>   
+
+  <tr>
+    <td colspan="3"><strong><input type="checkbox" name="searchallprojects" id="searchallprojects" /> {atktext id="allprojects"}</td>
+  </tr>
+  
+  <tr>
+    <td colspan="3" align="center"><input type="submit" name="submitsearch" id="submitsearch" value="{atktext id="filter"}" /></td>
+  </tr>
+      
+</table>
+
+{$formend}
+
+<br/><br/>
+
+{/if}
 
 <table cellspacing="0" cellpadding="0" class="recordListContainer">
   <tr>
@@ -31,20 +58,20 @@
 		  </div>
 		{/if}
     
-      {$formstart}
+      {$entryformstart}
     
       <table class="recordList" cellpadding="0" cellspacing="0">    
           
         <!-- header -->
         <tr>
-          <th class="recordListThFirst"><b>{atktext id="project"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="phase"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="enddate"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="time"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="completed"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="comment"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="activity"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="favorite"}</b></th>
+          <th class="recordListThFirst"><a href="{$sorturl}&orderby=project"><strong>{atktext id="project"}</strong></a></th>
+          <th class="recordListThFirst"><a href="{$sorturl}&orderby=phase"><strong>{atktext id="phase"}</strong></a></th>
+          <th class="recordListThFirst"><a href="{$sorturl}&orderby=enddate"><strong>{atktext id="enddate"}</strong></a></th>
+          <th class="recordListThFirst"><strong>{atktext id="time"}</strong></th>
+          <th class="recordListThFirst"><strong>{atktext id="completed"}</strong></th>
+          <th class="recordListThFirst"><strong>{atktext id="comment"}</strong></th>
+          <th class="recordListThFirst"><strong>{atktext id="activity"}</strong></th>
+          <th class="recordListThFirst"><strong>{atktext id="favorite"}</strong></th>
         </tr>
 
         <!-- records -->

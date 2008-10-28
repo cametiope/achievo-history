@@ -44,8 +44,8 @@ class timereg_advanced extends atkNode
   }
 
   /*
-     * Override of the add action.
-     */
+   * Override of the add action.
+   */
   public function action_add( &$handler )
   {
     $page = &$this->getPage();
@@ -71,8 +71,8 @@ class timereg_advanced extends atkNode
   }
 
   /*
-     * Custom action to let users only register hours on their favorite tasks.
-     */
+   * Custom action to let users only register hours on their favorite tasks.
+   */
   public function action_favorites( &$handler )
   {
     $page = &$this->getPage();
@@ -97,7 +97,7 @@ class timereg_advanced extends atkNode
   }
 
   /**
-   * Fill the smarty vars
+   * Fill the smarty vars.
    *
    * @param string $action
    */
@@ -111,8 +111,13 @@ class timereg_advanced extends atkNode
     $smarty->assign( 'rows', $this->getActivePhases( $action, $registered ) );
     $smarty->assign( 'completed', $this->getCompletedValues() );
     $smarty->assign( 'times', $this->getRegistrationTimes() );
+    $smarty->assign( 'action', $action );
+    $smarty->assign( 'sorturl', $this->getSortUrl( $action ) );
     
-    $smarty->assign( 'formstart', $this->getFormStart( $handler ) );
+    $smarty->assign( 'searchformstart', $this->getFormStart( $handler, 'searchform' ) );
+    $smarty->assign( 'datefilter', $this->getDateFilter() );
+    
+    $smarty->assign( 'entryformstart', $this->getFormStart( $handler ) );
     $smarty->assign( 'formend', $this->getFormEnd() );
     $smarty->assign( 'buttons', $this->getFormButtons( 'add', '' ) );
     $smarty->assign( 'taburl', $this->getTimeregAdvancedTabUrls() );
@@ -132,7 +137,7 @@ class timereg_advanced extends atkNode
   }
 
   /**
-   * Register styles and javascript for the action
+   * Register styles and javascript for the action.
    *
    * @param atkPage $page
    */
@@ -216,7 +221,7 @@ class timereg_advanced extends atkNode
   }
 
   /**
-   * Fill the smarty vars for times
+   * Fill the smarty vars for times.
    *
    * @return string
    */
@@ -239,14 +244,10 @@ class timereg_advanced extends atkNode
   protected function getActivePhases( $action = 'add', $registered = false )
   {
     $node = &atkGetNode( 'project.phase' );
-    
-    $filter = "assign_to=" . atkGetUserId();
-    $filter .= " AND " . $node->getTable() . ".startdate < NOW()";
-    $filter .= " AND " . $node->getTable() . ".enddate > NOW()";
-    if( $action == 'favorites' )
-      $filter .= " AND is_favorite=1";
-    
-    $rows = $node->select( $filter )->allRows();
+    $filter = $this->createActivePhasesFilter( $node, $action );
+    $orderby = $this->createActivePhasesOrder();
+    atk_var_dump($orderby, 'ORDER BY');
+    $rows = $node->select( $filter )->orderby( $orderby )->allRows();
     
     for( $i = 0, $_i = count( $rows ); $i < $_i; $i++ )
     {
@@ -259,6 +260,101 @@ class timereg_advanced extends atkNode
     }
     
     return $rows;
+  }
+
+  /**
+   * Generate filter for active phases.
+   *
+   * @param atkNode $node
+   * @param string $action
+   * @return string $filter
+   */
+  protected function createActivePhasesFilter( $node, $action )
+  {
+    $filter = "";
+    $filter .= "assign_to=" . atkGetUserId();
+    
+    if( $action == 'favorites' )
+    {
+      $filter .= " AND is_favorite=1";
+      return $filter;
+    }
+    
+    $postvars = atkGetPostVar();
+    $db = $this->getDb();
+    
+    if( array_key_exists( 'projectphasename', $postvars ) && $postvars['projectphasename'] != '' )
+    {
+      $projectPhaseName = strtolower( $db->escapeSQL( $postvars['projectphasename'] ) );
+      $filter .= " AND (LOWER(projectid.name) LIKE '%" . $projectPhaseName . "%' OR LOWER(phase.name) LIKE '%" . $projectPhaseName . "%')";
+    }
+    
+    if( $this->hasValidFilterDate( $postvars ) )
+    {
+      $enddate = $db->escapeSQL( $postvars['filterdate']['year'] . '-' . $postvars['filterdate']['month'] . '-' . $postvars['filterdate']['day'] );
+      $filter .= " AND " . $node->getTable() . ".enddate='" . $enddate . "'";
+    }
+    else
+    {
+      $filter .= " AND " . $node->getTable() . ".startdate < NOW()";
+      $filter .= " AND " . $node->getTable() . ".enddate > NOW()";
+    }
+    
+    return $filter;
+  }
+
+  /**
+   * Validate filterdate.
+   *
+   * @param array $postvars
+   * @return boolean
+   */
+  protected function hasValidFilterDate( $postvars )
+  {
+    
+    if( ! array_key_exists( 'filterdate', $postvars ) )
+      return false;
+    if( $postvars['filterdate']['day'] == 0 )
+      return false;
+    if( $postvars['filterdate']['month'] == 0 )
+      return false;
+    if( trim( $postvars['filterdate']['year'] ) == '' )
+      return false;
+    
+    return true;
+  }
+
+  /**
+   * Generate orderby for active phases.
+   *
+   * @return string $filter
+   */
+  protected function createActivePhasesOrder()
+  {
+    $postvars = atkGetPostVar();
+    
+    if( ! array_key_exists( 'filterdate', $postvars ) ) return '';
+    
+    if (trim($postvars['orderby'] == '')) return '';
+    else 
+    {
+      switch ($postvars['orderby']) {
+      	case 'project':
+      	  $orderby = 'projectid.name ASC';
+      	  break;
+      	case 'phase':
+      	  $orderby = 'phase.name ASC';
+      	  break;
+        case 'enddate':
+          $orderby = 'phase.enddate ASC';
+          break;
+      	default:
+      		$orderby = '';
+      	  break;
+      }
+      return $orderby;
+    }
+    return $this->getDb()->escapeSQL($postvars['orderBy']);
   }
 
   /**
@@ -314,18 +410,32 @@ class timereg_advanced extends atkNode
   }
 
   /**
+   * Generate sort Url.
+   *
+   * @param string $action
+   * @return string
+   */
+  protected function getSortUrl( $action )
+  {
+    $postvars = atkGetPostVar();
+    unset( $postvars['orderby'] );
+    return dispatch_url('timereg_advanced.timereg_advanced', $action, $postvars);
+  }
+
+  /**
    * Get the start of the form.
    *
    * @return String HTML The forms' start
    */
-  protected function getFormStart( &$handler )
+  protected function getFormStart( &$handler, $formname = 'entryform' )
   {
     $controller = &atkcontroller::getInstance();
     $controller->setNode( $this->m_node );
     
     $node = &$this->m_node;
     
-    $formstart = '<form id="entryform" name="entryform" enctype="multipart/form-data" action="' . $controller->getPhpFile() . '?' . SID . '"' . ' method="post" onsubmit="return globalSubmit(this)">';
+    $method = ($formname == 'searchform') ? 'get' : 'post';
+    $formstart = '<form id="entryform" name="' . $formname . '" enctype="multipart/form-data" action="' . $controller->getPhpFile() . '?' . SID . '"' . ' method="' . $method . '" onsubmit="return globalSubmit(this)">';
     
     $formstart .= session_form( SESSION_DEFAULT, $handler->getReturnBehaviour(), parent::getEditFieldPrefix() );
     $formstart .= $controller->getHiddenVarsString();
@@ -440,7 +550,7 @@ class timereg_advanced extends atkNode
    */
   protected function updatePhase( $phaseid, $favorite, $completed = -1 )
   {
-    $db = &$this->getDb();
+    $db = $this->getDb();
     
     $update = "UPDATE phase SET ";
     if( $completed != - 1 )
@@ -477,22 +587,33 @@ class timereg_advanced extends atkNode
     
     for( $i = 0, $_i = count( $hours ); $i < $_i; $i++ )
     {
-      $hours[$i]['time_full'] = $this->getFormattedTime($hours[$i]['time']);
+      $hours[$i]['time_full'] = $this->getFormattedTime( $hours[$i]['time'] );
     }
     
     return $hours;
   }
-  
+
   /**
    * Get formatted time f
    *
    * @param unknown_type $time
    * @return unknown
    */
-  protected function getFormattedTime($time)
+  protected function getFormattedTime( $time )
   {
-    useattrib('atkdurationattribute');
-    return atkDurationAttribute::_minutes2string($time);
+    useattrib( 'atkdurationattribute' );
+    return atkDurationAttribute::_minutes2string( $time );
+  }
+
+  /**
+   * Load DateAttribute to show the date input fields
+   *
+   * @return string
+   */
+  protected function getDateFilter()
+  {
+    $datefilter = &new atkDateAttribute( 'filterdate' );
+    return $datefilter->edit();
   }
 
 }
