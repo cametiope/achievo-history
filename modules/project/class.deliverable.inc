@@ -70,6 +70,9 @@
                    "status"       =>"new",
                    "entrydate"    =>array("year"=>date("Y"),
                      "month"=>date("m"),
+                     "day"=>date("d")),
+                   "duedate"    =>array("year"=>date("Y"),
+                     "month"=>date("m"),
                      "day"=>date("d")));
     }
 
