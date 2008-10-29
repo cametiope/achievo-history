@@ -32,14 +32,26 @@
     {
     	$result = $handler->createForceList();
 
-    	$projectData = atkGetNode("project.deliverable")->select("deliverable.id = '".$result["deliverable_id"]["id"]."'")
-    	                                                 ->includes("project_id")
-    	                                                 ->firstRow();
-
-    	$this->getAttribute("phase_id")->addDestinationFilter('phase.projectid = '.$projectData["project_id"]["id"]);
+      if( array_key_exists( 'phase_id', $result ) )
+      {
+        $db = atkGetDb();
+        $projectData = $db->getRows('SELECT projectid FROM phase WHERE phase.id = '.$result["phase_id"]["id"] );
+          
+        if( count( $projectData ) > 0 )
+        {
+          $this->getAttribute("deliverable_id")->addDestinationFilter('deliverable.project_id = '.$projectData[0]["projectid"].' AND deliverable.status <> "complete"'); 
+        }       
+      }
+    	else 
+    	{
+      	$projectData = atkGetNode("project.deliverable")->select("deliverable.id = '".$result["deliverable_id"]["id"]."'")
+      	                                                 ->includes("project_id")
+      	                                                 ->firstRow();
+  
+      	$this->getAttribute("phase_id")->addDestinationFilter('phase.projectid = '.$projectData["project_id"]["id"]);
+    	}
 
     	return $result;
     }
-
-
+    
   }
