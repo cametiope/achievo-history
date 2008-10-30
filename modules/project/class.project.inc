@@ -148,8 +148,7 @@
       
         $team = &$this->add(new atkOneToManyRelation("team", "project.project_personemployee_projectview", "projectid", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
   
-        $contacts = $this->add( new atkOneToManyRelation( 'contacts', 'organization.contact_projectview', 'company', AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
-        $contacts->setOwnerFields( array( 'customer' ) );
+        $contact = $this->add( new atkOneToManyRelation('contacts', 'project.project_contact', 'project', AF_NO_LABEL ) );
       }
       $this->setColumnAttribs(array('deliverable', 'team', 'contacts'));
 

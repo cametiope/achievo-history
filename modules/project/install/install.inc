@@ -51,7 +51,8 @@
 	$setup->installNode("project.deliverable_phase");
 	$setup->installNode("project.deliverable_package");
 	$setup->installNode("project.deliverable_document");
+	$setup->installNode("project.project_contact");
 
-  $setup->setVersion(27);
+  $setup->setVersion(29);
 
 ?>
