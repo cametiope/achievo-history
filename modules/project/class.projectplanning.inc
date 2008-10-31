@@ -136,7 +136,7 @@ include_once(atkConfig("atkroot")."achievotools.inc");
 
         foreach ($weeks as $w)
         {
-          $line[] = $this->getAvailability(resourceutils::str2str($w['startdate']),resourceutils::str2str($w['enddate']),$r['employee']);
+          $line[] = $this->getWorkLoad(resourceutils::str2str($w['startdate']),resourceutils::str2str($w['enddate']),$r['employee']);
         }
 
         $plan = $this->getPlan($r['type'],$r['id'],$r['employee']);
@@ -224,52 +224,54 @@ include_once(atkConfig("atkroot")."achievotools.inc");
     }
 
     /**
-     * Calculate employees availability at period of time
+     * Calculate employees workload at period of time
      *
      * @param string $start - start of period yyyy-mm-dd
      * @param string $end- end of period yyyy-mm-dd
      * @param int $employee - employees id
      * @return string html code - image with title
      */
-    function getAvailability($start,$end,$employee)
+    function getWorkLoad($start,$end,$employee)
     {
-      $rows = $this->getDb()->getrows("
-        SELECT
-            h.id,
-            h.current_planning plan,
-            h.startdate,
-            h.enddate
-          FROM
-            phase h
-          WHERE
-           h.assign_to='$employee' AND
-          ( (h.startdate BETWEEN '$start' AND '$end') OR
-          (h.enddate BETWEEN '$start' AND '$end') OR
-          (h.startdate > '$start' AND h.enddate < '$end') )
-      ");
-
-      $res = 0;
-      foreach ($rows as $r)
-      {
-        $factdays = $this->getWorkingDaysFromTask($r['startdate'],$r['enddate'],$start, $end);
-        $plandays = resourceutils::getWorkingDays($r['startdate'],$r['enddate']);
-        $res += $factdays*$r['plan']/$plandays;
-      }
       $contractHours = overtime_balance::getContractHours(resourceutils::str2str($start), resourceutils::str2str($end),$employee)*60;
       if($contractHours)
       {
-        $availability = (1-$res/$contractHours)*100;
-        if(eval("return ".atkConfig::get("project","project_resource_planning_green").";"))
+        $rows = $this->getDb()->getrows("
+          SELECT
+              h.id,
+              h.current_planning plan,
+              h.startdate,
+              h.enddate
+            FROM
+              phase h
+            WHERE
+             h.assign_to='$employee' AND
+            ( (h.startdate BETWEEN '$start' AND '$end') OR
+            (h.enddate BETWEEN '$start' AND '$end') OR
+            (h.startdate > '$start' AND h.enddate < '$end') OR
+            (h.startdate < '$start' AND h.enddate > '$end') )
+        ");
+
+        $res = 0;
+        foreach ($rows as $r)
+        {
+          $factdays = $this->getWorkingDaysFromTask($r['startdate'],$r['enddate'],$start, $end);
+          $plandays = resourceutils::getWorkingDays($r['startdate'],$r['enddate']);
+          $res += $factdays*$r['plan']/$plandays;
+        }
+
+        $workload = ($res/$contractHours)*100;
+        if(eval("return ".atkConfig::get("project","project_workload_green").";"))
         {
           $image = "user_green.png";
           $alt = 'green';
         }
-        elseif(eval("return ".atkConfig::get("project","project_resource_planning_yellow").";"))
+        elseif(eval("return ".atkConfig::get("project","project_workload_yellow").";"))
         {
           $image = "user_orange.png";
           $alt = 'yellow';
         }
-        elseif(eval("return ".atkConfig::get("project","project_resource_planning_red").";"))
+        elseif(eval("return ".atkConfig::get("project","project_workload_red").";"))
         {
           $image = "user_red.png";
           $alt = 'red';
@@ -280,13 +282,22 @@ include_once(atkConfig("atkroot")."achievotools.inc");
           $alt = 'error';
         }
 
-        return "<img src='images/$image' alt='$alt' title='".number_format($availability,2)."%' />";
+        return "<img src='images/$image' alt='$alt' title='".number_format($workload,2)."%' />";
       }
       else
-        return "<img src='images/error.png' alt='no data available' title='".$this->text('no_data_available')."%' />";
+        return "<img src='images/error.png' alt='no data available' title='".$this->text('no_data_available')."' />";
 
     }
 
+    /**
+     * Calculate how many days from task enter into period
+     *
+     * @param string $starttask date
+     * @param string $endtask date
+     * @param string $startperiod date
+     * @param string $endperiod date
+     * @return integer days quantanty
+     */
     function getWorkingDaysFromTask($starttask,$endtask,$startperiod,$endperiod)
     {
       if( ($starttask > $endperiod) || ($endtask < $startperiod))
