@@ -231,7 +231,7 @@ include_once(atkConfig("atkroot")."achievotools.inc");
      * @param int $employee - employees id
      * @return string html code - image with title
      */
-    function getWorkLoad($start,$end,$employee)
+    function getWorkLoad($start,$end,$employee,$projectId='')
     {
       $contractHours = overtime_balance::getContractHours(resourceutils::str2str($start), resourceutils::str2str($end),$employee)*60;
       if($contractHours)
@@ -245,6 +245,7 @@ include_once(atkConfig("atkroot")."achievotools.inc");
             FROM
               phase h
             WHERE
+            ".($projectId ? " h.projectid='$projectId' AND " : "" )."
              h.assign_to='$employee' AND
             ( (h.startdate BETWEEN '$start' AND '$end') OR
             (h.enddate BETWEEN '$start' AND '$end') OR
