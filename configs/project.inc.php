@@ -32,6 +32,6 @@
   // The default view mode for projectplanning
   $config["projectplanning_view"] = "week";
 
-  $config["project_resource_planning_green"] = '$availability >= 0 AND $availability < 80';
-  $config["project_resource_planning_yellow"] = '$availability >= 80 AND $availability < 100';
-  $config["project_resource_planning_red"] = '$availability >= 100';
+  $config["project_workload_green"] = '$workload >= 0 AND $workload < 80';
+  $config["project_workload_yellow"] = '$workload >= 80 AND $workload < 100';
+  $config["project_workload_red"] = '$workload >= 100';
