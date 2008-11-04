@@ -11,8 +11,11 @@
   class documentManager extends atkOneToManyRelation
   {
 
-    function documentManager($name, $flags=0)
+  	protected $master = '';
+  	
+    function documentManager($name, $flags=0, $master='')
     {
+      if ($master != '') $this->master = $master;
       $this->atkOneToManyRelation($name,"docmanager.document", "master_id", $flags);
     }
 
@@ -20,7 +23,17 @@
     {
       if ($this->m_destinationFilter != "")
         $this->m_destinationFilter .= " AND ";
-      $this->m_destinationFilter .= "master='".$this->m_ownerInstance->atkNodeType()."'";
+        
+      if ($this->master == '')
+        if ($this->m_ownerInstance->atkNodeType() == '')
+          $this->m_destinationFilter .= "1=1";
+        else
+      	  $this->m_destinationFilter .= "master='".$this->m_ownerInstance->atkNodeType()."'";
+      else
+        $this->m_destinationFilter .= "master='".$this->master."'";
+        
+      atkdebug('DESTINATIONFILTER: ' . $this->m_destinationFilter);  
+        
       return parent::init();
     }
 
@@ -81,5 +94,3 @@
       return $output;
     }
   }
-
-?>

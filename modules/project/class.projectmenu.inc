@@ -44,10 +44,11 @@
   		$this->generateTab('project.resourceplanning',       'report', atktext('resourceplanning'), 'atkfilter',   'project.id');
   		$this->generateTab('project.project_personemployee', 'admin',  atktext('team'),             'atkfilter',   'projectid');
   		$this->generateTab('project.deliverable',            'admin',  atktext('milestones'),       'atkfilter',   'project_id');
+
   		if (moduleExists('history'))
   		  $this->generateTab('history.history',              'admin',  atktext('history'),          'atkfilter',   'project_id');
 
-  		//$this->generateTab('project.document',               'admin', atktext('documents'));
+  		$this->generateTab('project.projectdocument',        'edit',  atktext('documents'),        'atkselector',   'project.id');
   		//$this->generateTab('project.email',                  'admin', atktext('emails'));
   		//$this->generateTab('project.notices',                'admin', atktext('notices'));
   		//$this->generateTab('project.finance',                'admin', atktext('finance'));

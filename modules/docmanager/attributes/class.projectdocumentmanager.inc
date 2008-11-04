@@ -29,6 +29,11 @@
   class projectDocumentManager extends documentManager
   {
 
+    function projectDocumentManager($name, $flags=0, $master='')
+    {
+      parent::documentManager($name, $flags, $master);
+    }  	
+  	
     /**
      * Returns the document types to be offered for generation by this attribute
      *
