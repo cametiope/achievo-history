@@ -27,6 +27,7 @@ class timereg_advanced extends atkNode
    */
   protected $m_obligatoryProjects = array();
 
+
   /**
    * Constructor.
    *
@@ -42,6 +43,7 @@ class timereg_advanced extends atkNode
     $this->addSecurityMap( 'removefavorite', 'add' );
     $this->addSecurityMap( 'times', 'add' );
   }
+
 
   /*
    * Override of the add action.
@@ -70,6 +72,7 @@ class timereg_advanced extends atkNode
     $page->addContent( $this->renderActionPage( 'add', $output ) );
   }
 
+
   /*
    * Custom action to let users only register hours on their favorite tasks.
    */
@@ -95,6 +98,7 @@ class timereg_advanced extends atkNode
     
     $page->addContent( $this->renderActionPage( 'add', $output ) );
   }
+
 
   /**
    * Fill the smarty vars.
@@ -136,6 +140,7 @@ class timereg_advanced extends atkNode
     return $smarty->fetch( moduleDir( 'timereg_advanced' ) . 'templates/timereg.tpl' );
   }
 
+
   /**
    * Register styles and javascript for the action.
    *
@@ -150,6 +155,7 @@ class timereg_advanced extends atkNode
     $page->register_script( "./atk/javascript/recordlist.js" );
     $page->register_script( moduleDir( 'timereg_advanced' ) . "javascript/timereg_advanced.js" );
   }
+
 
   /**
    * The add mode only needs a save button.
@@ -171,6 +177,7 @@ class timereg_advanced extends atkNode
     
     return $buttons;
   }
+
 
   /**
    * Times action.
@@ -196,6 +203,7 @@ class timereg_advanced extends atkNode
     $page->addContent( $this->renderActionPage( 'times', $output ) );
   }
 
+
   /**
    * Set favorite value for phase
    *
@@ -208,6 +216,7 @@ class timereg_advanced extends atkNode
     die();
   }
 
+
   /**
    * Unset favorite value for phase
    *
@@ -219,6 +228,7 @@ class timereg_advanced extends atkNode
     echo '<html></html>';
     die();
   }
+
 
   /**
    * Fill the smarty vars for times.
@@ -236,6 +246,7 @@ class timereg_advanced extends atkNode
     return $smarty->fetch( moduleDir( 'timereg_advanced' ) . 'templates/timereg_registered.tpl' );
   }
 
+
   /**
    * Select the active phases for the loggedin user.
    *
@@ -246,7 +257,7 @@ class timereg_advanced extends atkNode
     $node = &atkGetNode( 'project.phase' );
     $filter = $this->createActivePhasesFilter( $node, $action );
     $orderby = $this->createActivePhasesOrder();
-    atk_var_dump($orderby, 'ORDER BY');
+    atk_var_dump( $orderby, 'ORDER BY' );
     $rows = $node->select( $filter )->orderby( $orderby )->allRows();
     
     for( $i = 0, $_i = count( $rows ); $i < $_i; $i++ )
@@ -262,6 +273,7 @@ class timereg_advanced extends atkNode
     return $rows;
   }
 
+
   /**
    * Generate filter for active phases.
    *
@@ -271,8 +283,16 @@ class timereg_advanced extends atkNode
    */
   protected function createActivePhasesFilter( $node, $action )
   {
-    $filter = "";
-    $filter .= "assign_to=" . atkGetUserId();
+    $postvars = atkGetPostVar();
+    
+    if( array_key_exists( 'searchallprojects', $postvars ) && $postvars['searchallprojects'] != '' )
+    {
+      $filter = ("1=1");
+    }
+    else
+    {
+      $filter = "assign_to=" . atkGetUserId();
+    }
     
     if( $action == 'favorites' )
     {
@@ -280,7 +300,6 @@ class timereg_advanced extends atkNode
       return $filter;
     }
     
-    $postvars = atkGetPostVar();
     $db = $this->getDb();
     
     if( array_key_exists( 'projectphasename', $postvars ) && $postvars['projectphasename'] != '' )
@@ -291,8 +310,8 @@ class timereg_advanced extends atkNode
     
     if( $this->hasValidFilterDate( $postvars ) )
     {
-      $enddate = $db->escapeSQL( $postvars['filterdate']['year'] . '-' . $postvars['filterdate']['month'] . '-' . $postvars['filterdate']['day'] );
-      $filter .= " AND " . $node->getTable() . ".enddate='" . $enddate . "'";
+      $searchDate = $db->escapeSQL( $postvars['filterdate']['year'] . '-' . $postvars['filterdate']['month'] . '-' . $postvars['filterdate']['day'] );
+      $filter .= " AND (" . $node->getTable() . ".startdate < '" . $searchDate . "' AND enddate > '" . $searchDate . "')";
     }
     else
     {
@@ -302,6 +321,7 @@ class timereg_advanced extends atkNode
     
     return $filter;
   }
+
 
   /**
    * Validate filterdate.
@@ -324,6 +344,7 @@ class timereg_advanced extends atkNode
     return true;
   }
 
+
   /**
    * Generate orderby for active phases.
    *
@@ -333,29 +354,33 @@ class timereg_advanced extends atkNode
   {
     $postvars = atkGetPostVar();
     
-    if( ! array_key_exists( 'filterdate', $postvars ) ) return '';
+    if( ! array_key_exists( 'filterdate', $postvars ) )
+      return '';
     
-    if (trim($postvars['orderby'] == '')) return '';
-    else 
+    if( trim( $postvars['orderby'] == '' ) )
+      return '';
+    else
     {
-      switch ($postvars['orderby']) {
-      	case 'project':
-      	  $orderby = 'projectid.name ASC';
-      	  break;
-      	case 'phase':
-      	  $orderby = 'phase.name ASC';
-      	  break;
+      switch($postvars['orderby'])
+      {
+        case 'project':
+          $orderby = 'projectid.name ASC';
+          break;
+        case 'phase':
+          $orderby = 'phase.name ASC';
+          break;
         case 'enddate':
           $orderby = 'phase.enddate ASC';
           break;
-      	default:
-      		$orderby = '';
-      	  break;
+        default:
+          $orderby = '';
+          break;
       }
       return $orderby;
     }
-    return $this->getDb()->escapeSQL($postvars['orderBy']);
+    return $this->getDb()->escapeSQL( $postvars['orderBy'] );
   }
+
 
   /**
    * Get the activities by phase.
@@ -368,6 +393,7 @@ class timereg_advanced extends atkNode
     $node = atkGetNode( 'project.phase_activity' );
     return $node->select( 'phaseid=' . $phase )->excludes( 'phaseid' )->allRows();
   }
+
 
   /**
    * Get the description_obligatory value.
@@ -387,6 +413,7 @@ class timereg_advanced extends atkNode
     }
   }
 
+
   /**
    * Get a list with completed values.
    *
@@ -396,6 +423,7 @@ class timereg_advanced extends atkNode
   {
     return range( 0, 100, atkConfig::get( 'project', 'completed_parts' ) );
   }
+
 
   /**
    * Get a list with hours and minutes for time registration.
@@ -409,6 +437,7 @@ class timereg_advanced extends atkNode
         'minutes' => range( 0, 59, 15 ) );
   }
 
+
   /**
    * Generate sort Url.
    *
@@ -419,8 +448,9 @@ class timereg_advanced extends atkNode
   {
     $postvars = atkGetPostVar();
     unset( $postvars['orderby'] );
-    return dispatch_url('timereg_advanced.timereg_advanced', $action, $postvars);
+    return dispatch_url( 'timereg_advanced.timereg_advanced', $action, $postvars );
   }
+
 
   /**
    * Get the start of the form.
@@ -447,6 +477,7 @@ class timereg_advanced extends atkNode
     
     return $formstart;
   }
+
 
   /**
    * Validate the registered hours.
@@ -479,6 +510,7 @@ class timereg_advanced extends atkNode
     return true;
   }
 
+
   /**
    * Get the end of the form.
    *
@@ -488,6 +520,7 @@ class timereg_advanced extends atkNode
   {
     return '</form>';
   }
+
 
   /**
    * Store the enabled time registrations in a private member.
@@ -507,6 +540,7 @@ class timereg_advanced extends atkNode
       }
     }
   }
+
 
   /**
    * Save the time registrations to the database.
@@ -541,6 +575,7 @@ class timereg_advanced extends atkNode
     }
   }
 
+
   /**
    * Update phaseid with new completed value
    *
@@ -561,6 +596,7 @@ class timereg_advanced extends atkNode
     $db->commit();
   }
 
+
   /**
    * Get the urls for the advanced time registration tabs
    *
@@ -574,6 +610,7 @@ class timereg_advanced extends atkNode
         'times' => dispatch_url( 'timereg_advanced.timereg_advanced', 'times' ) );
     return $url;
   }
+
 
   /**
    * Get the registered hours
@@ -593,6 +630,7 @@ class timereg_advanced extends atkNode
     return $hours;
   }
 
+
   /**
    * Get formatted time f
    *
@@ -604,6 +642,7 @@ class timereg_advanced extends atkNode
     useattrib( 'atkdurationattribute' );
     return atkDurationAttribute::_minutes2string( $time );
   }
+
 
   /**
    * Load DateAttribute to show the date input fields
