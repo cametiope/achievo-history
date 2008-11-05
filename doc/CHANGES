@@ -51,6 +51,7 @@ Changes in Achievo 1.4
 * Fixed phases having a readonly status field when adding/editing them from
   a project page in which the phases list is set to show active or non
   active phases onlye. [Guido]
+* Fixed moving hours. [Dennis]
 
 Changes in Achievo 1.3.3
 ------------------------
