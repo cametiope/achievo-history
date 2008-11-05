@@ -291,12 +291,12 @@ class timereg_advanced extends atkNode
     }
     else
     {
-      $filter = "assign_to=" . atkGetUserId();
+      $filter = $node->getTable() . ".assign_to=" . atkGetUserId();
     }
     
     if( $action == 'favorites' )
     {
-      $filter .= " AND is_favorite=1";
+      $filter .= " AND " . $node->getTable() . ".is_favorite=1";
       return $filter;
     }
     
@@ -311,7 +311,7 @@ class timereg_advanced extends atkNode
     if( $this->hasValidFilterDate( $postvars ) )
     {
       $searchDate = $db->escapeSQL( $postvars['filterdate']['year'] . '-' . $postvars['filterdate']['month'] . '-' . $postvars['filterdate']['day'] );
-      $filter .= " AND (" . $node->getTable() . ".startdate < '" . $searchDate . "' AND enddate > '" . $searchDate . "')";
+      $filter .= " AND (" . $node->getTable() . ".startdate < '" . $searchDate . "' AND (" . $node->getTable() . ".enddate > '" . $searchDate . "')";
     }
     else
     {
