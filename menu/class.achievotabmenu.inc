@@ -57,7 +57,9 @@
 	  {
 	    $db = &atkGetDb();
 	    $ui = &atkinstance("atk.ui.atkui");
-	    
+
+	    $group = array_key_exists("project_group", $_REQUEST) ? $_REQUEST["project_group"] : 0;
+
 	    $node = &atkGetNode("project.project");
 
 	    $query = "
@@ -91,6 +93,11 @@
         $pids = implode(",", $node->get_user_projects());
 
         $query .= " WHERE p.id IN ($pids) OR p.coordinator='".$userId."'";
+        $query .= $group ? " AND p.project_group_id='$group'" : "";
+      }
+      else 
+      {
+        $query .= $group ? " WHERE p.project_group_id='$group'" : "";
       }
 	    
       $res = $db->getrows($query);
