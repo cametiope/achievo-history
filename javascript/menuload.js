@@ -9,3 +9,9 @@ function reloadProjects(el)
   var id = el.options[el.selectedIndex].value;
   window.location= "menu.php?atkmenutop=projectmanagement&selectedproject="+id;
 }
+
+function reloadTree(el)
+{
+  var id = el.options[el.selectedIndex].value;
+  window.location= "menu.php?project_group="+id;
+}
