@@ -34,7 +34,7 @@ class achievo_modern extends atkPlainMenu
         atkimport("menu.achievotabmenu");
         achievoTabMenu::registerCssJs($page);
         $parameter['tabmenu'] = achievoTabMenu::renderMenu();
-
+        $parameter['project_group'] = $this->getProjectGroup();
         $box = $ui->renderBox($parameter,"tabmenu");
       }
       else
@@ -166,6 +166,27 @@ class achievo_modern extends atkPlainMenu
     }
     return $prj;
   }
+  
+  function getProjectGroup()
+  {
+    $groups = atkGetDb()->getrows("SELECT id,name FROM project_group");
+    
+    $prj  = sprintf('<span class="achievoprojectselector">%s</span>:', atktext("group_select"));
+    $prj .="<FORM style=\"margin: 0px;\"><SELECT style=\"width: 150px\" name=\"project_group\" onchange=\"reloadTree(this);\">";
+    $prj .= "<OPTION value=\"0\">".atktext("group_select_none")."</OPTION>";
+
+    $selectedgroup = array_key_exists("project_group", $_REQUEST) ? $_REQUEST["project_group"] : null;
+    for ($i=0;$i < count($groups); $i++)
+    {
+      $prj .= "<OPTION value=\"".$groups[$i]['id']."\"";
+      if ($selectedgroup == $groups[$i]['id']) $prj .=" selected";
+      $prj .= ">".$groups[$i]['name']."</OPTION>";
+    }
+    $prj .="</SELECT></FORM>";
+
+    return $prj;
+  }
+
 }
 
 ?>
