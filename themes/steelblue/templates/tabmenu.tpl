@@ -19,6 +19,7 @@
         <tr>
           <td>
             <div id="projectMenu">
+              {$project_group}
             	<ul id="project_tree" class="dhtmlgoodies_tree">
             	{$tabmenu}
               </ul>
