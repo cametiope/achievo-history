@@ -21,6 +21,7 @@
       registerNode("project.role", array("admin", "add", "edit", "delete"));
       registerNode("project.resourceplanning", array("admin", "report"));
       registerNode("project.projectplanning", array("admin", "report"));
+      registerNode("project.pim_allocation", array("admin"));
     }
 
     function getMenuItems()
@@ -107,4 +108,16 @@
       $node->addListener(new planningListener());
     }
 
+    function getPimItems()
+    {
+      return array("allocations"=>"getAllocations",);
+    }
+    
+    function getAllocations()
+    {
+      include_once(moduleDir("project")."pim.inc");
+      return pimAllocations();
+    }
+    
+    
   }

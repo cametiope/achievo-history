@@ -39,6 +39,8 @@
       $this->add(new atkManyToOneRelation("personid", "employee.employee", AF_OBLIGATORY|AF_PRIMARY|AF_LARGE))->
         addListColumns("department","email","phone");
       $this->add(new atkManyToOneRelation("role", "project.role", AF_PRIMARY|AF_HIDE_EDIT|AF_HIDE_VIEW|AF_HIDE_ADD));
+      $this->add(new atkAttribute('allocated_by', AF_HIDE|AF_FORCE_LOAD));
+      $this->add(new atkDateTimeAttribute('allocated_date', '', '', AF_HIDE|AF_FORCE_LOAD));
       $this->addFilter("personid.role = 'employee'");
 
       //$this->addFilter("project_person.projectid", atkGetPostVar('projectid'));
@@ -55,6 +57,22 @@
       $this->setDescriptorTemplate('[personid.lastname], [personid.firstname] ([personid.userid])');
     }
 
+    /**
+     * Set up default values for this node
+     * @return array Associative array where the key is
+     *               the attribute name, and value is the
+     *               default value.
+     */
+    public function initial_values()
+    {
+      $user = &getUser();
+      return array("allocated_by"   => (int) $user["id"],
+                   "allocated_date" =>  array(
+                      "year"  =>  date("Y"),
+                      "month" =>  date("m"),
+                      "day"   =>  date("d")));
+    }
+    
     public function action_delete(&$handler)
     {
       // When deleting, the above filter won't work. But that doesn't matter, we
