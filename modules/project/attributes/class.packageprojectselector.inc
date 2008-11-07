@@ -12,11 +12,11 @@ class packageProjectSelector extends atkListAttribute
   {
     if( false !== ( $options = $this->getOptionArray() ) )
     {
-      parent::atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_READONLY_EDIT|AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
+      parent::atkListAttribute($name, $options['optionArray'], $options['valueArray'], AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
     }
     else
     {
-    	parent::atkListAttribute($name, array(), array(), AF_READONLY_EDIT|AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
+    	parent::atkListAttribute($name, array(), array(), AF_HIDE_LIST|AF_FORCE_LOAD, $size=0);
     }
   }
 
