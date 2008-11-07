@@ -4,7 +4,6 @@
    * @internal modifiers
    */
   $modifiers[] = "timereg.hours";
-  $modifiers[] = "project.phase";
   
   class mod_project extends achievoModule
   {
@@ -90,22 +89,8 @@
       atkimport("module.project.hourslistener");
       $node->addListener(new hoursListener());
 
-      atkimport("module.project.planninglistener");
-      $node->addListener(new planningListener());
-
       atkimport("module.project.trafficlightlistener");
       $node->addListener(new trafficlightListener());
-    }
-
-    /**
-     * Adds listeners to the project.phase node
-     *
-     * @param atkNode $node node instance 
-     */    
-    function project_phase_modifier(&$node)
-    {
-      atkimport("module.project.planninglistener");
-      $node->addListener(new planningListener());
     }
 
     function getPimItems()
