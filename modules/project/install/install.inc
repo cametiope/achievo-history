@@ -47,12 +47,35 @@
   PRIMARY KEY  (`package_id`,`person_id`)
 	)");
 
+  $setup->executeSQL('
+  CREATE TABLE IF NOT EXISTS `project_contact` (
+    `project` int(10) NOT NULL,
+    `personid` int(10) NOT NULL,
+    PRIMARY KEY  (`project`,`personid`)
+  ) ENGINE=MyISAM');
+    
+  
+  $setup->executeSQL("
+    CREATE TABLE memo (
+      id INT( 11 ) NOT NULL ,
+      project_id INT( 11 ) NOT NULL ,
+      master VARCHAR(255) NOT NULL ,
+      master_id INT(11) NOT NULL, 
+      memo TEXT NOT NULL ,
+      date_added DATETIME NOT NULL ,
+      user VARCHAR( 100 ) NOT NULL ,
+      location VARCHAR( 100 ) NOT NULL ,
+      PRIMARY KEY ( id ) 
+    )");
+  
+  $setup->executeSQL("ALTER TABLE `memo` ADD `updatestyle` VARCHAR( 1 ) NOT NULL");
+  
   $setup->installNode("project.project_group");
 	$setup->installNode("project.deliverable_phase");
 	$setup->installNode("project.deliverable_package");
 	$setup->installNode("project.deliverable_document");
 	$setup->installNode("project.project_contact");
 
-  $setup->setVersion(29);
+  $setup->setVersion(32);
 
 ?>
