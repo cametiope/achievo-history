@@ -21,11 +21,11 @@
   atkimport("atk.atkmetanode.inc");
 
   userelation("atkmanytoonerelation");
+  userelation("project.onetomanymemorelation");
   useattrib("atklistattribute");
   useattrib("project.packageprojectselector");
-
+  useattrib("project.memoattribute");
   useattrib("project.trafficlightattribute");
-  useattrib("project.trafficlightmemoattribute");
 
   class package extends atkMetaNode
   {
@@ -42,12 +42,6 @@
      */
     private $project;
 
-    /**
-     * Memo attribute object
-     *
-     * @var object
-     */
-    private $memo_attr;
     
     /**
      * Constructor.
@@ -65,14 +59,20 @@
      */
     public static function meta(atkMetaPolicy $policy)
     {
+      global $ATK_VARS;
+      
       // The next three attributes have to be the first three attributes in this node
       $policy->add('trafficlight','trafficLightAttribute', array(), AF_HIDE_LIST);
       $policy->add('trafficlight_updatestyle', 'atkradioattribute', array(array('manual', 'automatic'), array('M', 'A')), AF_FORCE_LOAD|AF_HIDE_LIST|AF_DISPLAY_VERT|AF_HIDE_ADD);
+
+      $policy->setTypeAndParams('memo', 'project.onetomanymemorelation', array( 'destination' => 'project.memo', 'refKey' => 'project_id',  'flags' =>  AF_HIDE_LIST|AF_HIDE_ADD ) );
       
-      $policy->add('trafficlight_memo', 'trafficlightmemoattribute', array('rows' => '4'), AF_HIDE|AF_FORCE_LOAD);      
-    
-      $policy->add('trafficlight_selection', 'atkdummyattribute', array(), AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD);
-      $policy->add('trafficlight_memo_field', 'atkdummyattribute', array(), AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD);          
+      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' )
+      {       
+        $policy->add( 'memo_add', 'memoAttribute', array(), AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW );
+      }      
+            
+      $policy->add('trafficlight_selection', 'atkdummyattribute', array(), AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD);      
 
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
 
@@ -94,7 +94,7 @@
 
       $policy->addFlags("abbreviation_package","name",AF_UNIQUE);
       $policy->addFlags("abbreviation_package","coordinator_id","category_id","status","initial_planning","deposit","master_id",
-                        "trafficlight", "trafficlight_updatestyle", "trafficlight_memo", AF_HIDE_LIST);
+                        "trafficlight", "trafficlight_updatestyle", AF_HIDE_LIST);
       $policy->addFlags("name",AF_SEARCHABLE);
       $policy->addFlags("description","startdate","enddate","initial_planning","current_planning","category_id", "status", "deposit", "completed", "spend_hours", "remaining_effort_time", AF_HIDE_ADD);
       $policy->addFlags("coordinator_id",AF_RELATION_AUTOLINK);
@@ -105,7 +105,7 @@
       $policy->hasMany('deliverable_package', array('source' => 'package_id'));
       $policy->addFlags('package_person', 'deliverable_package', AF_NO_LABEL);
 
-      $policy->setOrder(array('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field',  'abbreviation_package', 'name', 'projectid',
+      $policy->setOrder(array('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_selection', 'memo', 'memo_add', 'abbreviation_package', 'name', 'projectid',
                               'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
       
       $policy->addFlag('trafficlight',AF_HIDE_ADD);
@@ -139,41 +139,14 @@
       return $output;
     }    
     
-    
-    /**
-     * Generate output to change the memo field attribute depending on the selected updatestyle
-     * 
-     * @param array
-     * @param string
-     * @return string
-     */
-    public function trafficlight_memo_field_edit( &$record, $fieldprefix = '' )
-    {
-      $output = '<div id="project_package_trafficlight_memo_field">';
-      $this->memo_attr->setForceUpdate( true );
       
-      if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'A' )
-      {  
-        // Get memo attribute's content by executing a query
-        // This value should probably come directly from $record, but somehow this wont work
-        $db = &atkGetDb();
-        $row = $db->getRows('SELECT trafficlight_memo FROM package WHERE id = '.(int) $record['id']);
-        $record['trafficlight_memo'] = $row[0]['trafficlight_memo'];
-        
-        $this->memo_attr->addFlag( AF_READONLY );
-        $output .= '<textarea cols="70" rows="4" disabled="disabled" name="trafficlight_memo">';
-        $output .= $record['trafficlight_memo'];
-        $output .= '</textarea>';
-      }
-      else
+    function preUpdate($record)
+    {
+      if( $record['trafficlight_updatestyle'] == 'M' )
       {
-        $this->memo_attr->removeFlag( AF_READONLY );
-        $output .= $this->memo_attr->getEdit( 'edit', $record, $fieldprefix );        
-      }      
-
-      $output .= '</div>';
-      return $output;
-    }    
+        $this->getAttribute('memo_add')->addFlag( AF_OBLIGATORY );
+      }
+    }
     
     public function postAdd($rec)
     {
@@ -184,6 +157,47 @@
     	return true;
     }
 
+    
+    public function postUpdate( $record )
+    {
+      if( array_key_exists( 'memo_add', $record ) && $record['memo_add'] != '' )
+      {
+        $db = atkGetDb();
+        $user     = atkGetUser();
+        $username = array_key_exists( 'firstname', $user ) && array_key_exists( 'lastname', $user )  
+                      ? $user['firstname'] . ' ' . $user['lastname'] 
+                      : 'administrator';  
+        $id = $db->nextid('seq_memo'); 
+        
+        $query = '
+          INSERT INTO memo (
+            id,
+            project_id,
+            master,
+            master_id,
+            memo,
+            date_added,
+            user,
+            location,
+            updatestyle
+          ) VALUES (
+            '.$id.',
+            '.$record['projectid']['id'].',
+            "project.package",
+            '.$record['id'].',
+            "'.mysql_real_escape_string( $record['memo_add'] ).'",
+            NOW(),
+            "'.$username.'",
+            "Package: '.mysql_real_escape_string( $record['name'] ) .'",
+            "m"            
+          )';
+        
+        $db->query( $query );
+      }
+      return true;
+    }    
+
+    
     /**
      * Call custom validation methods for the startdate field
      *
@@ -401,8 +415,7 @@
     {
       $this->setColumnAttribs(array('deliverable_package', 'package_person'));
       
-      $this->memo_attr = $this->getAttribute("trafficlight_memo");
-      $this->getAttribute("trafficlight_updatestyle")->addDependee('trafficlight_memo_field')->addDependee('trafficlight_selection');
+      $this->getAttribute("trafficlight_updatestyle")->addDependee('trafficlight_selection');
       $this->getAttribute('deliverable_package')->setDestinationFilter('deliverable_id.status <> "complete"');
     }
 

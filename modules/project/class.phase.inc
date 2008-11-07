@@ -13,8 +13,9 @@
   useattrib("project.dependencyattrib");
   useattrib("project.packageprojectselector");
   useattrib("project.trafficlightattribute");
-  useattrib("project.trafficlightmemoattribute");
-
+  useattrib("project.memoattribute");
+    
+  userelation("project.onetomanymemorelation");
   userelation("atkmanytoonerelation");
   userelation("atkmanyboolrelation");
   userelation("atkonetomanyrelation");
@@ -43,12 +44,6 @@
      */
   	private $project;
 
-    /**
-     * Memo attribute object
-     *
-     * @var object
-     */
-    private $memo_attr;
       	
   	/**
   	 * Constructor.
@@ -58,6 +53,7 @@
   	 */
     public function __construct($name="phase", $flags=0)
     {
+      global $ATK_VARS;
       $securitymanager = &atkGetSecurityManager();
       $initialplanningallowed = isset($securitymanager) && $securitymanager->allowed("project.project","initialplanning");
 
@@ -70,16 +66,18 @@
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
       $radio = &$this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_FORCE_LOAD|AF_HIDE_LIST|AF_HIDE_ADD|AF_DISPLAY_VERT));
-      
-      // Hide attribute and add it as a class member var so we can manipulate it later
-      $memo = &$this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), AF_HIDE|AF_FORCE_LOAD));      
-      $this->memo_attr = $memo;
-            
       $radio->addDependee('trafficlight_selection');
-      $radio->addDependee('trafficlight_memo_field');
       $this->add(new atkDummyAttribute('trafficlight_selection', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
-      $this->add(new atkDummyAttribute('trafficlight_memo_field', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
+       
             
+      $memo = &$this->add(new oneToManyMemoRelation( 'memo', 'project.memo', 'project_id', AF_HIDE_LIST|AF_HIDE_ADD ) );      
+      
+      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' )
+      {       
+        $this->add(new memoAttribute( 'memo_add', AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW, 60 ) );
+      }    
+      
+      //$this->add(new atkDummyAttribute('trafficlight_memo_field', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));
       $this->add(new atkManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_HIDE_LIST|AF_HIDE_EDIT|AF_FORCE_LOAD));
       
       $this->add(new atkAttribute("name",AF_OBLIGATORY|AF_SEARCHABLE|AF_FORCE_LOAD, 50));
@@ -118,14 +116,14 @@
 
       $cascadingdeletehours = atkConfig::get("project", "project_cascading_delete_hours", false);
       if($cascadingdeletehours)
-        $this->add(new atkOneToManyRelation("hours","timereg.hours","phaseid",AF_HIDE|AF_CASCADE_DELETE));
+        $this->add(new atkOneToManyRelation("hours","timereg.hours","phaseid",AF_HIDE|AF_HIDE_ADD|AF_CASCADE_DELETE));
 
       // list of linked deliverables for this phase
       $this->add(new atkOneToManyRelation("deliverable_phase","project.deliverable_phase","phase_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE))
         ->setDestinationFilter('deliverable_id.status <> "complete"');
 
       $this->addSecurityMap("view","project.admin");
-      $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field');
+      $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'memo', 'trafficlight_selection', 'memo_add');
       $this->setTable("phase","phase");
 
       $this->setColumnAttribs(array('deliverable_phase'));
@@ -143,7 +141,56 @@
       }
     }
     
-      /**
+    
+    function preUpdate($record)
+    {
+      if( $record['trafficlight_updatestyle'] == 'M' )
+      {
+        $this->getAttribute('memo_add')->addFlag( AF_OBLIGATORY );
+      }
+    }
+
+    
+    function postUpdate($record)
+    {
+      if( array_key_exists( 'memo_add', $record ) && $record['memo_add'] != '' )
+      {
+        $db = atkGetDb();
+        $user     = atkGetUser();
+        $username = array_key_exists( 'firstname', $user ) && array_key_exists( 'lastname', $user )  
+                      ? $user['firstname'] . ' ' . $user['lastname'] 
+                      : 'administrator';  
+        $id = $db->nextid('seq_memo'); 
+        
+        $query = '
+          INSERT INTO memo (
+            id,
+            project_id,
+            master,
+            master_id,
+            memo,
+            date_added,
+            user,
+            location,
+            updatestyle
+          ) VALUES (
+            '.$id.',
+            '.$record['projectid']['id'].',
+            "project.phase",
+            '.$record['id'].',
+            "'.mysql_real_escape_string( $record['memo_add'] ).'",
+            NOW(),
+            "'.$username.'",
+            "Task: '.mysql_real_escape_string( $record['name'] ) .'",
+            "m"            
+          )';
+        
+        $db->query( $query );
+      }
+      return true;
+    }    
+          
+    /**
      * Generate output to show or hide a selectlist for the trafficlight attribute
      * 
      * @param array

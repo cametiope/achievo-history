@@ -5,7 +5,7 @@
   useattrib("atkradioattribute");
   useattrib("atkdurationattribute");
   useattrib("project.trafficlightattribute");
-  useattrib("project.trafficlightmemoattribute");
+  userelation("project.onetomanymemorelation");
 
   userelation("atkonetomanyrelation");
 
@@ -35,8 +35,8 @@
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight'));
       $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A')));
-      $this->add(new trafficLightMemoAttribute('trafficlight_memo'));
-
+      $this->add(new oneToManyMemoRelation( 'memo', 'project.memo', 'project_id', AF_HIDE_LIST|AF_HIDE_ADD ) );
+      
       $this->add(new atkAttribute("name",AF_READONLY));
       $this->add(new atkDateAttribute("startdate","","","","",AF_READONLY));
       $this->add(new atkDateAttribute("enddate","","","","",AF_READONLY));

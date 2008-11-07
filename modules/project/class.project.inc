@@ -3,6 +3,7 @@
   userelation("atkmanytoonerelation");
   userelation("atkonetomanyrelation");
   userelation("atkmanyboolrelation");
+  userelation("project.onetomanymemorelation");
   useattrib("atktextattribute");
   useattrib("atkdateattribute");
   useattrib("atklistattribute");
@@ -16,30 +17,14 @@
   useattrib("atknumberattribute");
   useattrib("docmanager.projectdocumentmanager");
   useattrib("project.trafficlightattribute");
-  useattrib("project.trafficlightmemoattribute");
+  useattrib("project.memoattribute");
 
   define("PRJ_TIMEREG_ALL_USERS", 0);
   define("PRJ_TIMEREG_MEMBERS_ONLY", 1);
 
   class project extends atkNode
   {
-
-    /**
-     * Project identifier
-     *
-     * @var string
-     */
-    private $project;
-
-    
-    /**
-     * Memo attribute object
-     *
-     * @var object
-     */
-    private $memo_attr;
-      
-     
+         
     /**
      * Constructor
      *
@@ -64,21 +49,18 @@
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
       $radio = &$this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_FORCE_LOAD|AF_HIDE_LIST|AF_HIDE_ADD|AF_DISPLAY_VERT));
-      
-      // Hide attribute and add it as a class member var so we can manipulate it later, if not in view mode
-      $memo_flags = AF_READONLY;      
-      if( $ATK_VARS['atkaction'] != 'view' )
-      {
-        $memo_flags = AF_HIDE|AF_FORCE_LOAD;
-      }   
-      $memo = &$this->add(new trafficLightMemoAttribute('trafficlight_memo', array('rows' => '4'), $memo_flags));      
-      $this->memo_attr = $memo;
-            
+                  
       $radio->addDependee('trafficlight_selection');
-      $radio->addDependee('trafficlight_memo_field');
-      $this->add(new atkDummyAttribute('trafficlight_selection', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
-      $this->add(new atkDummyAttribute('trafficlight_memo_field', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));     
-              
+      
+      $color = &$this->add(new atkDummyAttribute('trafficlight_selection', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));
+
+      $memo = &$this->add(new oneToManyMemoRelation( 'memo', 'project.memo', 'project_id', AF_HIDE_LIST|AF_HIDE_ADD ) );
+      
+      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' )
+      {       
+        $this->add(new memoAttribute( 'memo_add', AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW, 60 ) );
+      }
+      
       $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));
       $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));
       $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
@@ -133,7 +115,7 @@
 
       $this->add( new atkBoolAttribute( 'description_obligatory', AF_HIDE_ADD|AF_FORCE_LOAD ) );
       $this->add( new atkBoolAttribute( 'use_activities', AF_HIDE_ADD|AF_FORCE_LOAD ) );     
-      
+
       // If we are in project administration mode, we show all projects. Otherwise, we only
       // show active projects.
       if (!isset($_SERVER["PWD"]))
@@ -141,9 +123,9 @@
       else
         $reportnodetype = "";
       
-      if( atkGetPostVar('atkaction') != 'add' && atkGetPostVar('atkprevaction') != 'add' )
+      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' )
       { 
-        $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
+        $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD|AF_CASCADE_DELETE));
         $deliverable->setDestinationFilter('deliverable.project_id=[id] AND deliverable.status <> "complete"');
       
         $team = &$this->add(new atkOneToManyRelation("team", "project.project_personemployee_projectview", "projectid", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
@@ -154,7 +136,7 @@
 
       $this->setTable("project","project");
 
-      $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_memo', 'trafficlight_selection', 'trafficlight_memo_field');
+      $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_selection', 'memo', 'memo_add');
       $this->setIndex("name");
       
       // @todo: commented because these attributes aren't needed in the General tab.
@@ -202,7 +184,7 @@
       //$tab = ($ATK_VARS["atkaction"]=="view"||$ATK_VARS["atkaction"]=="edit"||$ATK_VARS["atkaction"]=="update"?"planning":"default");
       //$this->add($tmp, $tab);
     }
-
+    
     /**
      * Generate output to show or hide a selectlist for the trafficlight attribute
      * 
@@ -230,41 +212,6 @@
       return $output;
     }    
     
-    
-    /**
-     * Generate output to change the memo field attribute depending on the selected updatestyle
-     * 
-     * @param array
-     * @param string
-     * @return string
-     */
-    public function trafficlight_memo_field_edit( &$record, $fieldprefix = '' )
-    {
-      $output = '<div id="project_project_trafficlight_memo_field">';
-      $this->memo_attr->setForceUpdate( true );
-      
-      if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'A' )
-      {  
-        // Get memo attribute's content by executing a query
-        // This value should probably come directly from $record, but somehow this wont work
-        $db = &atkGetDb();
-        $row = $db->getRows('SELECT trafficlight_memo FROM project WHERE id = '.(int) $record['id']);
-        $record['trafficlight_memo'] = $row[0]['trafficlight_memo'];
-        
-        $this->memo_attr->addFlag( AF_READONLY );      
-        $output .= '<textarea cols="70" rows="4" disabled="disabled" name="trafficlight_memo">';
-        $output .= $record['trafficlight_memo'];
-        $output .= '</textarea>';
-      }
-      else
-      {
-        $this->memo_attr->removeFlag( AF_READONLY );
-        $output .= $this->memo_attr->getEdit( 'edit', $record, $fieldprefix );        
-      }      
-
-      $output .= '</div>';
-      return $output;
-    }
         
     function graph_topprojects($params)
     {
@@ -409,6 +356,7 @@
       $this->updatePhaseFields($record, "add");
       return true;
     }
+         
 
     /**
      * One line description of the function
@@ -988,8 +936,54 @@
       return $this->m_attribList["contract_id"]->edit($record, $mode);
     }
 
+    
+    
+    function preUpdate($record)
+    {
+      if( $record['trafficlight_updatestyle'] == 'M' )
+      {
+        $this->getAttribute('memo_add')->addFlag( AF_OBLIGATORY );
+      }
+    }
+    
+    
     function postUpdate($record)
     {
+      if( array_key_exists( 'memo_add', $record ) && $record['memo_add'] != '' )
+      {
+        $db = atkGetDb();
+        $user     = atkGetUser();
+        $username = array_key_exists( 'firstname', $user ) && array_key_exists( 'lastname', $user )  
+                      ? $user['firstname'] . ' ' . $user['lastname'] 
+                      : 'administrator';  
+        $id = $db->nextid('seq_memo');        
+        
+        $query = '
+          INSERT INTO memo (
+            id,
+            project_id,
+            master,
+            master_id,
+            memo,
+            date_added,
+            user,
+            location,
+            updatestyle
+          ) VALUES (
+            '.$id.',
+            '.$record['id'].',
+            "project.project",
+            '.$record['id'].',
+            "'.mysql_real_escape_string( $record['memo_add'] ).'",
+            NOW(),
+            "'.$username.'",
+            "Project: '.mysql_real_escape_string( $record['name'] ) .'",
+            "m"            
+          )';
+        
+        $db->query( $query );
+      }
+      
       $this->addCoordinatorToTeam($record);
     	$this->updatePhaseFields($record, "update");
       return true;
