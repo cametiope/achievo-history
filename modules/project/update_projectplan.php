@@ -34,15 +34,7 @@ switch($type)
     {
       foreach ($packVal as $packId=>$v)
       {
-        $node->getPackageChild($packId,$empId);
-
-        if(is_array($node->m_parentChild['project.package'][$packId]['package']))
-        {
-          foreach ($node->m_parentChild['project.package'][$packId]['package'] as $child)
-          {
-            $node->handleSubPackage($child['id'],$empId, $packId);
-          }
-        }
+        $node->handleSubPackage($packId, $empId);
       }
     }
 
@@ -97,15 +89,7 @@ switch($type)
     {
       foreach ($packVal as $packId=>$v)
       {
-        $node->getPackageChild($packId,$empId);
-
-        if(is_array($node->m_parentChild['project.package'][$packId]['package']))
-        {
-          foreach ($node->m_parentChild['project.package'][$packId]['package'] as $child)
-          {
-            $node->handleSubPackage($child['id'],$empId, $packId);
-          }
-        }
+        $node->handleSubPackage($packId, $empId);
       }
     }
 
@@ -142,11 +126,16 @@ switch($type)
     $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $id);
     $node->getPackageChild($id,$employeeId);
 
-    if(count($node->m_parentChild['project.package'][$id]['package']))
-    {
       foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
       {
         $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $child['id']);
+    }
+
+    foreach ($node->m_resourceHours['package'] as $empId=>$packVal)
+    {
+      foreach ($packVal as $packId=>$v)
+      {
+        $node->handleSubPackage($packId, $empId);
       }
     }
 

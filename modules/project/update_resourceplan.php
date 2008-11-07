@@ -19,10 +19,10 @@
   $node = &atkGetNode("project.resourceplanning");
   $projectid = $node->m_projectId;
   
-  $node->handleDateBound($startdate, $enddate, $startweek, $endweek);
+  $node->handleDateBounds($startdate, $enddate);
 
   //get period info
-  switch($node->getView())
+  switch($node->getViewMode())
   {
     case "week":
       $periods = dateutil::weeksBetween($startdate,$enddate);
@@ -36,7 +36,7 @@
   {
     case "employee":
 
-      //data collection
+      //data collection for current employee
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId);
 
       // We can see package and task (phase) hear, but not subproject
@@ -74,15 +74,18 @@
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $id);
       $node->getPackageChild($id, $employeeId);
       
-      //data collection for subpackage
-      foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
-      {
-        $node->handleSubPackage($child['id'],$employeeId);
-      }
-
       foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
       {
         $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $child['id']);
+      }
+
+      //data collection for subpackage
+      foreach ($node->m_resourceHours['package'] as $empId=>$packVal)
+      {
+        foreach ($packVal as $packId=>$v)
+        {
+          $node->handleSubPackage($packId, $empId);
+        }
       }
 
       foreach ($node->m_parentChild['project.package'][$id] as $type=>$child)
@@ -106,18 +109,17 @@
       break;
   }
 
-  $min_width = (count($periods) +2)*50+190;
+  $min_width = $node->getMinWidth(count($periods));
 
   $vars = array('plan'=>$data,
                 'min_width'=>$min_width,
                 'depth'=>$depth,
                 'width'=>190-$depth*20,
                 'padding'=>$depth*20,
-                'view'=>$node->getView()
+                'view'=>$node->getViewMode()
                   );
 
-  $ui = &atkinstance("atk.ui.atkui");
-  $content = $ui->render(moduleDir('project').'templates/resourceline.tpl',$vars);
+  $content = atkinstance("atk.ui.atkui")->render(moduleDir('project').'templates/resourceline.tpl',$vars);
 
   echo $content;
   exit;
