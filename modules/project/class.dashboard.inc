@@ -4,9 +4,9 @@
   useattrib("atknumberattribute");
   useattrib("atkradioattribute");
   useattrib("atkdurationattribute");
+  useattrib("atkfieldset");
   useattrib("project.trafficlightattribute");
   userelation("project.onetomanymemorelation");
-
   userelation("atkonetomanyrelation");
 
   class dashboard extends atkNode

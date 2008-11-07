@@ -8,6 +8,8 @@
   useattrib("atkdateattribute");
   useattrib("atklistattribute");
   useattrib("atkboolattribute");
+  useattrib("atkRadioAttribute");
+  useattrib("atkDurationAttribute" );  
   useattrib("project.dependencyattrib");
   useattrib("project.projecttemplateattribute");
   useattrib("atknumberattribute");
