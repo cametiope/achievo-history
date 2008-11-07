@@ -18,7 +18,7 @@
    */
 
   include_once("achievotools.inc");
-  atkimport("atk.atkmetanode.inc");
+  atkimport("atk.atkmetanode");
 
   userelation("atkmanytoonerelation");
   userelation("project.onetomanymemorelation");
