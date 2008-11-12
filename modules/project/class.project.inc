@@ -58,7 +58,7 @@
 
       $memo = &$this->add(new oneToManyMemoRelation( 'memo', 'project.memo', 'project_id', AF_HIDE_LIST|AF_HIDE_ADD ) );
       
-      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' )
+      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' && $ATK_VARS['atkaction'] != 'search' )
       {       
         $this->add(new memoAttribute( 'memo_add', AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW, 60 ) );
       }

@@ -56,7 +56,19 @@
       switch( $master )
       {
         case 'project.project':
-          $where = ' memo.project_id = '.$project_id.' AND memo.master = "project.project" AND memo.updatestyle = "m" ';
+          $where .= ' ( memo.project_id = '.$project_id.' AND memo.master = "project.project" )';
+          
+          $db = atkGetDb();
+          $packages = $db->getRows( 'SELECT id FROM package WHERE master = "project.project" AND master_id = '.$project_id );
+          if( count( $packages ) > 0 )
+          {            
+            $packs = array();
+            foreach( $packages AS $package )
+            {
+              $packs[] = $package['id'];
+            }
+            $where .= 'OR ( memo.master="project.package" AND memo.master_id IN ( '.implode(', ', $packs ).' ) )';
+          }        
           break;
           
         case 'project.package':
