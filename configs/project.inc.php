@@ -35,6 +35,8 @@
   $config["project_resource_planning_green"] = '$availability >= 0 AND $availability < 80';
   $config["project_resource_planning_yellow"] = '$availability >= 80 AND $availability < 100';
   $config["project_resource_planning_red"] = '$availability >= 100';
+  
+  $config['default_days_allocation_pim'] = 7;
 
   $config["project_workload_green"] = '$workload >= 0 AND $workload < 80';
   $config["project_workload_yellow"] = '$workload >= 80 AND $workload < 100';
