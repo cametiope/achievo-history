@@ -1,7 +1,11 @@
 <?php
+
+atkimport('atk.atktreenode');
+
 useattrib("atkNumberAttribute");
 useattrib("atkTextAttribute");
 userelation('atkOneToManyRelation');
+userelation('atkManyToOneTreeRelation');
 
 class department extends atkTreeNode
 {

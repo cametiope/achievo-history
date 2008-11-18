@@ -14,6 +14,8 @@
 
   userelation("atkmanytoonerelation");
   useattrib("project.dummyeditattribute");
+  useattrib("atkdatetimeattribute");
+  useattrib("atkdummyattribute");
 
   /**
    * Constructor.

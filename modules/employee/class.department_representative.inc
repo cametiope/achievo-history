@@ -1,5 +1,5 @@
 <?php
-  atkimport("atk.atkmetanode.inc");
+  atkimport("atk.atkmetanode");
   
   class department_representative extends atkMetaNode
   {
