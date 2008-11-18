@@ -311,7 +311,7 @@ class timereg_advanced extends atkNode
     if( $this->hasValidFilterDate( $postvars ) )
     {
       $searchDate = $db->escapeSQL( $postvars['filterdate']['year'] . '-' . $postvars['filterdate']['month'] . '-' . $postvars['filterdate']['day'] );
-      $filter .= " AND (" . $node->getTable() . ".startdate < '" . $searchDate . "' AND (" . $node->getTable() . ".enddate > '" . $searchDate . "')";
+      $filter .= " AND (" . $node->getTable() . ".startdate < '" . $searchDate . "' AND (" . $node->getTable() . ".enddate > '" . $searchDate . "'))";
     }
     else
     {
