@@ -33,7 +33,7 @@
     public $securityAlias = "project.project";
     public $order = "name";
     public $descriptor = "[name]";
-    public $flags = array(NF_ADD_LINK,NF_EDITAFTERADD);
+    public $flags = array(NF_ADD_LINK,NF_EDITAFTERADD,NF_TRACK_CHANGES);
 
     /**
      * Project identifier
@@ -157,7 +157,6 @@
     	return true;
     }
 
-    
     public function postUpdate( $record )
     {
       if( array_key_exists( 'memo_add', $record ) && $record['memo_add'] != '' )
@@ -194,10 +193,28 @@
         
         $db->query( $query );
       }
+      
+      //coordinator has been changed?
+      if($record['coordinator_id']['id'] <> $record["atkorgrec"]['coordinator_id']['id'])
+    	{
+        $teamNode = &atkGetNode('project.package_person');
+        //delete old
+        $teamNode->deleteDb("package_person.package_id='".$record['id']."' AND package_person.person_id='".$record["atkorgrec"]['coordinator_id']['id']."'");
+    	  //check, if new coordinator already in team
+    	  $rows = $teamNode->selectDb("package_person.package_id='".$record['id']."' AND package_person.person_id='".$record['coordinator_id']['id']."'");
+        //if not
+        if(count($rows) == 0)
+        {
+      	  //add it to team
+        	$team['package_id'] = $record['id'];
+        	$team['person_id'] = $record['coordinator_id']['id'];
+        	$teamNode->addDb($team);
+        }
+    	}
+
       return true;
     }    
 
-    
     /**
      * Call custom validation methods for the startdate field
      *
