@@ -7,7 +7,7 @@
           <table border="0" width="100%">
             <tr>
               <td width="50">{$fields[0].full}</td>
-              <td><textarea style="width: 100%; height: 80px;" disabled="disabled">{$fields[2].full}</textarea></td>
+              <td>{$fields[2].full}</td>
             </tr>
           </table>        
 
