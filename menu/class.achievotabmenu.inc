@@ -170,13 +170,27 @@
 	  private function _addUrl(&$rows,$type)
 	  {
 	    $theme = &atkinstance("atk.ui.atktheme");
-	    for($i=0;$i<count($rows);$i++)
+      $imgPath = $theme->imgPath($type.".gif");
+      $length = $theme->getAttribute("menu_item_length");
+
+	    /*@var $node atkNode*/
+      $node = &atkGetNode("project.".$type);
+      if($node->allowed("edit")) $action = "edit";
+      elseif($node->allowed("admin")) $action = "view";
+      
+      for($i=0;$i<count($rows);$i++)
 	    {
 	      $filter = ($type == 'package' || $type == 'phase') ? array('atkfilter' => 'projectid='.$rows[$i]['projectid']) : array();
-	      $rows[$i]['url'] = session_url(dispatch_url("project.".$type, "edit", array("atkselector" => $type.".id='".$rows[$i]["id"]."'", $filter),"dispatch.php"),SESSION_NEW);
-	      $rows[$i]['img'] = $theme->imgPath($type.".gif");
+	      
+	      if(isset($action))
+	      {
+	       $rows[$i]['url'] = session_url(dispatch_url("project.".$type, $action, array("atkselector" => $type.".id='".$rows[$i]["id"]."'", $filter),"dispatch.php"),SESSION_NEW);
+	      }
+	      else $rows[$i]['url'] = "";
+	      
+	      $rows[$i]['img'] = $imgPath;
 	      $rows[$i]['title'] = $rows[$i]['name'];
-	      $rows[$i]['name'] = substr($rows[$i]['name'],0,$theme->getAttribute("menu_item_length"));
+	      $rows[$i]['name'] = substr($rows[$i]['name'],0,$length);
 	    }
 	  }
 
