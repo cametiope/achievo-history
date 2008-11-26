@@ -198,8 +198,6 @@
       if($record['coordinator_id']['id'] <> $record["atkorgrec"]['coordinator_id']['id'])
     	{
         $teamNode = &atkGetNode('project.package_person');
-        //delete old
-        $teamNode->deleteDb("package_person.package_id='".$record['id']."' AND package_person.person_id='".$record["atkorgrec"]['coordinator_id']['id']."'");
     	  //check, if new coordinator already in team
     	  $rows = $teamNode->selectDb("package_person.package_id='".$record['id']."' AND package_person.person_id='".$record['coordinator_id']['id']."'");
         //if not
