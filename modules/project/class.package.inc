@@ -66,8 +66,8 @@
       $policy->add('trafficlight_updatestyle', 'atkradioattribute', array(array('manual', 'automatic'), array('M', 'A')), AF_FORCE_LOAD|AF_HIDE_LIST|AF_DISPLAY_VERT|AF_HIDE_ADD);
 
       $policy->setTypeAndParams('memo', 'project.onetomanymemorelation', array( 'destination' => 'project.memo', 'refKey' => 'project_id',  'flags' =>  AF_HIDE_LIST|AF_HIDE_ADD ) );
-      
-      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' )
+
+      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' && $ATK_VARS['atknodetype'] == 'project.package')
       {       
         $policy->add( 'memo_add', 'memoAttribute', array(), AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW );
       }      
@@ -432,7 +432,7 @@
       $this->getAttribute("trafficlight_updatestyle")->addDependee('trafficlight_selection');
       $this->getAttribute('deliverable_package')->setDestinationFilter('deliverable_id.status <> "complete"');
     }
-
+    
     /**
      * Display override for the completed attribute
      *
