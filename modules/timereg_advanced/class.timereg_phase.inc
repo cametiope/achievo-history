@@ -5,6 +5,7 @@
   useattrib('atkdurationattribute');
   useattrib('atknumberattribute');
   useattrib('atkdummyattribute');
+  useattrib('atkdurationattribute');
   //useattrib('atklistattribute');
 
   userelation('atkmanytoonerelation');
