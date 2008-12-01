@@ -2,28 +2,28 @@
 
 class projecttreeutils
 {
-  
+
   /**
    * Original node type
    *
    * @var atkNodeType
    */
   protected $originalType;
-  
+
   /**
    * New node type
    *
    * @var atkNodeType
    */
   protected $newType;
-  
+
   /**
    * Original project or package id
    *
    * @var integer
    */
   protected $originalId;
-  
+
   /**
    * New  project or package id
    *
@@ -41,8 +41,8 @@ class projecttreeutils
    */
   public function __construct( $originalType = 'project.package', $originalId = 0, $newType = 'project.package', $newId = 0 )
   {
-    $this->originalType = $this->getNodeFromType($originalType);
-    $this->newType = $this->getNodeFromType($newType);
+    $this->originalType = $originalType;
+    $this->newType = $newType;
     $this->originalId = $originalId;
     $this->newId = $newId;
   }
@@ -52,17 +52,23 @@ class projecttreeutils
    * Update the tree through the bottom-up design.
    *
    */
-  public function updateTree()
+  public function updateTree($record)
   {
+    $db = atkGetDb();
+    $securitymanager = &atkGetSecurityManager();
+    $initialplanningallowed = $securitymanager->allowed( "project.project", "initialplanning" );
+
+    //update project
+    $this->updateProject($record['projectid']['id'], $db, $initialplanningallowed);
+
     // Recalculate original tree
-    $this->calculateHours( $this->originalType, $this->originalId );
-    
+    $this->calculateHours( $this->originalType, $this->originalId, $db, $initialplanningallowed );
+
     // Recalculate new tree
     if( $this->newId != 0 )
     {
-      $this->calculateHours( $this->newType, $this->newId, $this->originalType, $this->originalId );
+      $this->calculateHours( $this->newType, $this->newId, $db, $initialplanningallowed );
     }
-  
   }
 
 
@@ -71,45 +77,20 @@ class projecttreeutils
    *
    * @param array $record
    */
-  protected function calculateHours( $type, $id )
+  protected function calculateHours( $type, $id, $db, $initialplanningallowed)
   {
-    $db = atkGetDb();
-    
-    if ($type == 'package')
+    if ($type == 'project.package')
     {
-      $select = sprintf( "SELECT id, master, master_id FROM %s WHERE id=%d LIMIT 0,1", $type, $id );
-      $rows = $db->getrows( $select );
-      $this->setUpdater( $rows[0], $db );
-    }
-    else 
-    {
-      $this->updateProject($id, $db);
+      $this->updatePackage($id, $db, $initialplanningallowed);
+
+      list($res) = $db->getrows("SELECT master, master_id FROM package WHERE id='$id'");
+      $this->calculateHours($res['master'], $res['master_id'], $db, $initialplanningallowed);
     }
   }
-
-
-  /**
-   * Call custom updater.
-   *
-   * @param array $p Phase or Package
-   * @param object $db
-   */
-  protected function setUpdater( $p, $db )
-  {
-    if( $p['master'] == 'project.package' )
-    {
-      $this->updatePackage( $p['master_id'], $db );
-    }
-    else
-    {
-      $this->updateProject( $p['master_id'], $db );
-    }
-  }
-
 
   /**
    * Update the information in packages.
-   * 
+   *
    * Calculate the total spend minutes/hours, current planning hours
    * and remaining effort time hours from underlying packages and phases and
    * update the information in the parent package.
@@ -117,80 +98,81 @@ class projecttreeutils
    * @param integer $package_id
    * @param atkDb $db
    */
-  protected function updatePackage( $package_id, $db )
+  protected function updatePackage( $package_id, $db, $initialplanningallowed )
   {
-    $select = sprintf( "
-        SELECT
-          ((SELECT SUM(time) AS spend_minutes FROM hours WHERE phaseid IN (SELECT id FROM phase WHERE master='project.package' AND master_id=%d)) + SUM(p.spend_hours)) AS hours, 
-          ((SELECT SUM(current_planning) FROM phase WHERE master='project.package' AND master_id=%d) + (SELECT SUM(current_planning) FROM package WHERE master='project.package' AND master_id=%d)) AS current_planning, 
-          ((SELECT SUM(remaining_effort_time) FROM phase WHERE master='project.package' AND master_id=%d) + (SELECT SUM(remaining_effort_time) FROM package WHERE master='project.package' AND master_id=%d)) AS remaining_effort_time
+    $select = "
+        SELECT"
+          .($initialplanningallowed ?
+            " (IFNULL((SELECT SUM(initial_planning) FROM phase WHERE master='project.package' AND master_id='$package_id'),0)
+             + IFNULL((SELECT SUM(initial_planning) FROM package WHERE master='project.package' AND master_id='$package_id'),0)) AS initial_planning," : "")."
+
+          (IFNULL((SELECT SUM(time) AS spend_minutes FROM hours WHERE phaseid IN (SELECT id FROM phase WHERE master='project.package' AND master_id='$package_id')),0)
+           + IFNULL(SUM(p.spend_hours),0)) AS hours,
+
+          (IFNULL((SELECT SUM(current_planning) FROM phase WHERE master='project.package' AND master_id='$package_id'),0)
+          +IFNULL((SELECT SUM(current_planning) FROM package WHERE master='project.package' AND master_id='$package_id'),0)) AS current_planning,
+
+          (IFNULL((SELECT SUM(remaining_effort_time) FROM phase WHERE master='project.package' AND master_id='$package_id'),0)
+          +IFNULL((SELECT SUM(remaining_effort_time) FROM package WHERE master='project.package' AND master_id='$package_id'),0)) AS remaining_effort_time
         FROM
           package p
         WHERE
-          (p.master='project.package' AND p.master_id=%d)", $package_id, $package_id, $package_id, $package_id, $package_id, $package_id, $package_id, $package_id );
-    
-    $hours = $db->getrows( $select );
-    $h = $hours[0];
-    
+          (p.master='project.package' AND p.master_id='$package_id')";
+
+    list($h) = $db->getrows( $select );
+
     $completed = $this->calculateCompleted( $h['hours'], $h['current_planning'], $h['remaining_effort_time'] );
-    
-    $update = sprintf( "UPDATE
-                          package 
-                        SET
-                          spend_hours=%d,
-                          current_planning=%d,
-                          completed=%d,
-                          remaining_effort_time=%d 
-                        WHERE 
-                          id=%d", $h['hours'], $h['current_planning'], $completed, $h['remaining_effort_time'], $package_id );
-    
+
+    $update = "UPDATE
+                          package
+                        SET"
+                        .($initialplanningallowed ? " initial_planning= '".$h['initial_planning']."'," : "")."
+                          spend_hours='".$h['hours']."',
+                          current_planning='".$h['current_planning']."',
+                          completed='$completed',
+                          remaining_effort_time='".$h['remaining_effort_time']."'
+                        WHERE
+                          id='$package_id'";
+
     $db->query( $update );
-    
-    $selectPackage = "SELECT id, master, master_id FROM package WHERE id=" . $package_id . " LIMIT 0,1";
-    $package = $db->getrows( $selectPackage );
-    
-    $this->setUpdater( $package[0], $db );
   }
 
 
   /**
    * Update the information in projects
-   * 
+   *
    * Calculate the total spend minutes/hours, current planning hours
    * and remaining effort time hours from underlying packages and phases and
-   * update the information in the parent project. 
+   * update the information in the parent project.
    *
    * @param integer $project_id
    * @param atkDb $db
    */
-  protected function updateProject( $project_id, $db )
+  protected function updateProject( $project_id, $db, $initialplanningallowed )
   {
-    $select = sprintf( "
-        SELECT
-          ((SELECT SUM(time) AS spend_minutes FROM hours WHERE phaseid IN (SELECT id FROM phase WHERE master='project.project' AND master_id=%d)) + SUM(p.spend_hours)) AS hours, 
-          ((SELECT SUM(current_planning) FROM phase WHERE master='project.project' AND master_id=%d) + (SELECT SUM(current_planning) FROM package WHERE master='project.project' AND master_id=%d)) AS current_planning, 
-          ((SELECT SUM(remaining_effort_time) FROM phase WHERE master='project.project' AND master_id=%d) + (SELECT SUM(remaining_effort_time) FROM package WHERE master='project.project' AND master_id=%d)) AS remaining_effort_time
+    list($h) = $db->getrows("
+        SELECT"
+          .($initialplanningallowed ? " SUM(initial_planning) AS initial_planning," : "")."
+          SUM(current_planning) AS current_planning,
+          SUM(remaining_effort_time) AS remaining_effort_time,
+          (SELECT SUM(time) FROM hours WHERE phaseid IN (SELECT id FROM phase WHERE projectid='$project_id')) AS hours
         FROM
-          package p
+          phase
         WHERE
-          (p.master='project.project' AND p.master_id=%d)", $project_id, $project_id, $project_id, $project_id, $project_id, $project_id, $project_id, $project_id );
-    
-    $hours = $db->getrows( $select );
-    $h = $hours[0];
-    
-    $completed = $this->calculateCompleted( $h['hours'], $h['current_planning'], $h['remaining_effort_time'] );
-    
-    $update = sprintf( "UPDATE
-                          project
-                        SET
-                          spend_hours=%d,
-                          current_planning=%d,
-                          completed=%d,
-                          remaining_effort_time=%d 
-                        WHERE id=%d", $h['hours'], $h['current_planning'], $completed, $h['remaining_effort_time'], $project_id );
-    $db->query( $update );
-  }
+          projectid='$project_id'");
 
+    $completed = $this->calculateCompleted( $h['hours'], $h['current_planning'], $h['remaining_effort_time'] );
+
+    $db->query("UPDATE
+                  project
+                SET"
+                  .($initialplanningallowed ? " initial_planning= '".$h['initial_planning']."'," : "")."
+                  spend_hours='".$h['hours']."',
+                  current_planning='".$h['current_planning']."',
+                  completed='$completed',
+                  remaining_effort_time='".$h['remaining_effort_time']."'
+                WHERE id='$project_id'");
+  }
 
   /**
    * Calculate the completed value.
@@ -204,21 +186,51 @@ class projecttreeutils
   {
     if( $left <= 0 )
       return 100;
-    
+
     return (round( (( $hours / ($left +$hours)) * 100), 0 ));
   }
 
-
-  /**
-   * Get nodename from type.
-   *
-   * @param string $type
-   * @return string
-   */
-  protected function getNodeFromType( $type )
+  public function updateInitialPlanning($rec, $db)
   {
-    list( $module, $node ) = split( '\.', $type );
-    return $node;
+    list($master,$master_id) = explode("s_",$rec['project_package']);
+    $this->setToProject($db,$rec['projectid']['id']);
+    $this->setToTree("project.".$master, $master_id, $db, $rec['initial_planning'],$rec['current_planning']);
+  }
+
+  private function setToTree($master, $master_id, $db, $initial, $current)
+  {
+    if($master=="project.package")
+    {
+      $db->query("
+        UPDATE package
+        SET initial_planning = initial_planning+'$initial',
+            current_planning = current_planning+'$current'
+        WHERE id='$master_id'
+      ");
+
+      list($res) = $db->getrows("SELECT master, master_id FROM package WHERE id='$master_id'");
+      $this->setToTree($res['master'], $res['master_id'], $db, $initial, $current);
+    }
+  }
+
+  private function setToProject($db, $projectId)
+  {
+    list($res) = $db->getrows("
+      SELECT
+        SUM(initial_planning) initial,
+        SUM(current_planning) current
+      FROM
+        phase
+      WHERE
+        projectid='$projectId'
+    ");
+
+    $db->query("
+      UPDATE project
+      SET initial_planning='".$res['initial']."',
+          current_planning='".$res['current']."'
+      WHERE id='$projectId'
+    ");
   }
 
 }
