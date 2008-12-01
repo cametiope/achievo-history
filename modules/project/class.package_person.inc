@@ -1,6 +1,6 @@
 <?php
 
-  atkimport("atk.atkmetanode.inc");
+  atkimport("atk.atkmetanode");
 
   /**
 	 * Package_person
