@@ -1,5 +1,6 @@
 <?php
 
+useattrib("atknumberattribute");
 useattrib("docmanager.projectdocumentmanager");
 
 /**
@@ -20,17 +21,17 @@ class projectdocument extends atkNode
    * Constructor.
    *
    */
-  public function __construct($name='projectdocument')
+  public function __construct()
   {
+    $this->atkNode( 'projectdocument' );
+       
     $this->add( new atkNumberAttribute( 'id', AF_AUTOKEY ) );
     
-    $this->add( new projectDocumentManager( 'docs', AF_HIDE_LIST | AF_HIDE_SEARCH | AF_NO_LABEL , 'project.project' ))
-      ->addDestinationFilter("master_id='[projectdocument.id]'");
+    $this->add( new projectDocumentManager( 'docs', AF_HIDE_LIST | AF_HIDE_SEARCH | AF_NO_LABEL , 'project.project' ));
     
     $this->setTable('project','project');
     $this->setSecurityAlias('project.project');
   }
-
 
   /**
    * Edit action handler override.
@@ -74,7 +75,7 @@ class projectdocument extends atkNode
   private function getProjectMenu()
   {
     atkimport( 'module.project.projectmenu' );
-    $pm = new projectmenu( 'project.deliverable', $this->m_project );
+    $pm = new projectmenu( 'project.projectdocument', $this->m_project );
     return $pm->getTabHtml();
   }
 
