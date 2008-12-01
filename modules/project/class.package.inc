@@ -90,7 +90,7 @@
 
       $policy->setTypeAndParams("status","atk.attributes.atklistattribute",array(array("active","nonactive","archived")));
       $policy->setTypeAndParams(array("initial_planning","current_planning","remaining_effort_time", "spend_hours"),"atk.attributes.atkdurationattribute",array("15m"));
-      $policy->addFlags("initial_planning","current_planning","remaining_effort_time", "spend_hours", AF_READONLY);
+      $policy->addFlags("initial_planning","current_planning","remaining_effort_time", "spend_hours", 'completed', AF_READONLY);
 
       $policy->addFlags("abbreviation_package","name",AF_UNIQUE);
       $policy->addFlags("abbreviation_package","coordinator_id","category_id","status","initial_planning","deposit","master_id",
@@ -99,7 +99,6 @@
       $policy->addFlags("description","startdate","enddate","initial_planning","current_planning","category_id", "status", "deposit", "completed", "spend_hours", "remaining_effort_time", AF_HIDE_ADD);
       $policy->addFlags("coordinator_id",AF_RELATION_AUTOLINK);
       $policy->addFlags("status",AF_LIST_NO_NULL_ITEM);
-      $policy->addFlags("remaining_effort_time",AF_READONLY);
       $policy->addFlags("category_id","coordinator_id","deposit",AF_LARGE);
 
       $policy->hasMany('deliverable_package', array('source' => 'package_id'));
