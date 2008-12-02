@@ -8,6 +8,6 @@
     public static function meta(atkMetaPolicy $policy)
     {
       $policy->hasOne("employee.department",array("source"=>"department_id"));
-      $policy->hasOne("person.person",array("source"=>"representative_id"));        
+      $policy->hasOne("employee.employee",array("source"=>"representative_id"));        
     }
   }

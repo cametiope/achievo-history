@@ -16,7 +16,7 @@ class department extends atkTreeNode
     $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
     $this->add(new atkManyToOneTreeRelation("parent_id","employee.department", AF_PARENT|AF_FORCE_LOAD));    
     $this->add(new atkAttribute("name",AF_OBLIGATORY));
-    $this->add(new atkManyToOneRelation("manager_id", "person.person", AF_HIDE_LIST|AF_LARGE));    
+    $this->add(new atkManyToOneRelation("manager_id", "employee.employee", AF_HIDE_LIST|AF_LARGE));    
     $this->add(new atkOneToManyRelation("representatives","employee.department_representative", "department_id", AF_HIDE_LIST));   
     $this->add(new atkTextAttribute("description"));
     
