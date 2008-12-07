@@ -876,6 +876,11 @@ class hours extends atkNode
 
     // update overtime balance
     $this->calculateNewBalance($rec, "add");
+
+    //update stent time in project and package
+    $information = atkNew( 'module.project.utils.projecttreeutils', $rec['phaseid']['master'], $rec['phaseid']['master_id'] );
+    $information->updateTree($rec['phaseid']);
+    
     return true;
   }
 
@@ -890,6 +895,11 @@ class hours extends atkNode
 
     // update overtime balance
     $this->calculateNewBalance($rec, "edit");
+    
+    //update stent time in project and package
+    $information = atkNew( 'module.project.utils.projecttreeutils', $rec['phaseid']['master'], $rec['phaseid']['master_id'] );
+    $information->updateTree($rec['phaseid']);
+
     return true;
   }
 
