@@ -232,7 +232,7 @@ class phase extends atkNode
   protected function recalculateInformation( $record )
   {
     list($master,$master_id) = explode("s_",$record['project_package']);
-    if( "project.".$master != $record['atkorgrec']['master'] || $master_id != $record['atkorgrec']['master_id'] )
+    if( $master && ("project.".$master != $record['atkorgrec']['master'] || $master_id != $record['atkorgrec']['master_id']) )
       $information = atkNew( 'module.project.utils.projecttreeutils', $record['atkorgrec']['master'], $record['atkorgrec']['master_id'], $master, $master_id );
     else
       $information = atkNew( 'module.project.utils.projecttreeutils', $record['master'], $record['master_id'] );
@@ -416,6 +416,12 @@ class phase extends atkNode
   }
 
 
+  /**
+   * Enter description here...
+   *
+   * @param unknown_type $rec
+   * @return unknown
+   */
   public function postDel( $rec )
   {
     if( isset( $rec["id"] ) )
@@ -424,6 +430,7 @@ class phase extends atkNode
       $delphase = $rec["id"];
       $deprec = $node->deleteDb( "phaseid_row = $delphase OR phaseid_col = $delphase" );
     }
+    $this->recalculateInformation( $rec );
     return true;
   }
 
