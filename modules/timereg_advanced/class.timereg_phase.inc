@@ -144,6 +144,18 @@
       return false;
     }
 
+    function postAdd($rec)
+    {
+      $phaseid = atkArrayNvl($rec,"phaseid");
+      if($phaseid)
+      {
+        list($row) = $this->getDb()->getrows("SELECT projectid, master, master_id FROM phase WHERE id='$phaseid'");
+        //update spent time in project and package
+        $information = atkNew( 'module.project.utils.projecttreeutils', $row['master'], $row['master_id'] );
+        $information->updateTree($row['projectid']);
+      }
+      return true;
+    }
 
     /**
      * Get the values and options for the completed dropdown
