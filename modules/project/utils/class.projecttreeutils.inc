@@ -52,14 +52,14 @@ class projecttreeutils
    * Update the tree through the bottom-up design.
    *
    */
-  public function updateTree($record)
+  public function updateTree($projectid)
   {
     $db = atkGetDb();
     $securitymanager = &atkGetSecurityManager();
     $initialplanningallowed = $securitymanager->allowed( "project.project", "initialplanning" );
 
     //update project
-    $this->updateProject($record['projectid']['id'], $db, $initialplanningallowed);
+    $this->updateProject($projectid, $db, $initialplanningallowed);
 
     // Recalculate original tree
     $this->calculateHours( $this->originalType, $this->originalId, $db, $initialplanningallowed );

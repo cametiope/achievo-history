@@ -237,7 +237,7 @@ class phase extends atkNode
     else
       $information = atkNew( 'module.project.utils.projecttreeutils', $record['master'], $record['master_id'] );
 
-    $information->updateTree($record);
+    $information->updateTree($record['projectid']['id']);
   }
 
 
