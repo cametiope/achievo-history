@@ -879,7 +879,7 @@ class hours extends atkNode
 
     //update spent time in project and package
     $information = atkNew( 'module.project.utils.projecttreeutils', $rec['phaseid']['master'], $rec['phaseid']['master_id'] );
-    $information->updateTree($rec['phaseid']);
+    $information->updateTree($rec['phaseid']['projectid']['id']);
     
     return true;
   }
@@ -898,7 +898,7 @@ class hours extends atkNode
     
     //update spent time in project and package
     $information = atkNew( 'module.project.utils.projecttreeutils', $rec['phaseid']['master'], $rec['phaseid']['master_id'] );
-    $information->updateTree($rec['phaseid']);
+    $information->updateTree($rec['phaseid']['projectid']['id']);
 
     return true;
   }
@@ -910,7 +910,7 @@ class hours extends atkNode
 
     //update spent time in project and package
     $information = atkNew( 'module.project.utils.projecttreeutils', $rec['phaseid']['master'], $rec['phaseid']['master_id'] );
-    $information->updateTree($rec['phaseid']);
+    $information->updateTree($rec['phaseid']['projectid']['id']);
     return true;
   }
 
