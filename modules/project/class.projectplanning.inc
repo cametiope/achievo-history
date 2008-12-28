@@ -158,14 +158,6 @@ include_once(atkConfig("atkroot")."achievotools.inc");
 
         $this->m_resourceHours['task'][$r['employee']][$r['id']] = array("plan"=>$plan,"fact"=>$r['fact'],"name"=>$r['name'],"startdate"=>$r['startdate'],"enddate"=>$r['enddate'],"taskplan"=>$r['plan']);
 
-        //per package
-        if($r['master'] == 'project.package')
-        {
-          $this->m_resourceHours['package'][$r['employee']][$r['master_id']]['plan'] += $plan;
-          $this->m_resourceHours['package'][$r['employee']][$r['master_id']]['fact'] += $r['fact'];
-          $this->m_resourceHours['package'][$r['employee']][$r['master_id']]['name'] = $r['master_name'];
-        }
-
         //per project
         $this->m_resourceHours['project'][$r['employee']][$r['projectid']]['plan'] += $plan;
         $this->m_resourceHours['project'][$r['employee']][$r['projectid']]['fact'] += $r['fact'];
@@ -293,6 +285,7 @@ include_once(atkConfig("atkroot")."achievotools.inc");
           {
             $this->m_resourceHours['project'][$employeeId][$id]['line'][$i] += $row[$i];
           }
+          
         }
 
         //subpackage handling
@@ -332,32 +325,6 @@ include_once(atkConfig("atkroot")."achievotools.inc");
             $value = $this->getFact("project",$v['master_project'],$empKey) + $this->getFact("project",$projId,$empKey);
             $this->setFact("project",$v['master_project'],$empKey,$value);
           }
-        }
-      }
-    }
-
-    /**
-     * Add time from subpackage
-     *
-     * @param int $id - package id
-     * @param int $employee - employee id
-     */
-    public function handleSubPackage($id, $employee)
-    {
-      if(!$this->isHandle($id, $employee))
-      {
-        $this->getPackageChild($id, $employee);
-        foreach ($this->m_parentChild['project.package'][$id]['package'] as $child)
-        {
-          $this->handleSubPackage($child['id'],$employee);
-
-          $value = $this->getPlan("package",$id,$employee) + $this->getPlan("package",$child['id'],$employee);
-          $this->setPlan("package",$id,$employee,$value);
-
-          $value = $this->getFact("package",$id,$employee) + $this->getFact("package",$child['id'],$employee);
-          $this->setFact("package",$id,$employee,$value);
-
-          $this->setHandle($id, $employee);
         }
       }
     }
@@ -650,6 +617,13 @@ include_once(atkConfig("atkroot")."achievotools.inc");
           {
             $this->m_resourceHours['package'][$employeeId][$id]['line'][$i] += $row[$i];
           }
+          
+          $value = $this->getPlan("package",$id,$employeeId) + $this->getPlan("package",$child['id'],$employeeId);
+          $this->setPlan("package",$id,$employeeId,$value);
+
+          $value = $this->getFact("package",$id,$employeeId) + $this->getFact("package",$child['id'],$employeeId);
+          $this->setFact("package",$id,$employeeId,$value);
+          
         }
 
         //task handling
@@ -659,6 +633,19 @@ include_once(atkConfig("atkroot")."achievotools.inc");
           for($i=0,$_i=count($row);$i<$_i;$i++)
           {
             $this->m_resourceHours['package'][$employeeId][$id]['line'][$i] += $row[$i];
+          }
+          $value = $this->getPlan("package",$id,$employeeId) + $this->getPlan("task",$child['id'],$employeeId);
+          $this->setPlan("package",$id,$employeeId,$value);
+
+          $value = $this->getFact("package",$id,$employeeId) + $this->getFact("task",$child['id'],$employeeId);
+          $this->setFact("package",$id,$employeeId,$value);
+        }
+
+        if(empty($this->m_resourceHours['package'][$employeeId][$id]['line']))
+        {
+          for($i=0, $_i=count($weeks); $i<$_i; $i++)
+          {
+            $this->m_resourceHours['package'][$employeeId][$id]['line'][$i] = 0;
           }
         }
       }
@@ -678,5 +665,31 @@ include_once(atkConfig("atkroot")."achievotools.inc");
       return $this->m_resourceHours['task'][$employeeId][$id]['line'];
     }
 
+    public function collectSubPackageTask($projectId, $employeeId)
+    {
+      $db = &$this->getDb();
+      $rows = $db->getrows("
+          SELECT k.id,k.name,k.master_id
+          FROM 
+           package k
+           JOIN package_person p ON k.id=p.package_id
+          WHERE p.person_id='$employeeId' AND k.projectid='$projectId' AND master='project.package'
+      ");
+       foreach ($rows as $r)
+       {
+         $this->m_parentChild['project.package'][$r['master_id']]['package'][] = array("id"=>$r['id'],"name"=>$r['name']);
+       }
+       
+       $rows = $db->getrows("
+        SELECT id,name,master_id 
+        FROM phase 
+        WHERE master='project.package' AND projectid='$projectId' AND assign_to='$employeeId'
+       ");
+       
+       foreach ($rows as $r)
+       {
+         $this->m_parentChild['project.package'][$r['master_id']]['task'][] = array("id"=>$r['id'],"name"=>$r['name']);
+       }
+    }
   }
 ?>
