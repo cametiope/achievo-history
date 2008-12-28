@@ -29,17 +29,10 @@ switch($type)
     //data collection for current employee
     $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId);
     $node->handleSubproject();
-
-    foreach ($node->m_resourceHours['package'] as $empId=>$packVal)
-    {
-      foreach ($packVal as $packId=>$v)
-      {
-        $node->handleSubPackage($packId, $empId);
-      }
-    }
-
+    
     foreach ($node->m_resourceHours['project'][$employeeId] as $projectId=>$r)
     {
+      $node->collectSubPackageTask($projectId, $employeeId);
       $node->getProjectChild($projectId, $employeeId);
     }
 
@@ -75,6 +68,7 @@ switch($type)
     $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, '', $id);
 
     //get all children of current project where executor is current employee
+    $node->collectSubPackageTask($id, $employeeId);
     $node->getProjectChild($id, $employeeId);
 
     //data collection - subprojects
@@ -82,15 +76,6 @@ switch($type)
     {
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, '', $child['id']);
       $node->getProjectChild($child['id'], $employeeId);
-    }
-
-    //data collection for sub...
-    foreach ($node->m_resourceHours['package'] as $empId=>$packVal)
-    {
-      foreach ($packVal as $packId=>$v)
-      {
-        $node->handleSubPackage($packId, $empId);
-      }
     }
 
     foreach ($node->m_parentChild['project.project'][$id] as $type=>$child)
@@ -126,17 +111,10 @@ switch($type)
     $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $id);
     $node->getPackageChild($id,$employeeId);
 
-      foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
-      {
-        $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $child['id']);
-    }
-
-    foreach ($node->m_resourceHours['package'] as $empId=>$packVal)
+    foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
     {
-      foreach ($packVal as $packId=>$v)
-      {
-        $node->handleSubPackage($packId, $empId);
-      }
+      $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $child['id']);
+      $node->getPackageChild($child['id'],$employeeId);
     }
 
     foreach ($node->m_parentChild['project.package'][$id] as $type=>$child)
