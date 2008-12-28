@@ -177,14 +177,6 @@
 
         $this->m_resourceHours['task'][$r['employee']][$r['id']] = array("plan"=>$plan,"fact"=>$r['fact'],"name"=>$r['name'],"startdate"=>$r['startdate'],"enddate"=>$r['enddate'],"taskplan"=>$r['plan']);
 
-        //per package
-        if($r['master'] == 'project.package')
-        {
-          $this->m_resourceHours['package'][$r['employee']][$r['master_id']]['plan'] += $plan;
-          $this->m_resourceHours['package'][$r['employee']][$r['master_id']]['fact'] += $r['fact'];
-          $this->m_resourceHours['package'][$r['employee']][$r['master_id']]['name'] = $r['master_name'];
-        }
-
         //per employee
         $this->m_resourceHours['employee'][$r['employee']][$r['employee']]['plan'] += $plan;
         $this->m_resourceHours['employee'][$r['employee']][$r['employee']]['fact'] += $r['fact'];
