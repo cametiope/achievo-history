@@ -196,6 +196,32 @@ class packageProjectSelector extends atkListAttribute
         
     $values   = $this->getValues( $record );
     return $this->_translateValue( $this->m_selected, $record);
-  }  
+  }
+
+  /**
+   * Convert values from an HTML form posting to an internal value for
+   * this attribute.
+   * 
+   * We must pass changes from project_package field to master and master_id fields or some 
+   * functionality (validation for example) don't work properly. So & is important!!!
+   *
+   * @param array $postvars The array with html posted values ($_POST, for
+   *                        example) that holds this attribute's value.
+   * @return String The internal value
+   */
+  public function fetchValue(&$postvars)
+  {
+    if(isset($postvars['project_package']))
+    {
+      list($master,$master_id) = explode("s_",$postvars['project_package']);
+      $master = "project.".$master;
+      if($master!=$postvars['master'] || $master_id!=$postvars['master_id'])
+      {
+        $postvars['master'] = $master;
+        $postvars['master_id'] = $master_id;
+      }
+    }
+    return parent::fetchValue($postvars);
+  }
 
 }
