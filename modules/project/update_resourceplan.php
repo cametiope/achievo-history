@@ -40,24 +40,19 @@
       $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId);
 
       // We can see package and task (phase) hear, but not subproject
+      $node->collectSubPackageTask($projectid, $employeeId);
       $node->getProjectChild($projectid, $employeeId);
-
-      //data collection for subpackage
-      foreach ($node->m_parentChild['project.project'][$projectid]['package'] as $child)
-      {
-        $node->handleSubPackage($child['id'],$employeeId);
-      }
 
       foreach ($node->m_parentChild['project.project'][$projectid] as $type=>$child)
       {
         //child-package
         foreach ($child as $i)
         {
+          $items = $node->{'getLine'.$type}($periods, $i['id'], $employeeId);
+
           $line = array();
           $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employeeId));
           $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employeeId));
-
-          $items = $node->{'getLine'.$type}($periods, $i['id'], $employeeId);
 
           foreach ($items as $item)
           {
@@ -77,26 +72,18 @@
       foreach ($node->m_parentChild['project.package'][$id]['package'] as $child)
       {
         $node->getTaskHours(resourceutils::str2str($startdate), resourceutils::str2str($enddate),$employeeId, $child['id']);
-      }
-
-      //data collection for subpackage
-      foreach ($node->m_resourceHours['package'] as $empId=>$packVal)
-      {
-        foreach ($packVal as $packId=>$v)
-        {
-          $node->handleSubPackage($packId, $empId);
-        }
+        $node->getPackageChild($child['id'],$employeeId);
       }
 
       foreach ($node->m_parentChild['project.package'][$id] as $type=>$child)
       {
         foreach ($child as $i)
         {
+          $items = $node->{'getLine'.$type}($periods, $i['id'], $employeeId);
+
           $line = array();
           $line[] = atkDurationAttribute::_minutes2string($node->getPlan($type,$i['id'],$employeeId));
           $line[] = atkDurationAttribute::_minutes2string($node->getFact($type,$i['id'],$employeeId));
-
-          $items = $node->{'getLine'.$type}($periods, $i['id'], $employeeId);
 
           foreach ($items as $item)
           {
