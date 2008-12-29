@@ -471,6 +471,7 @@ class phase extends atkNode
   {
     if( $mode == 'update' )
     {
+      $this->fixMasterFields($record);
       $this->validate_startdate_timeregistration( $record, $mode );
       $this->validate_startdate_before_parent( $record, $mode );
       $this->validate_startdate_before_enddate( $record, $mode );
@@ -489,6 +490,7 @@ class phase extends atkNode
   {
     if( $mode == 'update' )
     {
+      $this->fixMasterFields($record);
       $this->validate_enddate_before_parent( $record, $mode );
       $this->validate_enddate_before_project( $record, $mode );
     }
@@ -533,7 +535,6 @@ class phase extends atkNode
       triggerError( $record, "startdate", "error_cannot_set_startdate_later_than_first_timereg" );
     }
   }
-
 
   /**
    * Custom validation: does the phase start on the same date (or later) then its master
@@ -885,5 +886,18 @@ class phase extends atkNode
       $this->project = sessionLoad( 'projectid' );
     }
   }
-
+  
+  public function fixMasterFields(&$record)
+  {
+    if(isset($record['project_package']))
+    {
+      list($master,$master_id) = explode("s_",$record['project_package']);
+      $master = "project.".$master;
+      if($master!=$record['master'] || $master_id!=$record['master_id'])
+      {
+        $record['master'] = $master;
+        $record['master_id'] = $master_id;
+      }
+    }
+  }
 }
