@@ -877,9 +877,19 @@ class hours extends atkNode
     // update overtime balance
     $this->calculateNewBalance($rec, "add");
 
+    // create a temporary record
+    $treeUpdateRecord = $rec;
+    
+    // phaseid must be an array
+    if (!is_array($treeUpdateRecord['phaseid']))
+    {
+      $phases = atkGetNode('project.phase')->selectDb('phase.id='.$rec['phaseid']);
+      $treeUpdateRecord['phaseid'] = $phases[0];
+    }
+    
     //update spent time in project and package
-    $information = atkNew( 'module.project.utils.projecttreeutils', $rec['phaseid']['master'], $rec['phaseid']['master_id'] );
-    $information->updateTree($rec['phaseid']['projectid']['id']);
+    $information = atkNew( 'module.project.utils.projecttreeutils', $treeUpdateRecord['phaseid']['master'], $treeUpdateRecord['phaseid']['master_id'] );
+    $information->updateTree($treeUpdateRecord['phaseid']['projectid']['id']);
     
     return true;
   }
