@@ -274,6 +274,8 @@ class hours extends atkNode
 
     $this->add(new atkTextAttribute("remark", atkconfig("timereg_remark_lines", 1), 0));
     $this->addTime();
+    $this->add( new atkDurationAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING|AF_OBLIGATORY) );
+    
 
     // If we don't use duration, then we won't need this
     // Because we can set the rates with the billing module
@@ -887,8 +889,12 @@ class hours extends atkNode
       $treeUpdateRecord['phaseid'] = $phases[0];
     }
     
-    //update spent time in project and package
     $information = atkNew( 'module.project.utils.projecttreeutils', $treeUpdateRecord['phaseid']['master'], $treeUpdateRecord['phaseid']['master_id'] );
+
+    //copy remaining_effort_time from hours to phase
+    $information->updateRemainTime($rec['phaseid']['id'], $rec['remaining_effort_time']);
+    
+    //update spent time in project and package
     $information->updateTree($treeUpdateRecord['phaseid']['projectid']['id']);
     
     return true;
@@ -905,9 +911,12 @@ class hours extends atkNode
 
     // update overtime balance
     $this->calculateNewBalance($rec, "edit");
-    
-    //update spent time in project and package
+
     $information = atkNew( 'module.project.utils.projecttreeutils', $rec['phaseid']['master'], $rec['phaseid']['master_id'] );
+
+    //copy remaining_effort_time from hours to phase
+    $information->updateRemainTime($rec['phaseid']['id'], $rec['remaining_effort_time']);
+    //update spent time in project and package
     $information->updateTree($rec['phaseid']['projectid']['id']);
 
     return true;
