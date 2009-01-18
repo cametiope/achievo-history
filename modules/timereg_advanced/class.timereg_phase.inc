@@ -6,7 +6,6 @@
   useattrib('atknumberattribute');
   useattrib('atkdummyattribute');
   useattrib('atkdurationattribute');
-  //useattrib('atklistattribute');
 
   userelation('atkmanytoonerelation');
 
@@ -32,9 +31,9 @@
       $this->add(new atkDateAttribute( 'activitydate', '', '', 0, ( atkconfig('timereg_allowfuture', false )? 0 : date('Ymd') ), AF_OBLIGATORY|AF_FORCE_LOAD ), null, 10 );
       $this->add(new atkDateAttribute( 'entrydate', '', '', 0, 0, AF_HIDE|AF_OBLIGATORY ) );
       $this->add(new atkDurationAttribute( 'time', atkconfig( 'timereg_resolution', '15m' ), atkconfig( 'max_bookable',10 ).'h',AF_OBLIGATORY ) );
+      $this->add( new atkDurationAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING|AF_OBLIGATORY) );
 
       $this->add(new atkNumberAttribute( 'userid', AF_HIDE ) );
-      $this->add(new atkDummyAttribute( 'completed', $this->renderSelectList( $this->getCompletedValues() ), AF_HIDE_LIST|AF_DUMMY_SHOW_LABEL ) );
       $this->add( new atkTextAttribute( 'remark', atkconfig( 'timereg_remark_lines', 1 ), ( true === $this->remark_obligatory ? AF_OBLIGATORY : 0 ) ) );
 
       $phase = &new atkNumberAttribute( 'phaseid', AF_OBLIGATORY|AF_FORCE_LOAD );
@@ -101,98 +100,20 @@
       );
     }
 
-
-    /**
-     * Triggers before update
-     *
-     * @param array $record
-     * @return boolean
-     */
-    public function preUpdate( &$record, $mode )
-    {
-      return $this->saveCompleted( $record );
-    }
-
-
-    /**
-     * Triggers before insert
-     *
-     * @param array $record
-     * @return boolean
-     */
-    public function preAdd( &$record )
-    {
-      return $this->saveCompleted( $record );
-    }
-
-
-    /**
-     * Store progress in phase instead of the hours node
-     *
-     * @param array $record
-     * @return boolean
-     */
-    private function saveCompleted( &$record )
-    {
-      $postvars = atkGetPostVar();
-
-      if( array_key_exists( 'phaseid' , $record ) && array_key_exists( 'completed_select', $postvars ) )
-      {
-        $db = &atkGetDb();
-        return $db->query( 'UPDATE phase SET completed = '.(int) $postvars['completed_select'].' WHERE id = '.(int) $record['phaseid'] );
-      }
-      return false;
-    }
-
     function postAdd($rec)
     {
       $phaseid = atkArrayNvl($rec,"phaseid");
       if($phaseid)
       {
         list($row) = $this->getDb()->getrows("SELECT projectid, master, master_id FROM phase WHERE id='$phaseid'");
-        //update spent time in project and package
         $information = atkNew( 'module.project.utils.projecttreeutils', $row['master'], $row['master_id'] );
+
+        //copy remaining_effort_time from hours to phase
+        $information->updateRemainTime($phaseid, $rec['remaining_effort_time']);
+        //update spent time in project and package
         $information->updateTree($row['projectid']);
       }
       return true;
-    }
-
-    /**
-     * Get the values and options for the completed dropdown
-     *
-     * @return array with values and options
-     */
-    private function getCompletedValues()
-    {
-      $values = range(0,100, atkConfig::get('project','completed_parts'));
-      for ($i=0, $_i=count($values); $i<$_i; $i++)
-      {
-        $completed['values'][$i] = $values[$i];
-        $completed['options'][$i] = $values[$i].'%';
-      }
-      return $completed;
-    }
-
-
-    /**
-     * Render a custom selectlist
-     *
-     * @todo preset selected option on validation error
-     * @return string
-     */
-    private function renderSelectList( $optionlist )
-    {
-      $html = '
-        <select name="completed_select">';
-
-      for( $i = 0, $_i = count( $optionlist['options'] ); $i < $_i; $i++ )
-      {
-        $html .= '<option value="'.$optionlist['values'][$i].'">'.$optionlist['options'][$i].'</option>';
-      }
-
-      $html .= '</select>';
-
-      return $html;
     }
 
     /**
