@@ -105,8 +105,7 @@ class phase extends atkNode
     $this->add( new atkDateAttribute( "startdate", "", "" ) );
     $this->add( new atkDateAttribute( "enddate", "", "" ) );
 
-    $completed = $this->getCompletedValues();
-    $this->add( new atkListAttribute( "completed", $completed['options'], $completed['values'], AF_HIDE_ADD | AF_FORCE_LOAD | AF_OBLIGATORY | AF_LIST_NO_NULL_ITEM ) );
+    $this->add( new atkNumberAttribute( "completed", AF_HIDE_ADD | AF_FORCE_LOAD | AF_OBLIGATORY | AF_READONLY ) );
 
     $this->add( new atkDurationAttribute( "initial_planning", '1m', '10h', ($initialplanningallowed ? 0 : AF_READONLY_EDIT) | AF_TOTAL | AF_DURATION_STRING ) );
     $this->add( new atkDurationAttribute( "current_planning", "1m", "10h", AF_DURATION_STRING ) );
@@ -717,24 +716,6 @@ class phase extends atkNode
     return true;
   }
 
-
-  /**
-   * Get the values and options for the completed dropdown
-   *
-   * @return array Array with values and options
-   */
-  private function getCompletedValues()
-  {
-    $values = range( 0, 100, atkConfig::get( 'project', 'completed_parts' ) );
-    for( $i = 0, $_i = count( $values ); $i < $_i; $i++ )
-    {
-      $completed['values'][$i] = $values[$i];
-      $completed['options'][$i] = $values[$i] . '%';
-    }
-    return $completed;
-  }
-
-
   /**
    * We must reload menu after changes in package/task.
    *
@@ -900,4 +881,16 @@ class phase extends atkNode
       }
     }
   }
+  /**
+   * Display override for completed field
+   *
+   * @param array $record
+   * @param string $mode
+   * @return string
+   */
+  public function completed_display($record,$mode)
+  {
+    return $record['completed'].'%';
+  }
+  
 }
