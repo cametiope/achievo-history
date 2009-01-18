@@ -232,5 +232,18 @@ class projecttreeutils
       WHERE id='$projectId'
     ");
   }
+  
+  public function updateRemainTime($phase_id, $time)
+  {
+    atkGetDb()->query("
+      UPDATE phase 
+      SET 
+        remaining_effort_time='$time',
+        current_planning=
+          (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time',
+        completed = (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')/((SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time')*100
+      WHERE id='$phase_id'");
+  }
+  
 
 }
