@@ -30,7 +30,6 @@
   class package extends atkMetaNode
   {
 
-    public $securityAlias = "project.project";
     public $order = "name";
     public $descriptor = "[name]";
     public $flags = array(NF_ADD_LINK,NF_EDITAFTERADD,NF_TRACK_CHANGES);
