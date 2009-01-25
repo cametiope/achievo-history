@@ -4,7 +4,7 @@
   // a phase is deleted. If omitted, false is default.
   $config["project_cascading_delete_hours"] = false;
 
-  // Criteria for trafficlight displayal
+  // Criteria for trafficlight display
   $config["trafficlight_red"]     = array('start' => 0, 'end' => 29);
   $config["trafficlight_yellow"]  = array('start' => 30, 'end' => 99);
   $config["trafficlight_green"]   = array('start' => 100, 'end' => 100);
