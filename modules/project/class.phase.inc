@@ -191,6 +191,7 @@ class phase extends atkNode
     {
       $information = atkNew( 'module.project.utils.projecttreeutils', $rec['master'], $rec['master_id'] );
       $information->updateInitialPlanning($rec, $this->getDb());
+      $information->updateTrafficLight($rec['id']);
     }
     return true;
   }
@@ -231,12 +232,18 @@ class phase extends atkNode
   protected function recalculateInformation( $record )
   {
     list($master,$master_id) = explode("s_",$record['project_package']);
-    if( $master && ("project.".$master != $record['atkorgrec']['master'] || $master_id != $record['atkorgrec']['master_id']) )
-      $information = atkNew( 'module.project.utils.projecttreeutils', $record['atkorgrec']['master'], $record['atkorgrec']['master_id'], $master, $master_id );
-    else
-      $information = atkNew( 'module.project.utils.projecttreeutils', $record['master'], $record['master_id'] );
-
-    $information->updateTree($record['projectid']['id']);
+    if($master) 
+    {
+      $master = "project.".$master;
+    
+      if($master != $record['atkorgrec']['master'] || $master_id != $record['atkorgrec']['master_id'])
+        $information = atkNew( 'module.project.utils.projecttreeutils', $record['atkorgrec']['master'], $record['atkorgrec']['master_id'], $master, $master_id );
+      else
+        $information = atkNew( 'module.project.utils.projecttreeutils', $record['master'], $record['master_id'] );
+  
+      $information->updateTree($record['projectid']['id']);
+      $information->updateTrafficLight($record['id']);
+    }
   }
 
 
@@ -258,7 +265,7 @@ class phase extends atkNode
 
       $output .= '<select name="trafficlight" ' . (! $record['trafficlight'] ? 'selected' : '') . '>';
       $output .= '<option value="">' . atktext( 'list_null_value_obligatory' ) . '</option>';
-      $output .= '<option value="' . $red['start'] . '">' . atktext( 'red' ) . '</option>';
+      $output .= '<option value="' . $red['end'] . '">' . atktext( 'red' ) . '</option>';
       $output .= '<option value="' . $yellow['start'] . '">' . atktext( 'yellow' ) . '</option>';
       $output .= '<option value="' . $green['start'] . '">' . atktext( 'green' ) . '</option>';
 
@@ -409,8 +416,10 @@ class phase extends atkNode
 
   public function addDb( &$record, $exectrigger = true, $mode = "add" )
   {
-    // This override makes sure that the current_planning is set equal to the number of initial_planning.
+    // This override makes sure that the current_planning and remaining_effort_time 
+    // is set equal to the number of initial_planning.
     $record["current_planning"] = $record["initial_planning"];
+    $record["remaining_effort_time"] = $record["initial_planning"];
     return parent::addDb( $record, $exectrigger, $mode );
   }
 

@@ -56,7 +56,9 @@
     {
     	$value = $record[$this->fieldName()];
 
-    	if (is_null($value))
+    	//If trafficlight value is null or equal 0 -  we don't start register time for 
+    	// this project and traffcilight is unknown
+    	if (is_null($value) || $value == 0)
     	  return '<img src="'.IMG_TRAFFIC_UNKNOWN.'" alt="'.atktext('trafficlight_unknown').'" />';
 
     	$red = atkConfig::get('project', 'trafficlight_red');

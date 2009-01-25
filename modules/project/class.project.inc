@@ -58,7 +58,7 @@
 
       $memo = &$this->add(new oneToManyMemoRelation( 'memo', 'project.memo', 'project_id', AF_HIDE_LIST|AF_HIDE_ADD ) );
       
-      if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' && $ATK_VARS['atkaction'] != 'search' && $ATK_VARS['atknodetype'] == 'project.package')
+      if( $ATK_VARS['atkaction'] != 'add' && atkArrayNvl($ATK_VARS,'atkprevaction') != 'add' && $ATK_VARS['atkaction'] != 'search' && $ATK_VARS['atknodetype'] == 'project.project')
       {       
         $this->add(new memoAttribute( 'memo_add', AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW, 60 ) );
       }
@@ -205,7 +205,7 @@
         
         $output.= '<select name="trafficlight" '.(!$record['trafficlight'] ? 'selected' : '' ).'>';
         $output.= '<option value="">'.atktext('list_null_value_obligatory').'</option>';
-        $output.= '<option value="'.$red['start'].'">'.atktext('red').'</option>';
+        $output.= '<option value="'.$red['end'].'">'.atktext('red').'</option>';
         $output.= '<option value="'.$yellow['start'].'">'.atktext('yellow').'</option>';
         $output.= '<option value="'.$green['start'].'">'.atktext('green').'</option>';
        

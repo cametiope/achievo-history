@@ -90,8 +90,8 @@
       atkimport("module.project.hourslistener");
       $node->addListener(new hoursListener());
 
-      atkimport("module.project.trafficlightlistener");
-      $node->addListener(new trafficlightListener());
+//      atkimport("module.project.trafficlightlistener");
+//      $node->addListener(new trafficlightListener());
     }
 
     function getPimItems()

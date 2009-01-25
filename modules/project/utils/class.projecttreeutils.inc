@@ -122,17 +122,20 @@ class projecttreeutils
     list($h) = $db->getrows( $select );
 
     $completed = $this->calculateCompleted( $h['hours'], $h['current_planning'], $h['remaining_effort_time'] );
+    //get project trafficlight_updatestyle
+    list($style) = $db->getrows("SELECT trafficlight_updatestyle FROM package WHERE id='$package_id'");
 
-    $update = "UPDATE
-                          package
-                        SET"
-                        .($initialplanningallowed ? " initial_planning= '".$h['initial_planning']."'," : "")."
-                          spend_hours='".$h['hours']."',
-                          current_planning='".$h['current_planning']."',
-                          completed='$completed',
-                          remaining_effort_time='".$h['remaining_effort_time']."'
-                        WHERE
-                          id='$package_id'";
+    $update = " UPDATE
+                  package
+                SET"
+                .($initialplanningallowed ? " initial_planning= '".$h['initial_planning']."'," : "")."
+                  spend_hours='".$h['hours']."',
+                  current_planning='".$h['current_planning']."',
+                  completed='$completed',
+                  remaining_effort_time='".$h['remaining_effort_time']."'"
+                 .(($style['trafficlight_updatestyle'] == 'A') ? ",trafficlight='$completed'" : "")."
+                WHERE
+                  id='$package_id'";
 
     $db->query( $update );
   }
@@ -162,7 +165,9 @@ class projecttreeutils
           projectid='$project_id'");
 
     $completed = $this->calculateCompleted( $h['hours'], $h['current_planning'], $h['remaining_effort_time'] );
-
+    //get project trafficlight_updatestyle
+    list($style) = $db->getrows("SELECT trafficlight_updatestyle FROM project WHERE id='$project_id'");
+    
     $db->query("UPDATE
                   project
                 SET"
@@ -170,7 +175,8 @@ class projecttreeutils
                   spend_hours='".$h['hours']."',
                   current_planning='".$h['current_planning']."',
                   completed='$completed',
-                  remaining_effort_time='".$h['remaining_effort_time']."'
+                  remaining_effort_time='".$h['remaining_effort_time']."'"
+                  .(($style['trafficlight_updatestyle'] == 'A') ? ",trafficlight='$completed'" : "")."
                 WHERE id='$project_id'");
   }
 
@@ -184,8 +190,9 @@ class projecttreeutils
    */
   protected function calculateCompleted( $hours, $planning, $left )
   {
-    if( $left <= 0 )
-      return 100;
+    //If we don't start register time for project, completed =0
+    if(empty($hours)) return 0;
+    elseif( $left <= 0 ) return 100;
 
     return (round( (( $hours / ($left +$hours)) * 100), 0 ));
   }
@@ -243,6 +250,11 @@ class projecttreeutils
           (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time',
         completed = (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')/((SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time')*100
       WHERE id='$phase_id'");
+  }    
+  
+  public function updateTrafficLight($phase_id)
+  {
+    atkGetDb()->query("UPDATE phase SET trafficlight=completed WHERE id='$phase_id' AND trafficlight_updatestyle='A'");
   }
   
 

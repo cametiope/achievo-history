@@ -128,7 +128,7 @@
         
         $output.= '<select name="trafficlight" '.(!$record['trafficlight'] ? 'selected' : '' ).'>';
         $output.= '<option value="">'.atktext('list_null_value_obligatory').'</option>';
-        $output.= '<option value="'.$red['start'].'">'.atktext('red').'</option>';
+        $output.= '<option value="'.$red['end'].'">'.atktext('red').'</option>';
         $output.= '<option value="'.$yellow['start'].'">'.atktext('yellow').'</option>';
         $output.= '<option value="'.$green['start'].'">'.atktext('green').'</option>';
        
@@ -416,8 +416,8 @@
       return array("status"=>1,
                    "coordinator_id"=>getUser(),
                    "projectid" => $selectedproject[1],
-                   "trafficlight_updatestyle" => "A",
-                   "trafficlight" => "0",);
+                   "trafficlight_updatestyle" => "A"
+                   );
     }
 
 
