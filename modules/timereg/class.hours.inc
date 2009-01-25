@@ -893,6 +893,7 @@ class hours extends atkNode
 
     //copy remaining_effort_time from hours to phase
     $information->updateRemainTime($rec['phaseid']['id'], $rec['remaining_effort_time']);
+    $information->updateTrafficLight($rec['phaseid']['id']);
     
     //update spent time in project and package
     $information->updateTree($treeUpdateRecord['phaseid']['projectid']['id']);
@@ -916,6 +917,7 @@ class hours extends atkNode
 
     //copy remaining_effort_time from hours to phase
     $information->updateRemainTime($rec['phaseid']['id'], $rec['remaining_effort_time']);
+    $information->updateTrafficLight($rec['phaseid']['id']);
     //update spent time in project and package
     $information->updateTree($rec['phaseid']['projectid']['id']);
 
