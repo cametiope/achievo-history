@@ -110,6 +110,7 @@
 
         //copy remaining_effort_time from hours to phase
         $information->updateRemainTime($phaseid, $rec['remaining_effort_time']);
+        $information->updateTrafficLight($phaseid);
         //update spent time in project and package
         $information->updateTree($row['projectid']);
       }
