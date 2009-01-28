@@ -15,6 +15,7 @@ useattrib( "project.dependencyattrib" );
 useattrib( "project.packageprojectselector" );
 useattrib( "project.trafficlightattribute" );
 useattrib( "project.memoattribute" );
+useattrib( "timereg.remainingefforttimeattribute" );
 
 userelation( "project.onetomanymemorelation" );
 userelation( "atkmanytoonerelation" );
@@ -108,8 +109,10 @@ class phase extends atkNode
     $this->add( new atkNumberAttribute( "completed", AF_HIDE_ADD | AF_FORCE_LOAD | AF_OBLIGATORY | AF_READONLY ) );
 
     $this->add( new atkDurationAttribute( "initial_planning", '1m', '10h', ($initialplanningallowed ? 0 : AF_READONLY_EDIT) | AF_TOTAL | AF_DURATION_STRING ) );
-    $this->add( new atkDurationAttribute( "current_planning", "1m", "10h", AF_DURATION_STRING ) );
-    $this->add( new atkDurationAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING ) );
+    $current = &$this->add( new atkDurationAttribute( "current_planning", "1m", "10h", AF_READONLY|AF_HIDE_ADD|AF_FORCE_LOAD ) );
+    $current->setForceUpdate(true);
+    
+    $this->add( new remainingEffortTimeAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING ) );
 
     // deliverable dependency
     $depends = &$this->add( new atkManyToOneRelation( "dependsondeliverable", "project.deliverable", AF_HIDE_LIST ) );
@@ -152,11 +155,12 @@ class phase extends atkNode
   /**
    * Add flag to memo_add attribute if trafficlight-updatestyle is "manual".
    *
-   * @param unknown_type $record
-   * @return unknown
+   * @param array $record
+   * @return boolean
    */
-  function preUpdate( $record )
+  public function preUpdate( &$record )
   {
+    
     if( $record['trafficlight_updatestyle'] == 'M' )
     {
       $this->getAttribute( 'memo_add' )->addFlag( AF_OBLIGATORY );
@@ -175,17 +179,21 @@ class phase extends atkNode
    * @param array $record
    * @return boolean
    */
-  function postUpdate( $record )
+  public function postUpdate( $record )
   {
     if( array_key_exists( 'memo_add', $record ) && $record['memo_add'] != '' )
       $this->addMemo( $record );
 
     $this->recalculateInformation( $record );
-
+    
+    $ptu = atkNew('module.project.utils.projecttreeutils');
+    $ptu->updateRemainTime( $record['id'], $record['remaining_effort_time'] );
+    $ptu->updateTrafficLight( $record['id'] );
+    
     return true;
   }
 
-  function postAdd( $rec )
+  public function postAdd( $rec )
   {
     if($rec['initial_planning'])
     {
@@ -766,6 +774,13 @@ class phase extends atkNode
     {
       $initalplaning_attr->addFlag( AF_READONLY );
     }
+    
+    if ($record['completed'] == 100)
+    {
+      $remainingefforttime_attr->addFlag( AF_READONLY );
+    }
+    
+    atk_var_dump($record['completed'], 'COMPLETED');
 
     if( $this->atkNodeType() != $this->m_postvars['atknodetype'] )
     {
@@ -784,7 +799,11 @@ class phase extends atkNode
    *
    * @param String $action
    * @param array $record
-   * @param String $tab
+   * @param String $tabi need a proposal fort he following small functionality
+
+We want to show in the normal Time registration the high and holidays (for example Christmas) in calendar and Date Attribute. The days must be coloerd red in the JavaScript calendar (must have). The Date dropdown box shows the day red (must have) and is flowed by the comment (could have).
+
+To add the dates we need a small node where we can define high days (Edit, Delete actions is also necessary). To define them we select a date and write a short comment like Christmas or something else.
    * @return String The filename of the template (without path)
    */
   public function getTemplate( $action, $record = NULL, $tab = "" )

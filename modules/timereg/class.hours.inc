@@ -11,6 +11,8 @@ useattrib("atkdurationattribute");
 useattrib("atkdummyattribute");
 useattrib("atktimeattribute");
 useattrib("atknumberattribute");
+useattrib('timereg.remainingefforttimeattribute');
+
 userelation("atkmanytoonerelation");
 atkimport("module.timereg.locking");
 atkimport("module.timereg.timeregutils");
@@ -274,7 +276,7 @@ class hours extends atkNode
 
     $this->add(new atkTextAttribute("remark", atkconfig("timereg_remark_lines", 1), 0));
     $this->addTime();
-    $this->add( new atkDurationAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING|AF_OBLIGATORY) );
+    $this->add(new remainingEffortTimeAttribute( "remaining_effort_time", "15m", "100h", AF_DURATION_STRING|AF_OBLIGATORY) );
     
 
     // If we don't use duration, then we won't need this

@@ -113,8 +113,8 @@ class timereg_advanced extends atkNode
     $smarty = &atkinstance( 'atk.ui.atksmarty' );
     
     $smarty->assign( 'rows', $this->getActivePhases( $action, $registered ) );
-    $smarty->assign( 'completed', $this->getCompletedValues() );
     $smarty->assign( 'times', $this->getRegistrationTimes() );
+    $smarty->assign( 'remaining', $this->getRemainingTimes() );
     $smarty->assign( 'action', $action );
     $smarty->assign( 'sorturl', $this->getSortUrl( $action ) );
     
@@ -415,17 +415,6 @@ class timereg_advanced extends atkNode
 
 
   /**
-   * Get a list with completed values.
-   *
-   * @return Array List of completed values
-   */
-  protected function getCompletedValues()
-  {
-    return range( 0, 100, atkConfig::get( 'project', 'completed_parts' ) );
-  }
-
-
-  /**
    * Get a list with hours and minutes for time registration.
    *
    * @return Array List with hours and minutes
@@ -434,6 +423,18 @@ class timereg_advanced extends atkNode
   {
     return array( 
         'hours' => range( 0, atkconfig( "max_bookable", 10 ), 1 ), 
+        'minutes' => range( 0, 59, 15 ) );
+  }
+  
+  /**
+   * Get a list with hours and minutes for remaining effort time
+   *
+   * @return Array List with hours and minutes
+   */
+  protected function getRemainingTimes()
+  {
+    return array( 
+        'hours' => range( 0, 100, 1 ), 
         'minutes' => range( 0, 59, 15 ) );
   }
 
@@ -561,6 +562,7 @@ class timereg_advanced extends atkNode
       $item['userid'] = $userid;
       $item['phaseid'] = $hour['phaseid'];
       $item['activityid'] = $hour['activity'];
+      $item['remaining_effort_time'] = ($hour['remaining']['hours'] * 60) + $hour['remaining']['minutes'];
       $item['remark'] = $db->escapeSQL( $hour['remark'] );
       $item['time'] = ($hour['time']['hours'] * 60) + $hour['time']['minutes'];
       $item['workperiod'] = 0;
@@ -568,29 +570,31 @@ class timereg_advanced extends atkNode
           'day' => date( 'd' ), 
           'month' => date( 'm' ), 
           'year' => date( 'Y' ) );
+      
       $node->addDb( $item );
       
       $favorite = ($hour['is_favorite'] == 'on') ? 1 : 0;
-      $this->updatePhase( $hour['phaseid'], $favorite, $hour['completed'] );
+      $this->updatePhase( $hour['phaseid'], $favorite );
+      
+      $ptu = atkNew('module.project.utils.projecttreeutils');
+      $ptu->updateRemainTime( $item['phaseid'], $item['remaining_effort_time'] );
+      $ptu->updateTrafficLight( $item['phaseid'] );
+      
     }
   }
 
 
   /**
-   * Update phaseid with new completed value
+   * Update phaseid with new is_favorite value
    *
    * @param integer $phaseid
    * @param integer $favorite
-   * @param integer $completed
    */
-  protected function updatePhase( $phaseid, $favorite, $completed = -1 )
+  protected function updatePhase( $phaseid, $favorite )
   {
     $db = $this->getDb();
     
-    $update = "UPDATE phase SET ";
-    if( $completed != - 1 )
-      $update .= "completed=" . $db->escapeSQL( $completed ) . ",";
-    $update .= "is_favorite=" . $favorite . " WHERE id=" . $db->escapeSQL( $phaseid );
+    $update = "UPDATE phase SET is_favorite=" . $favorite . " WHERE id=" . $db->escapeSQL( $phaseid );
     
     $db->query( $update );
     $db->commit();

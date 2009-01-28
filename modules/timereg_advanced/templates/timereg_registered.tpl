@@ -34,7 +34,6 @@
           <th class="recordListThFirst"><b>{atktext id="phase"}</b></th>
           <th class="recordListThFirst"><b>{atktext id="enddate"}</b></th>
           <th class="recordListThFirst"><b>{atktext id="time"}</b></th>
-          <th class="recordListThFirst"><b>{atktext id="completed"}</b></th>
           <th class="recordListThFirst"><b>{atktext id="comment"}</b></th>
           <th class="recordListThFirst"><b>{atktext id="activity"}</b></th>
         </tr>
@@ -54,9 +53,6 @@
            </td>
            <td class="recordListTd">
              {$row.time_full}
-           </td>
-           <td class="recordListTd">
-             {$row.phaseid.completed} %
            </td>
            <td class="recordListTd">
              {$row.remark}

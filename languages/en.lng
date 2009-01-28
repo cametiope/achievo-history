@@ -504,6 +504,7 @@
   "registeredtimeperweek" => "Registered time per week",
   "registeredtimeperweekday" => "Registered time per weekday",
   "relation" => "Relation",
+  "remaining_effort_time" => "Remaining effort time",
   "remark" => "Remark",
   "remarkrequired" => "Specification required",
   "report" => "Report",

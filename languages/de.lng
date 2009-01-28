@@ -510,6 +510,7 @@
   "registeredtimeperweek" => "Registrierte Zeit pro Woche",
   "registeredtimeperweekday" => "Registrierte Zeit pro Wochentag",
   "relation" => "Relation", // Missing string!!!
+  "remaining_effort_time" => "Restaufwand",
   "remark" => "Bemerkung",
   "remarkrequired" => "Bemerkung erforderlich",
   "report" => "Bericht",

@@ -503,6 +503,7 @@
   "registeredtimeperweek" => "Geregistreerde tijd per week",
   "registeredtimeperweekday" => "Geregistreerde tijd per weekdag",
   "relation" => "Relaties",
+  "remaining_effort_time" => "Resterende tijd",
   "remark" => "Opmerking",
   "remarkrequired" => "Specificatie verplicht",
   "report" => "Rapport",

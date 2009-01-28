@@ -44,13 +44,17 @@
     {
       global $ATK_VARS;
 
+      $phase_id = array_shift( decodeKeyValuePair( $ATK_VARS['atkselector'] ) );
+      
       atkimport('atk.ui.atkdialog');
-      $dialog = new atkDialog('timereg_advanced.timereg_phase', 'add', 'dialog', array('atkfilter' => 'phaseid="'.array_shift( decodeKeyValuePair( $ATK_VARS['atkselector'] ) ).'"'));
+      $dialog = new atkDialog('timereg_advanced.timereg_phase', 'add', 'dialog', array('atkfilter' => 'phaseid="'.$phase_id.'"'));
       $dialog->setModifierObject('timereg_advanced.timereg_phase');
       $onClick = $dialog->getCall();
-
-      return '
-        <a href="javascript:void(0)" onclick="'.$onClick.'; return false;" class="valignMiddle">'.atktext('add_timeregistration_dialog').'</a>
-      ';
+      
+      $completed = atkGetDb()->getvalue("SELECT completed FROM phase WHERE id='" . $phase_id . "'");
+      if ($completed == 100)
+        return '';
+      else
+        return '<a href="javascript:void(0)" onclick="'.$onClick.'; return false;" class="valignMiddle">'.atktext('add_timeregistration_dialog').'</a>';
     }
   }

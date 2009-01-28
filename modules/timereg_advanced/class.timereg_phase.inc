@@ -6,7 +6,8 @@
   useattrib('atknumberattribute');
   useattrib('atkdummyattribute');
   useattrib('atkdurationattribute');
-
+  useattrib('timereg.remainingefforttimeattribute');
+  
   userelation('atkmanytoonerelation');
 
   atkimport('module.project.utils.projectutils');
@@ -31,7 +32,7 @@
       $this->add(new atkDateAttribute( 'activitydate', '', '', 0, ( atkconfig('timereg_allowfuture', false )? 0 : date('Ymd') ), AF_OBLIGATORY|AF_FORCE_LOAD ), null, 10 );
       $this->add(new atkDateAttribute( 'entrydate', '', '', 0, 0, AF_HIDE|AF_OBLIGATORY ) );
       $this->add(new atkDurationAttribute( 'time', atkconfig( 'timereg_resolution', '15m' ), atkconfig( 'max_bookable',10 ).'h',AF_OBLIGATORY ) );
-      $this->add( new atkDurationAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING|AF_OBLIGATORY) );
+      $this->add(new remainingEffortTimeAttribute( "remaining_effort_time", "15m", "100h", AF_DURATION_STRING|AF_OBLIGATORY) );
 
       $this->add(new atkNumberAttribute( 'userid', AF_HIDE ) );
       $this->add( new atkTextAttribute( 'remark', atkconfig( 'timereg_remark_lines', 1 ), ( true === $this->remark_obligatory ? AF_OBLIGATORY : 0 ) ) );

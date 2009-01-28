@@ -12,7 +12,7 @@
       /* register nodes */
       registerNode("project.dashboard", array("admin"));
       registerNode("project.project", array("admin", "add", "edit", "delete", "stats","planning", "initialplanning", "any_project", "changeabbreviation"), array("finance", "planning"));
-      registerNode("project.package", array("admin", "add", "edit", "delete")):
+      registerNode("project.package", array("admin", "add", "edit", "delete"));
       registerNode("project.phase", array("admin", "add", "edit", "delete"));
       registerNode("project.deliverable", array("admin", "add", "edit", "delete"));
       registerNode("project.activity", array("admin", "add", "edit", "delete", "stats"));
