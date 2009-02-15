@@ -242,7 +242,8 @@ class hours extends atkNode
     $phase->setDestinationFilter('phase.`master` = "project.project" AND phase.master_id = "[projectid.id]" ) OR ( phase.`master` = "project.package" AND phase.master_id = "[packageid.id]"');
     $oneActivity = (projectutils::getActivityCount( ) == 1);
     if(!$oneActivity)
-      $phase->addDependee("activityid");      
+      $phase->addDependee("activityid");
+    $phase->addDependee("remaining_effort_time");      
     $this->add($phase,null, 30);       
 
     $package = &new packageManyToOneRelation("packageid", "project.package",AF_FORCE_LOAD|AF_HIDE_LIST);
@@ -894,11 +895,10 @@ class hours extends atkNode
     $information = atkNew( 'module.project.utils.projecttreeutils', $treeUpdateRecord['phaseid']['master'], $treeUpdateRecord['phaseid']['master_id'] );
 
     //copy remaining_effort_time from hours to phase
-    $information->updateRemainTime($rec['phaseid']['id'], $rec['remaining_effort_time']);
-    $information->updateTrafficLight($rec['phaseid']['id']);
-    
+    $information->updateRemainTime($treeUpdateRecord['phaseid']['id'], $treeUpdateRecord['remaining_effort_time']);
     //update spent time in project and package
     $information->updateTree($treeUpdateRecord['phaseid']['projectid']['id']);
+    $information->updateTrafficLight($treeUpdateRecord['phaseid']['id']);
     
     return true;
   }
@@ -919,9 +919,9 @@ class hours extends atkNode
 
     //copy remaining_effort_time from hours to phase
     $information->updateRemainTime($rec['phaseid']['id'], $rec['remaining_effort_time']);
-    $information->updateTrafficLight($rec['phaseid']['id']);
     //update spent time in project and package
     $information->updateTree($rec['phaseid']['projectid']['id']);
+    $information->updateTrafficLight($rec['phaseid']['id']);
 
     return true;
   }
@@ -1561,6 +1561,16 @@ class hours extends atkNode
       $p_attrib->addDestinationFilter("person.eligible='1'");
     }
     return $p_attrib->edit($record, $fieldprefix, $mode);
+  }
+  
+  public function remaining_effort_time_edit($record, $fieldprefix="", $mode="edit")
+  {
+    $res = "&nbsp;";
+    if(!$record['phaseid']['is_support_task'])
+    {
+      $res = $this->getAttribute("remaining_effort_time")->edit($record,$fieldprefix, $mode);
+    }
+    return $res;
   }
 
 }
