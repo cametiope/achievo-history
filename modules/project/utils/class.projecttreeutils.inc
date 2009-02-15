@@ -197,59 +197,31 @@ class projecttreeutils
     return (round( (( $hours / ($left +$hours)) * 100), 0 ));
   }
 
-  public function updateInitialPlanning($rec, $db)
-  {
-    list($master,$master_id) = explode("s_",$rec['project_package']);
-    $this->setToProject($db,$rec['projectid']['id']);
-    $this->setToTree("project.".$master, $master_id, $db, $rec['initial_planning'],$rec['current_planning']);
-  }
-
-  private function setToTree($master, $master_id, $db, $initial, $current)
-  {
-    if($master=="project.package")
-    {
-      $db->query("
-        UPDATE package
-        SET initial_planning = initial_planning+'$initial',
-            current_planning = current_planning+'$current'
-        WHERE id='$master_id'
-      ");
-
-      list($res) = $db->getrows("SELECT master, master_id FROM package WHERE id='$master_id'");
-      $this->setToTree($res['master'], $res['master_id'], $db, $initial, $current);
-    }
-  }
-
-  private function setToProject($db, $projectId)
-  {
-    list($res) = $db->getrows("
-      SELECT
-        SUM(initial_planning) initial,
-        SUM(current_planning) current
-      FROM
-        phase
-      WHERE
-        projectid='$projectId'
-    ");
-
-    $db->query("
-      UPDATE project
-      SET initial_planning='".$res['initial']."',
-          current_planning='".$res['current']."'
-      WHERE id='$projectId'
-    ");
-  }
-  
   public function updateRemainTime($phase_id, $time)
   {
-    atkGetDb()->query("
-      UPDATE phase 
-      SET 
-        remaining_effort_time='$time',
-        current_planning=
-          (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time',
-        completed = (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')/((SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time')*100
-      WHERE id='$phase_id'");
+    //Is this a support task?
+    $node = atkGetNode("project.phase"); 
+    if($node->is_support_task($phase_id))
+    {
+      //remaining effort time = current planning - booked time
+      atkGetDb()->query("
+        UPDATE phase 
+        SET 
+          remaining_effort_time=current_planning - (SELECT sum(time) FROM hours WHERE phaseid='$phase_id'),
+          completed = (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')/current_planning*100
+        WHERE id='$phase_id'");
+    }
+    else 
+    {
+      atkGetDb()->query("
+        UPDATE phase 
+        SET 
+          remaining_effort_time='$time',
+          current_planning=
+            (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time',
+          completed = (SELECT sum(time) FROM hours WHERE phaseid='$phase_id')/((SELECT sum(time) FROM hours WHERE phaseid='$phase_id')+'$time')*100
+        WHERE id='$phase_id'");
+    }
   }    
   
   public function updateTrafficLight($phase_id)
