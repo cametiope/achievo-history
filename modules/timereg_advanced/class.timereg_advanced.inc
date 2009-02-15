@@ -575,11 +575,6 @@ class timereg_advanced extends atkNode
       
       $favorite = ($hour['is_favorite'] == 'on') ? 1 : 0;
       $this->updatePhase( $hour['phaseid'], $favorite );
-      
-      $ptu = atkNew('module.project.utils.projecttreeutils');
-      $ptu->updateRemainTime( $item['phaseid'], $item['remaining_effort_time'] );
-      $ptu->updateTrafficLight( $item['phaseid'] );
-      
     }
   }
 

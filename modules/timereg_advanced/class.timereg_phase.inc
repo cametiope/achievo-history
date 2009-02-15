@@ -106,14 +106,16 @@
       $phaseid = atkArrayNvl($rec,"phaseid");
       if($phaseid)
       {
+        //Spent_time and remaining_effort_time has been changed
         list($row) = $this->getDb()->getrows("SELECT projectid, master, master_id FROM phase WHERE id='$phaseid'");
+        /*@var $information projecttreeutils*/
         $information = atkNew( 'module.project.utils.projecttreeutils', $row['master'], $row['master_id'] );
 
         //copy remaining_effort_time from hours to phase
         $information->updateRemainTime($phaseid, $rec['remaining_effort_time']);
-        $information->updateTrafficLight($phaseid);
         //update spent time in project and package
         $information->updateTree($row['projectid']);
+        $information->updateTrafficLight($phaseid);
       }
       return true;
     }
@@ -141,6 +143,16 @@
       }
 
       return null;
+    }
+    
+    public function preAddToEditArray( $record, $mode )
+    {
+      //Is this a support task?
+      $node = atkGetNode("project.phase"); 
+      if($node->is_support_task($record['phaseid']))
+      {
+        $this->getAttribute("remaining_effort_time")->addFlag(AF_HIDE)->removeFlag(AF_OBLIGATORY);
+      }
     }
 
   }

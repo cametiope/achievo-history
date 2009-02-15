@@ -105,17 +105,21 @@
              <img src="atk/themes/default/images/required_field.gif">
            </td>
            <td class="recordListTd">
-             <select id="timereg_{$row.id}_remaining_hours" name="timereg[{$row.id}][remaining][hours]">
-             {section name=r loop=$remaining.hours}
-               <option value="{$remaining.hours[r]}">{$remaining.hours[r]} {atktext id="hours"}</option>
-             {/section}
-             </select> : 
-             <select id="timereg_{$row.id}_remaining_minutes" name="timereg[{$row.id}][remaining][minutes]">
-             {section name=s loop=$remaining.minutes}
-               <option value="{$remaining.minutes[s]}">{$remaining.minutes[s]} {atktext id="minutes"}</option>
-             {/section}
-             </select>
-             <img src="atk/themes/default/images/required_field.gif">
+             {if $row.is_support_task == 1}
+               &nbsp;
+             {else}
+               <select id="timereg_{$row.id}_remaining_hours" name="timereg[{$row.id}][remaining][hours]">
+               {section name=r loop=$remaining.hours}
+                 <option value="{$remaining.hours[r]}">{$remaining.hours[r]} {atktext id="hours"}</option>
+               {/section}
+               </select> : 
+               <select id="timereg_{$row.id}_remaining_minutes" name="timereg[{$row.id}][remaining][minutes]">
+               {section name=s loop=$remaining.minutes}
+                 <option value="{$remaining.minutes[s]}">{$remaining.minutes[s]} {atktext id="minutes"}</option>
+               {/section}
+               </select>
+               <img src="atk/themes/default/images/required_field.gif">
+             {/if}
            </td>           
            <td class="recordListTd">
              <input type="text" size="30" id="timereg[{$row.id}][remark]" name="timereg[{$row.id}][remark]" value="{$values.timereg[$row.id].remark}" />
