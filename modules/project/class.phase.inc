@@ -109,7 +109,7 @@ class phase extends atkNode
     $this->add( new atkNumberAttribute( "completed", AF_HIDE_ADD | AF_FORCE_LOAD | AF_OBLIGATORY | AF_READONLY ) );
 
     $this->add( new atkDurationAttribute( "initial_planning", '1m', '10h', ($initialplanningallowed ? 0 : AF_READONLY_EDIT) | AF_TOTAL | AF_DURATION_STRING ) );
-    $current = &$this->add( new atkDurationAttribute( "current_planning", "1m", "10h", AF_READONLY|AF_HIDE_ADD|AF_FORCE_LOAD ) );
+    $current = &$this->add( new atkDurationAttribute( "current_planning", "1m", "10h", AF_READONLY|AF_HIDE_ADD|AF_FORCE_LOAD | AF_DURATION_STRING ) );
     $current->setForceUpdate(true);
     
     $this->add( new remainingEffortTimeAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING ) );
@@ -137,6 +137,13 @@ class phase extends atkNode
 
     $this->setColumnAttribs( array(
         'deliverable_phase' ) );
+        
+    /* 
+     * For Support tasks the remaining effort time will be calculated automatically using this formula:
+     * remaining effort time = actual planning - booked time. 
+     * For Support tasks the remaining effort time field is read-only."
+     */
+    $this->add(new atkBoolAttribute("is_support_task",AF_READONLY_EDIT|AF_HIDE_LIST|AF_FORCE_LOAD));
 
     $this->setDescriptorTemplate( "[name]" );
 
@@ -186,10 +193,6 @@ class phase extends atkNode
 
     $this->recalculateInformation( $record );
     
-    $ptu = atkNew('module.project.utils.projecttreeutils');
-    $ptu->updateRemainTime( $record['id'], $record['remaining_effort_time'] );
-    $ptu->updateTrafficLight( $record['id'] );
-    
     return true;
   }
 
@@ -197,9 +200,8 @@ class phase extends atkNode
   {
     if($rec['initial_planning'])
     {
-      $information = atkNew( 'module.project.utils.projecttreeutils', $rec['master'], $rec['master_id'] );
-      $information->updateInitialPlanning($rec, $this->getDb());
-      $information->updateTrafficLight($rec['id']);
+      //We add new phase with initial, current planning, and with remain efforts time - so we must update all upper accordingly
+      $this->recalculateInformation( $rec );
     }
     return true;
   }
@@ -243,8 +245,9 @@ class phase extends atkNode
     if($master) 
     {
       $master = "project.".$master;
-    
-      if($master != $record['atkorgrec']['master'] || $master_id != $record['atkorgrec']['master_id'])
+      
+      /*@var $information projecttreeutils*/
+      if(isset($record['atkorgrec']) && ($master != $record['atkorgrec']['master'] || $master_id != $record['atkorgrec']['master_id']))
         $information = atkNew( 'module.project.utils.projecttreeutils', $record['atkorgrec']['master'], $record['atkorgrec']['master_id'], $master, $master_id );
       else
         $information = atkNew( 'module.project.utils.projecttreeutils', $record['master'], $record['master_id'] );
@@ -775,7 +778,10 @@ class phase extends atkNode
       $initalplaning_attr->addFlag( AF_READONLY );
     }
     
-    if ($record['completed'] == 100)
+    /*    
+     * For Support tasks the remaining effort time field is read-only."
+     */
+    if ($record['completed'] == 100 || $record['is_support_task'])
     {
       $remainingefforttime_attr->addFlag( AF_READONLY );
     }
@@ -919,6 +925,12 @@ To add the dates we need a small node where we can define high days (Edit, Delet
   public function completed_display($record,$mode)
   {
     return $record['completed'].'%';
+  }
+  
+  public function is_support_task($id)
+  {
+    $is = $this->getDb()->getrows("SELECT is_support_task FROM phase WHERE id='$id'");
+    return $is[0]['is_support_task'] == '1';
   }
   
 }
