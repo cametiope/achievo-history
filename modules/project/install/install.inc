@@ -76,6 +76,6 @@
 	$setup->installNode("project.deliverable_document");
 	$setup->installNode("project.project_contact");
 
-  $setup->setVersion(32);
+  $setup->setVersion(33);
 
 ?>
