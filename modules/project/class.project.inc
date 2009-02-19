@@ -39,10 +39,11 @@
 
       $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
 
-      $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employee",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
+      $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employeeselector",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
       $attr->setDestinationFilter("person.status='active'");
+      $attr->setAutoLinkDestination('employee.employee');
 
-      $p_attr = &$this->add(new atkManyToOneRelation("master_project","project.project",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
+      $p_attr = &$this->add(new atkManyToOneRelation("master_project","project.projectselector",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
       $p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
 
       $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_HIDE_ADD|AF_HIDE_LIST));
@@ -78,7 +79,8 @@
       }
 
       // Add the organization relation
-      $this->add(new atkManyToOneRelation("customer", "organization.organization", AF_HIDE_LIST|AF_RELATION_AUTOLINK|AF_HIDE_ADD|AF_SEARCHABLE|AF_FORCE_LOAD), "", 500);
+      $this->add(new atkManyToOneRelation("customer", "organization.organizationselector", AF_HIDE_LIST|AF_RELATION_AUTOLINK|AF_HIDE_ADD|AF_SEARCHABLE|AF_FORCE_LOAD), "", 500)
+                 ->setAutoLinkDestination('organization.organization');
 
       $this->add(new atkOneToManyRelation("contacts","project.project_personcontact", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE|AF_HIDE_ADD|$flags));
 
@@ -229,12 +231,13 @@
 
     function initial_values()
     {
+      $nextyear = strtotime("+1 year");
       $rec = array("startdate"=>array("year"=>date("Y"),
                                       "month"=>date("m"),
                                       "day"=>date("d")),
-                   "enddate"=>array("year"=>(date("Y")+1),
-                                    "month"=>date("m"),
-                                    "day"=>date("d")),
+                   "enddate"=>array("year"=>(date("Y",$nextyear)),
+                                    "month"=>date("m",$nextyear),
+                                    "day"=>date("d",$nextyear)),
                    "timereg_limit"=>PRJ_TIMEREG_MEMBERS_ONLY,
                    "status"=>"active",
                    "coordinator"=>getUser());
@@ -936,9 +939,17 @@
       $db->query($query);
     }
 
+    /**
+     * If the current project is a master project, make it impossible to
+     * set a master project for this project by hiding the master_project
+     * field.
+     *
+     * @param Integer $id The project Id
+     */
     function _hideMasterProject($id)
     {
-      $rows = &$this->selectDb("project.master_project='$id'","","","",array('id'));
+      $node = &newNode($this->atkNodeType());
+      $rows = &$node->selectDb("project.master_project='$id'","","","",array('id'));
 
       if(count($rows)>0)
       {

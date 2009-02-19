@@ -1,5 +1,27 @@
 <?php
+/**
+ * This file is part of the Achievo distribution.
+ * Detailed copyright and licensing information can be found
+ * in the doc/COPYRIGHT and doc/LICENSE files which should be
+ * included in the distribution.
+ *
+ * @package achievo
+ * @subpackage employee
+ *
+ * @copyright (c)2008 Ibuildings B.V.
+ * @license http://www.achievo.org/licensing Achievo Open Source License
+ *
+ * @version $Revision$
+ * $Id$
+ */
 
+
+  /**
+   * Module file for the menu items and security
+   *
+   * @package achievo
+   * @subpackage employee
+   */
   class mod_employee extends achievoModule
   {
     function getNodes()
@@ -24,7 +46,10 @@
       $this->menuitem("-","","main",true,620);
     }
 
-    function getDependencies($mode)
+   /**
+    * Set dependencies for employee module
+    */
+   function getDependencies($mode)
     {
       return array("person");
     }

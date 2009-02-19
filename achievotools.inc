@@ -16,7 +16,7 @@
    */
   function achievoVersion()
   {
-    include(atkconfig("atkroot")."version.inc");
+    require(atkconfig("atkroot")."version.inc");
     return $achievo_version;
   }
 
@@ -26,7 +26,7 @@
    */
   function achievoState()
   {
-    include(atkconfig("atkroot")."version.inc");
+    require(atkconfig("atkroot")."version.inc");
     return $achievo_state;
   }
 
@@ -43,7 +43,8 @@
   {
     $theme = &atkinstance("atk.ui.atktheme");
     if($theme->getAttribute('useframes',true)) { $target='main'; } else { $target=""; }
-    $searchnode = &atkGetNode("search.search");
+    $node = atkconfig("top_search_node") ? atkconfig("top_search_node") : "search.search";
+    $searchnode = &atkGetNode($node);
     $searchpiece = $searchnode->simpleSearchForm("", $target, SESSION_NEW);
     return $searchpiece;
   }

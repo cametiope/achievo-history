@@ -1,5 +1,5 @@
 <?php
 
-  $setup->installNode("employee.employee");
+   $setup->addColumn('person', 'creditor_id','int(11)');
 
 ?>

@@ -9,11 +9,23 @@ Changes in Achievo 1.4
 + Added ability to configure projectcode autonumbering in the configuration
   file configs/project.inc.php. [Guido]
 + Added ability to copy scheduler items. [Jeroen]
-+ Added email functionallity to scheduler so employees get notified by the
++ Added email functionality to scheduler so employees get notified by the
   scheduler by email when an event is triggered. [Guido]
 + Added scheduler email system which for example sends an email to you
   when you are invited to an appointment in the scheduler. [Sandy,Guido]
 + Added support for .sql install/patch files. [Sandy]
++ Added documentation for the quotation.reminder and
+  timereg.reminder_hoursnotblocked cronjobs. [Guido]
++ Added caching for retrieving total activities. [Sandy]
++ Added Vera open source font for graph module. [Sandy]
++ Added introspect script that iterates over all nodes of all modules in 
+  Achievo and collects all relations between nodes together with the underlying
+  database relations. [Bill, Dennis]
+- Removed /manual/guide.html because of outdated information. Please refer
+  to the Achievo wiki for current information on how to use Achievo. [Guido]
+- Removed the /contrib/phase_convert.pl script. This script is now replaced
+  by the hours move function. [Guido]
+* Moved cron documentation from /cron/README to /doc/CRON. [Guido]
 * Fixed some PHP Notices. [Guido]
 * Fixed minor layout issues in the scheduler. [Guido]
 * Added missing dutch translations into the scheduler. [Guido]
@@ -24,23 +36,73 @@ Changes in Achievo 1.4
 * Now we use the recipients language, when sending timeguard reminder email
   to an employee. [Yury]
 * Fixed adding todos which caused an SQL error. [Dennis]
-* Fixed aggregation of unsorted columns [Guido,Jeroen]
-* Removed executable bit (svn:executable property in svn) from files that
-  aren't executable. [Guido]
+* Fixed aggregation of unsorted columns. [Guido,Jeroen]
+* Fixed svn properties. [Guido]
+  * Property svn:executable should be set on *.sh files only. Other files
+    should not have this attribute.
+  * Property svn:eol-style should be set to native on all plain text files,
+    binary files however should not have this property set.
+  * Property svn:mime-type should be set to application/octet-stream on all
+    binary files. Plain text files should not have this property set.
+  * Property svn:keywords should be set to "Author Date Id Revision" on all
+    plain text files, unless good reason exists not to do so. Binary files
+    should never have this property set.
+* Fixed broken images caused by EOL manipulation by CVS or SVN. [Guido]
 * Fixed translation issues in the scheduler. [Guido]
 * Fixed error when using the moon phases feature while the server doesn't have
   the calendar module enabled. [Guido]
 * Beautified the scheduler recurring settings interface. [Guido]
 * Fixed cancel button in hours move page still moving the hours to the
-  selected project, phase and acitivity. This also happened when no
-  project/phase/activity was selected, so it effectively mad the time
+  selected project, phase and activity. This also happened when no
+  project/phase/activity was selected, so it effectively made the time
   registrations invalid. [Guido]
 * Updated jpgraph to version 2.3 (php5 version) (bug #924) [Sandy]
-* Updated default witdh of graphs to 750px. [Sandy]
+* Updated default width of graphs to 750px. [Sandy]
 * Fixed currency symbol in organization contracts and projects. [Sandy]
 * Moved all configs to module specific config files in /configs. [Sandy]
 * Available themes are now cached in
   achievotmp/themes/available_themes.inc [Sandy]
+* Moved upgrade sql files into the setup module directory. [Guido]
+* Fixed scheduler-related upgrade issue when upgrading from a pre-0.9.2
+  version of Achievo. [Guido]
+* Fixed SQL error when using aggregation of certain columns in the
+  hours survey. [Guido]
+* Fixed achievo title in framed themes. [Sandy]
+* Show full username in top like frameless themes. [Sandy]
+* Fixed empty descriptors for organizations. [Guido]
+* Fixed SQL error when using subprojects if there isn't a project
+  selected in the surveyhours. [Sandy]
+* Swedish javascript calendar works again. (bug #1061) [Sandy]
+* Popup calendar now also works when only day and month
+  are selected. (bug #1007) [Sandy]
+* Fixed bug in the weeknumber calculation for 2010. [Sandy]
+* Only Change the session language if the owner object
+  is userpreferences. (bug #1241) [Sandy]
+* Fixed adding a project to a contract which caused an SQL error in some 
+  cases. [Dennis]
+* Fixed fresh install of the person module so it installs completely
+  instead of only installing until patch 6. [Dennis]
+
+Changes in Achievo 1.3.4
+------------------------
+* Fixed ability to copy projects in custom modules. [Dennis]
++ Added hours_approve_only_show_not_approved translation. [Guido]
+- Removed non-used 'organization' column from hoursurvey. [Guido]
+* Fixed validation of obligatory reason for blocked week disapproval. [Guido]
+* Fixed ability to block weeks in which no project hours are registered when
+  approve_period_per_coordinator is set to true in the configuration file.
+  [Guido]
+* Fixed timereg.reminder_hoursnotblocked cronjob sending emails when a week is
+  blocked for everyone. [Guido]
+* Fixed weekComplete check: If there were no contracts and/or
+  timeregistrations, a week still appeared to be completely
+  booked. [Dennis]
+* Fixed SQL error in reminder_hoursnotblocked cron. [Guido]
+* Fixed missing translations in emails sent to project coordinators
+  when one of their team members locks a week in the time registration.
+  [Guido]
+* Fixed timeout in reports when two employees are eachothers supervisor.
+  [Guido]
 * Made language field in employees, contact persons and userprefs non-
   obligatory. This also fixes language field obligatory errors when saving
   a node record that hides the language field. [Guido]
@@ -55,6 +117,8 @@ Changes in Achievo 1.4
 
 Changes in Achievo 1.3.3
 ------------------------
+- Removed mcpuk file manager of the fckeditor in ATK because
+  it contains a security exploit. [Sandy]
 - Removed non-used 'organization' column from hoursurvey. [Guido]
 * Fixed weekComplete check: If there were no contracts and/or
   timeregistrations, a week still appeared to be completely booked. [Dennis]
@@ -71,9 +135,6 @@ Changes in Achievo 1.3.2
 * Fixed SQL error when selecting activities that are also in
   the selected template when adding a phase. [Sandy]
 * Fixed aggregation of unsorted columns [Guido,Jeroen]
-* Fixed weekComplete check: If there were no contracts and/or
-  timeregistrations, a week still appeared to be completely
-  booked. [Dennis]
 
 Changes in Achievo 1.3.1
 ------------------------

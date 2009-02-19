@@ -1,4 +1,20 @@
 <?php
+/**
+ * This file is part of the Achievo distribution.
+ * Detailed copyright and licensing information can be found
+ * in the doc/COPYRIGHT and doc/LICENSE files which should be
+ * included in the distribution.
+ *
+ * @package achievo
+ * @subpackage scheduler
+ *
+ * @copyright (c)2008 Sandy Pleyte
+ * @copyright (c)2008 Ibuildings B.V.
+ * @license http://www.achievo.org/licensing Achievo Open Source License
+ *
+ * @version $Revision$
+ * $Id$
+ */
 
 /**
  *
@@ -21,8 +37,12 @@
  *
  * Sunday is the first day of week.
  * Week containing Jan 1st is the first week of that year.
+ * 
+ * @author Sandy Pleyte <sandy@achievo.org>
+ * @package achievo
+ * @subpackage scheduler
+ * @since 1.3.0
  */
-
 class weeknumber
 {
   /**
@@ -59,11 +79,11 @@ class weeknumber
   {
     $day = 86400;
     $year = date("Y",$timestamp);
-    $tmp_time = mktime(12,0,0,1,$firstweekcontains,$year);
+    $tmp_time = mktime(0,0,0,1,$firstweekcontains,$year);
     $weekday = date("w",$tmp_time);
     if($weekday==$startday)
     {
-      return $tmp_time+(7*$day);
+      return $tmp_time+(6*$day);
     }
     else
     {
@@ -99,11 +119,12 @@ class weeknumber
                   "firstweekend"=>$enddate_nextyear);
     }
 
-    $startyear = date("Y",$timestamp);
+		$endyear = date("Y",$enddate_nextyear);
     $found=false;
-    for($i=$enddate;date("Y",$i)==$startyear&&!$found;$i+=$week)
+    for($i=$enddate;date("Y",$i)<=$endyear&&!$found;$i+=$week)
     {
       $weeknumber++;
+			if($weeknumber>53) $weeknumber=1;
       $weekstart = ($i-(6*$day));
       $weekend = $i;
       if(date("Y-m-d",$timestamp)>=date("Y-m-d",$weekstart) && date("Y-m-d",$timestamp)<=date("Y-m-d",$weekend))

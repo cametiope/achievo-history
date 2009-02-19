@@ -223,7 +223,7 @@ class hours extends atkNode
 
 
     $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
-    
+
     $p_attr = &$this->add(new atkBoolAttribute("virtual_time",AF_HIDE));
     $p_attr->setForceInsert(true);
 
@@ -233,7 +233,7 @@ class hours extends atkNode
 
     // force_load flag is set for userid, since several features rely on the
     // userid, even if it's not displayed on screen.
-    $this->add(new atkManyToOneRelation("userid","employee.employee", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
+    $this->add(new atkManyToOneRelation("userid","employee.employeeselector", AF_HIDE|AF_FORCE_LOAD|AF_OBLIGATORY));
 
     //phaseid must be added before the project id to make sure the join works
     //we need the projectid to sort on
@@ -244,7 +244,7 @@ class hours extends atkNode
       $phase->addDependee("activityid");
     $this->add($phase,null, 30);
 
-    $project = &new projectManyToOneRelation("projectid","project.project",AF_OBLIGATORY|AF_FORCE_LOAD);
+    $project = &new projectManyToOneRelation("projectid","project.projectselector",AF_OBLIGATORY|AF_FORCE_LOAD);
     $project->addDependee("phaseid");
     $project->setUserId($this->m_user);
 
@@ -258,7 +258,7 @@ class hours extends atkNode
     if($oneActivity)
       $activity_flag = AF_HIDE|AF_FORCE_LOAD;
     else
-      $activity_flag = AF_LIST_OBLIGATORY_NULL_ITEM;
+      $activity_flag = AF_FORCE_LOAD;
     $activity = &new atkManyToOneRelation("activityid","project.activity",AF_OBLIGATORY|$activity_flag);
     $this->add($activity);
 
@@ -330,7 +330,7 @@ class hours extends atkNode
   function descriptor($record)
   {
     $datestr = date("d-m-Y", dateutil::arr2stamp($record["activitydate"]));
-    $employeenode = &atkGetNode("employee.employee");
+    $employeenode = &atkGetNode("employee.employeeselector");
     $users = $employeenode->selectDb("person.id='{$record["userid"]["id"]}'");
     return sprintf("%s, %s (%s)", $users[0]["lastname"], $users[0]["firstname"],$datestr);
   }
@@ -542,11 +542,15 @@ class hours extends atkNode
   // override the admin action, because we have the weekview/dayview switch..
   function action_admin(&$handler)
   {
-    $this->setTable("hoursbase");
     $page = &$this->getPage();
+    if ($this->m_partial == 'datagrid')
+    {
+       $page->addContent($handler->partial_datagrid());
+       return;
+    }
 
+    $this->setTable("hoursbase");
     $this->setLock();
-
     $this->addFilter($this->getTable().".userid",$this->m_user);
 
     //we need to make sure the activitydate has the same value as $this->m_viewdate.
@@ -640,7 +644,7 @@ class hours extends atkNode
       $orderby = $this->viewuserOrderBy();
 
       //Init desc fields
-      $empNode = &atkGetNode("employee.employee");
+      $empNode = &atkGetNode("employee.employeeselector");
       $fieldsArr = $empNode->descriptorFields();
       if(!in_array("id", $fieldsArr)) $fieldsArr[] = "id";
       $fields = implode(", ",$fieldsArr);
@@ -789,7 +793,7 @@ class hours extends atkNode
 
     $output.=$table->render($weekdata, TBL_FOOTER|TBL_DATA, "recordlist");
     $output.= "<br>".$this->weekviewFooter($weekdates, $viewtime);
-    $ui = &atknew("atk.ui.atkui");
+    $ui = &atkinstance("atk.ui.atkui");
     return $ui->renderBox(array("title"=>$this->weekviewTitle($userid, $viewtime),
                                     "content"=>$output));
   }
@@ -999,9 +1003,9 @@ class hours extends atkNode
                 hours.userid = '$userid'
                 AND activitydate between '$start' and '$end'";
     list($res) = $db->getrows($query);
-    
+
     if ($res['contract']==0 || $result['totaal']==0)
-    {    
+    {
       // either no contract in this period, or no hours booked at all..
       return false;
     }

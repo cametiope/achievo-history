@@ -1,5 +1,28 @@
 <?php
+/**
+ * This file is part of the Achievo distribution.
+ * Detailed copyright and licensing information can be found
+ * in the doc/COPYRIGHT and doc/LICENSE files which should be
+ * included in the distribution.
+ *
+ * @package achievo
+ * @subpackage scheduler
+ *
+ * @copyright (c)2008 Sandy Pleyte
+ * @copyright (c)2008 Ibuildings B.V.
+ * @license http://www.achievo.org/licensing Achievo Open Source License
+ *
+ * @version $Revision$
+ * $Id$
+ */
 
+/**
+ * Scheduler item class
+ * @author Sandy Pleyte <sandy@achievo.org>
+ * @package achievo
+ * @subpackage scheduler
+ * @since 1.3.0
+ */
 class schedulerItem
 {
   var $scheduler_model;
@@ -133,6 +156,7 @@ class schedulerItem
       //$attendees_rows = $this->getAttendees($item["id"]);
       $numberofattendees = count($this->scheduler_model->m_attendees[$item["id"]]);
       $names = "";
+      $initials = "";
       for($i=0;$i<$numberofattendees;$i++)
       {
 
@@ -140,15 +164,21 @@ class schedulerItem
         if($userid==$user["id"]) $isAttendee=true;
         if($i>0) $names.=", ";
         $names.= $this->scheduler_model->m_users[$userid]["firstname"]." ".$this->scheduler_model->m_users[$userid]["lastname"].($this->scheduler_model->m_users[$userid]["role"]!="employee"?" (".$this->scheduler_model->m_users[$userid]["role"].")":"");
+        $the_initials=$this->scheduler_model->m_users[$userid]["initials"];
+     	  if(strlen($the_initials))
+ 	      {
+ 	        if($i>0) $initials.=", ";
+ 	        $initials.= $the_initials;
+ 	      }
       }
 
       if($numberofattendees==1)
       {
-        $attendees='<img src="'.$theme->imgPath("attendee.gif","scheduler").'" width=16 height=16 title="'.$names.'" alt="'.$names.'">';
+        $attendees='<img src="'.$theme->imgPath("attendee.gif","scheduler").'" width=16 height=16 title="'.$names.'" alt="'.$names.'"> '.$initials.':';
       }
       else
       {
-        $attendees='<img src="'.$theme->imgPath("attendees.gif","scheduler").'" width=16 height=16 title="'.$names.'" alt="'.$names.'">';
+        $attendees='<img src="'.$theme->imgPath("attendees.gif","scheduler").'" width=16 height=16 title="'.$names.'" alt="'.$names.'"> '.$initials.':';
       }
     }
     else

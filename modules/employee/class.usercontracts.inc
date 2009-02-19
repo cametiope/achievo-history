@@ -1,5 +1,19 @@
 <?php
-
+/**
+ * This file is part of the Achievo distribution.
+ * Detailed copyright and licensing information can be found
+ * in the doc/COPYRIGHT and doc/LICENSE files which should be
+ * included in the distribution.
+ *
+ * @package achievo
+ * @subpackage employee
+ *
+ * @copyright (c)2008 Ibuildings B.V.
+ * @license http://www.achievo.org/licensing Achievo Open Source License
+ *
+ * @version $Revision$
+ * $Id$
+ */
 // The ability to add contracts per user was sponsored by Tryllian BV, Netherlands.
 
 userelation("atkmanytoonerelation");
@@ -9,9 +23,16 @@ useattrib("atknumberattribute");
 useattrib("atkmultiselectattribute");
 useattrib("atknumberattribute");
 useattrib("atktimeattribute");
-
+/**
+ * Class for managing user contracts
+ * @package achievo
+ * @subpackage employee
+ */
 class usercontracts extends atkNode
 {
+  /**
+   * Constructor
+   */
   function usercontracts()
   {
     $m_arr_minute_step = array();
@@ -20,7 +41,7 @@ class usercontracts extends atkNode
     $this->atkNode("usercontracts", NF_TRACK_CHANGES); // this is a support module who's called directly
 
     $this->add(new atkNumberAttribute("id", AF_AUTOKEY));
-    $this->add(new atkManyToOneRelation("userid","employee.employee",AF_READONLY|AF_OBLIGATORY));
+    $this->add(new atkNumberAttribute('userid',AF_READONLY|AF_OBLIGATORY));
     $this->add(new atkNumberAttribute("uc_hours", AF_OBLIGATORY, 4,2));
     $this->add(new atkDateAttribute("startdate","","",0,0, AF_OBLIGATORY));
     $this->add(new atkDateAttribute("enddate", "",""));
@@ -34,6 +55,11 @@ class usercontracts extends atkNode
     $this->setDescriptorTemplate("[uc_hours] " . $this->text("hours"));
   }
 
+  /**
+   * Reset overtime balance
+   *
+   * @param array $record Record
+   */
   function resetOvertimeBalance($record)
   {
     atkImport("module.utils.dateutil");
@@ -41,16 +67,46 @@ class usercontracts extends atkNode
     $balancenode->deleteBalance($record["userid"]["id"], dateutil::arr2str($record["startdate"], "Y-m-d"));
   }
 
+  /**
+   * Reset overtime balance after adding a contract
+   *
+   * @param array $record Record
+   * @return boolean
+   */
   function postAdd($record)    { $this->resetOvertimeBalance($record); return true; }
+
+  /**
+   * Reset overtime balance after updating a contract
+   *
+   * @param array $record Record
+   * @return boolean
+   *
+   */
   function postUpdate($record) { $this->resetOvertimeBalance($record); $this->resetOvertimeBalance($record["atkorgrec"]); return true; }
+
+  /**
+   * Reset overtime balance after deleting a contract
+   *
+   * @param array $record Record
+   * @return boolean
+   */
   function postDelete($record) { $this->resetOvertimeBalance($record); return true; }
 
+  /**
+   * Set initial values for a contract
+   *
+   * @return array
+   */
   function initial_values()
   {
+  	$nextyear = strtotime("+1 year");
     return array("uc_hours"=>40,
-                 "enddate"=>array("year"=>(date("Y")+1),
+                 "startdate"=>array("year"=>(date("Y")),
                                   "month"=>date("m"),
                                   "day"=>date("d")),
+                 "enddate"=>array("year"=>date("Y",$nextyear),
+                                  "month"=>date("m",$nextyear),
+                                  "day"=>date("d",$nextyear)),
                  "workstarttime"=>array("hours"=>"08",
                                         "minutes"=>"30",
                                         "seconds"=>"00"),
@@ -68,6 +124,11 @@ class usercontracts extends atkNode
    * - workingdays is set to the workingdays of the previous contract
    * - startdate is set to the enddate of the previous contract
    * - enddate is set to startdate + 1 year.
+   *
+   * @param array $record Record
+   * @param string $prefix Prefix
+   * @param string $mode Mode
+   * @return string
    */
   function uc_hours_edit(&$record, $prefix, $mode)
   {
@@ -115,6 +176,12 @@ class usercontracts extends atkNode
     return $this->m_attribList["uc_hours"]->edit($record, $prefix, $mode);
   }
 
+  /**
+   * Get most recent contract
+   *
+   * @param int $userid
+   * @return array
+   */
   function getMostRecentContract($userid)
   {
     if ($userid!="")

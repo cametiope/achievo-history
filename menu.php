@@ -36,9 +36,10 @@
   atkimport("atk.ui.atktheme");
   
   $output = &atkOutput::getInstance();
-  $page = &atknew("atk.ui.atkpage");
+  $page = &atkinstance("atk.ui.atkpage");
+  $page->unregister_all_scripts();
   $theme = &atkTheme::getInstance();  
-  $ui = &atknew("atk.ui.atkui");
+  $ui = &atkinstance("atk.ui.atkui");
 
 
   /* general menu stuff */

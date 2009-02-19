@@ -3,7 +3,7 @@
 // File:	JPG-CONFIG.INC
 // Description:	Configuration file for JpGraph library
 // Created: 	2004-03-27
-// Ver:		$Id: jpg-config.inc.php 781 2006-10-08 08:07:47Z ljp $
+// Ver:		$Id$
 //
 // Copyright (c) Aditus Consulting. All rights reserved.
 //========================================================================
@@ -144,7 +144,7 @@ DEFINE("USE_CACHE",false);
 // regenerate the image. Note that even if reading the cache is 
 // disabled the cached will still be updated with the newly generated
 // image. Set also "USE_CACHE" below.
-DEFINE("READ_CACHE",true);
+DEFINE("READ_CACHE",false);
 
 // Determine if the error handler should be image based or purely
 // text based. Image based makes it easier since the script will

@@ -1,6 +1,30 @@
 <?php
+/**
+ * This file is part of the Achievo distribution.
+ * Detailed copyright and licensing information can be found
+ * in the doc/COPYRIGHT and doc/LICENSE files which should be
+ * included in the distribution.
+ *
+ * @package achievo
+ * @subpackage scheduler
+ *
+ * @copyright (c)2008 Sandy Pleyte
+ * @copyright (c)2008 Ibuildings B.V.
+ * @license http://www.achievo.org/licensing Achievo Open Source License
+ *
+ * @version $Revision$
+ * $Id$
+ */
+
 atkimport("modules.scheduler.views.scheduler_view");
 
+/**
+ * scheduler week view
+ * @author Sandy Pleyte <sandy@achievo.org>
+ * @package achievo
+ * @subpackage scheduler
+ * @since 1.3.0
+ */
 class scheduler_weekview extends scheduler_view
 {
   var $m_weekdates = array();
@@ -18,11 +42,11 @@ class scheduler_weekview extends scheduler_view
     $theme = &atktheme::getInstance();
     $prevTime = $this->m_weekdates[0]['date'];
     $prevUrl  = atkSelf()."?view=week&viewdate=$prevTime";
-    $prevImg  ='<img src="'.$theme->imgPath("arrow_left.gif","scheduler").'" border=0 width=16 height=16 title="'.atktext("previous_week","scheduler").'" alt="'.atktext("previous_week","scheduler").'">';
+    $prevImg  ='<img src="'.$theme->imgPath("arrow_left.gif","scheduler").'" border=0 width=16 height=16 title="'.atktext("previousweek","scheduler").'" alt="'.atktext("previousweek","scheduler").'">';
 
     $nextTime = $this->m_weekdates[8]['date'];
     $nextUrl  = atkSelf()."?view=week&viewdate=$nextTime";
-    $nextImg  ='<img src="'.$theme->imgPath("arrow_right.gif","scheduler").'" border=0 width=16 height=16 title="'.atktext("next_week","scheduler").'" alt="'.atktext("next_week","scheduler").'">';
+    $nextImg  ='<img src="'.$theme->imgPath("arrow_right.gif","scheduler").'" border=0 width=16 height=16 title="'.atktext("nextweek","scheduler").'" alt="'.atktext("nextweek","scheduler").'">';
 
     $currentUrl = atkSelf()."?view=week&viewdate=".date("Y-m-d");
 
@@ -33,7 +57,7 @@ class scheduler_weekview extends scheduler_view
     if($this->m_userPrefs["showweeknumbers"]==true) $this->m_viewTitle.= atktext("week")."&nbsp;".$this->m_weeknumber.", ";
     $this->m_viewTitle.= date("d-m-Y",$weeknumberFull["firstweekstart"])." - ".date("d-m-Y",$weeknumberFull["firstweekend"])."</b>";
 
-    return href($prevUrl, $prevImg)."&nbsp;".href($nextUrl, $nextImg)."&nbsp;".href($currentUrl,atktext("current_week","scheduler"));
+    return href($prevUrl, $prevImg)."&nbsp;".href($nextUrl, $nextImg)."&nbsp;".href($currentUrl,atktext("currentweek","scheduler"));
 
   }
   /**

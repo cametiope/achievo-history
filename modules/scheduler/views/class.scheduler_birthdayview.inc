@@ -1,6 +1,30 @@
 <?php
+/**
+ * This file is part of the Achievo distribution.
+ * Detailed copyright and licensing information can be found
+ * in the doc/COPYRIGHT and doc/LICENSE files which should be
+ * included in the distribution.
+ *
+ * @package achievo
+ * @subpackage scheduler
+ *
+ * @copyright (c)2008 Sandy Pleyte
+ * @copyright (c)2008 Ibuildings B.V.
+ * @license http://www.achievo.org/licensing Achievo Open Source License
+ *
+ * @version $Revision$
+ * $Id$
+ */
+
 atkimport("modules.scheduler.views.scheduler_view");
 
+/**
+ * Scheduler birthday view
+ * @author Sandy Pleyte <sandy@achievo.org>
+ * @package achievo
+ * @subpackage scheduler
+ * @since 1.3.0
+ */
 class scheduler_birthdayview extends scheduler_view
 {
    var $m_view = "birthday";
@@ -25,7 +49,7 @@ class scheduler_birthdayview extends scheduler_view
       if($month>12) $month-=12;
       if(isset($birthdays[$month]) && is_array($birthdays[$month]))
       {
-        $tmp.='<b>'.ucfirst(dateutil::monthname($month)).'</b> ('.count($birthdays[$month]).')<br>';
+        $tmp.='<b>'.ucfirst(atktext(dateutil::monthname($month),'atk')).'</b> ('.count($birthdays[$month]).')<br>';
         foreach($birthdays[$month] as $day => $users)
         {
           foreach($users as $info)
