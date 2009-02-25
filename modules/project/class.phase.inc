@@ -143,7 +143,7 @@ class phase extends atkNode
      * remaining effort time = actual planning - booked time. 
      * For Support tasks the remaining effort time field is read-only."
      */
-    $this->add(new atkBoolAttribute("is_support_task",AF_READONLY_EDIT|AF_HIDE_LIST|AF_FORCE_LOAD));
+    $this->add(new atkBoolAttribute("is_support_task",AF_HIDE_LIST|AF_FORCE_LOAD));
 
     $this->setDescriptorTemplate( "[name]" );
 
@@ -784,6 +784,7 @@ class phase extends atkNode
     if ($record['completed'] == 100 || $record['is_support_task'])
     {
       $remainingefforttime_attr->addFlag( AF_READONLY );
+      $currentplanning_attr->removeFlag( AF_READONLY_EDIT );
     }
     
     atk_var_dump($record['completed'], 'COMPLETED');
