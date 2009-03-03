@@ -231,6 +231,7 @@ class weekreport extends atkNode
       if($userid!="all")  $query->addCondition("hours.userid='$userid'");
     }
 
+    $query->addCondition("person.role='employee'");
     $query->addCondition("hours.activitydate >= '$startdate'");
     $query->addCondition("hours.activitydate <= '$enddate'");
     $query->addCondition("hours.userid = person.id");
@@ -547,15 +548,23 @@ class weekreport extends atkNode
                   id, lastname, firstname
                 FROM
                   person
-                 ";
+                WHERE
+                  role='employee' ";
+
+      // This config is used to hide inactive persons, which is off by default.
+      if (atkConfig::get("reports","report_hide_inactive_persons", false)){
+        $query.="AND status='active' ";
+      }
+
       if ($employeeswitch=="supervisor" && $userid!="all")
       {
-        $query.= "WHERE supervisor = '".$userid."'";
+        $query.= "AND supervisor = '".$userid."'";
       }
       if ($employeeswitch=="name" && $userid!="all")
       {
-        $query.= "WHERE id = '".$userid."'";
+        $query.= "AND id = '".$userid."'";
       }
+
       $db = &atkGetDb();
       $persons = $db->getrows($query);
 
