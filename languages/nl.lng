@@ -538,7 +538,7 @@
   "searchbyprojectorphase" => "U kunt zoeken per project, of per fase van een project",
   "search_again" => "Opnieuw zoeken",
   "search_emptysearchstring" => "Geen trefwoord opgegeven.",
-  "search_noresults" => "Je zoekoprdacht '%s' leverde geen resultaat op.",
+  "search_noresults" => "Je zoekopdracht '%s' leverde geen resultaat op.",
   "selectandaddnewproject" => "Selecteer en koppel een bestaand project",
   "select_project" => "Project toevoegen",
   "seluserdate" => "Selecteer medewerkers en een datum om agenda's te vergelijken",
