@@ -15,6 +15,7 @@ userelation("atkmanytoonerelation");
 atkimport("module.timereg.locking");
 atkimport("module.timereg.timeregutils");
 atkimport("module.project.utils.projectutils");
+atkimport("modules.utils.dateutil");
 
 /**
  * Converts the starttime - endtime notation to a duration notation
