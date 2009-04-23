@@ -225,8 +225,9 @@ class hours extends atkNode
 
     $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
 
-    $p_attr = &$this->add(new atkBoolAttribute("virtual_time",AF_HIDE));
-    $p_attr->setForceInsert(true);
+    $this->add(new atkBoolAttribute("virtual_time",AF_HIDE))
+      ->setForceInsert(true)
+      ->setForceUpdate(true);
 
     $this->add(new atkDateAttribute("activitydate","","", 0, (atkconfig::get("timereg","timereg_allowfuture", false)?0:date("Ymd")), AF_OBLIGATORY|AF_FORCE_LOAD|($this->m_weekview?0:AF_HIDE_LIST)),null,10);
     $this->add(new to_date());
@@ -330,6 +331,7 @@ class hours extends atkNode
 
   function descriptor($record)
   {
+    atkimport("module.utils.dateutil");
     $datestr = date("d-m-Y", dateutil::arr2stamp($record["activitydate"]));
     $employeenode = &atkGetNode("employee.employeeselector");
     $users = $employeenode->selectDb("person.id='{$record["userid"]["id"]}'");
@@ -904,6 +906,7 @@ class hours extends atkNode
 
   function calculateNewBalance($rec, $mode)
   {
+    /*@var $balancenode overtime_balance*/
     $balancenode = &atkGetNode("timereg.overtime_balance");
     $userid = $rec["userid"]["id"];
     $year  = $rec["activitydate"]["year"];
@@ -1383,6 +1386,7 @@ class hours extends atkNode
 
   function preUpdate(&$record)
   {
+    $record['virtual_time'] = $record['phaseid']['virtual_time'];
     $this->modifyfortime($record);
     return true;
   }
