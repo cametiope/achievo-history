@@ -107,7 +107,6 @@
 
       $res = array();
 
-      $node = &atkGetNode($nodetype);
       $allowedaction = $node->allowed("edit") ? "edit" : ($node->allowed("view") ? "view" : "");
       if (!empty($allowedaction))
       {
@@ -121,5 +120,23 @@
 
       return $res;
     }
+    
+    /**
+     * Are we in 'active' or in 'archive' mode?
+     *
+     * @param string $varname
+     * @return string
+     */
+    function getViewMode($varname)
+    {
+      $sessionManager = &atkGetSessionManager();
+      $value = $sessionManager->stackVar($varname);
+      if ($value=="")
+      {
+        $value = "active";
+      }
+      return $value;
+    }
+    
   }
 ?>
