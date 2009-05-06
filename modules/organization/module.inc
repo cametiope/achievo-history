@@ -29,6 +29,8 @@
 
     function search($expression)
     {
+      $mode = $this->getViewMode("status");
+      
       $res = array();
       $custnode = &atkGetNode("organization.organization");
       $recs = $custnode->searchDb($expression);
@@ -39,6 +41,10 @@
       $res["contacts"] = $this->recLinks($contactnode->searchDb($expression), "organization.contact");
 
       $contractnode = &atkGetNode("organization.contracts");
+      if($mode == "active")
+      {
+        $contractnode->addFilter("contract.status='active'");;
+      }
       $res["contracts"] = $this->recLinks($contractnode->searchDb($expression), "organization.contracts");
 
       return $res;
