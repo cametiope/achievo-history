@@ -703,6 +703,11 @@
   "show_active_phases" => "Show active phases",
   "show_all_phases" => "Show all phases",
   "show_nonactive_phases" => "Show nonactive phases",
-  "date_filter_explain" => "Show only projects that was worked on between:",);
+  "date_filter_explain" => "Show only projects that was worked on between:",
+  "onlyactiverecordsaresearch" => "Only active records are search.",
+  "clicktosearcharchive" => "Click here to search also in archived records",
+  "youareinallrecords" => "You are search in all records.",
+  "clicktosearchactiverecords" => "Click here to search active records only.",
+  );
 
 ?>
