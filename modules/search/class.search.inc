@@ -91,6 +91,18 @@
 
       $res.='<br><br>'.atktext('search_again').':<br>';
       $res.=$this->simpleSearchForm($searchstring, "", SESSION_DEFAULT).'<br><br>';
+      
+      $view = atkGetModule($this->getModule())->getViewMode("status");
+      if ($view=="active")
+      {
+        $res.=atktext("onlyactiverecordsaresearch")." ".href(dispatch_url($this->atknodetype(),$this->m_action,array("status"=>"nonactive")),
+                                                        atktext('clicktosearcharchive', $this->m_module, $this->m_type))."<br>";
+      }
+      else
+      {
+        $res.=atktext("youareinallrecords")." ".href(dispatch_url($this->atknodetype(),$this->m_action,array("status"=>"active")),
+                                                     atktext('clicktosearchactiverecords', $this->m_module, $this->m_type))."<br>";
+      }
 
       $ui = &$this->getUi();
       $page = &$this->getPage();
