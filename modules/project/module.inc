@@ -59,6 +59,11 @@
     function search($expression)
     {
       $prjnode = &atkGetNode("project.project");
+      $mode = $this->getViewMode("status");
+      if($mode == "active")
+      {
+        $prjnode->addFilter("project.status='active'");
+      }
       return array("projects"=>$this->recLinks($prjnode->searchDb($expression), "project.project"));
     }
 
@@ -72,7 +77,7 @@
       atkimport("module.project.hourslistener");
       $node->addListener(new hoursListener());
     }
-
+    
   }
 
 ?>
