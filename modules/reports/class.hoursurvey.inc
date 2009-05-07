@@ -292,7 +292,9 @@ class hoursurvey extends atkNode
     //Place entrydate into the end of list
     $hoursnode->remove("entrydate");
     $hoursnode->add(new atkDateAttribute("entrydate", AF_FORCE_LOAD));
-
+    
+    $hoursnode->getAttribute("workperiod")->removeFlag(AF_HIDE_LIST);
+    
     $columnConfig = &$hoursnode->getColumnConfig();
 
     if (is_array($orderby))
@@ -323,7 +325,7 @@ class hoursurvey extends atkNode
       // No collumns selected. Default->select all, exept entrydate
       for($i=0,$_i=count($arr_col);$i<$_i;$i++)
       {
-        if($arr_col[$i] != 'entrydate')
+        if(!in_array($arr_col[$i],array('entrydate','workperiod')))
         {
           $col[]=$arr_col[$i];
         }
