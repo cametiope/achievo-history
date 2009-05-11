@@ -9,6 +9,7 @@ class hrFirstAttributes extends atkDateAttribute
     /*@var $query atkQuery*/
     $query->addField("first_hr","","s");
     $query->addField("last_hr","","s");
+    $query->addField("spend_hours","","s");
     
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
@@ -38,8 +39,9 @@ class hrFirstAttributes extends atkDateAttribute
     
     $query->addJoin("
           (SELECT 
-            min(h.activitydate) first_hr,
-            max(h.activitydate) last_hr,
+            MIN(h.activitydate) first_hr,
+            MAX(h.activitydate) last_hr,
+            SUM(h.time) spend_hours, 
             t.projectid,
             h.userid,
             t.id phaseid
@@ -79,6 +81,21 @@ class coordinator extends atkManyToOneRelation
   }
 }
 
+class planningAttribute extends atkDurationAttribute 
+{
+  public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
+  {
+  }
+
+  function getOrderByStatement($extra='', $table='', $direction='ASC')
+  {
+    if($this->fieldName() == 'spend_hours') $table = 's';
+    else $table = 'ss';
+    return $table.".".$this->fieldName().($direction ? " {$direction}" : "");
+  }
+  
+}
+
 class surveyphase extends phase 
 {
   public $m_filterrecord;
@@ -97,6 +114,9 @@ class surveyphase extends phase
     $this->getAttribute("duration")->addFlag(AF_HIDE_LIST);  
     $this->getAttribute("dependsondeliverable")->addFlag(AF_HIDE_LIST);  
     $this->getAttribute("name")->setLabel($this->text("phase"));  
+    
+    $this->remove("spend_hours");
+    $this->add(new planningAttribute("spend_hours","","",AF_TOTAL));
     
     $this->setAttributesOrder("projectid","name","coordinator","startdate","enddate","first_hr","last_hr");
       
