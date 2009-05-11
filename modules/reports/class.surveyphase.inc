@@ -34,7 +34,7 @@ class hrFirstAttributes extends atkDateAttribute
     }
     
     $wherestr = implode(" AND ",$where);
-    if($wherestr) $wherestr = "AND ".$wherestr;
+    if($wherestr) $wherestr = "WHERE ".$wherestr;
     
     $query->addJoin("
           (SELECT 
