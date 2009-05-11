@@ -47,12 +47,22 @@ class hrFirstAttributes extends atkDateAttribute
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
              GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",$flag);
   }
+
+  function getOrderByStatement($extra='', $table='', $direction='ASC')
+  {
+    return "s.".$this->fieldName().($direction ? " {$direction}" : "");
+  }
 }
 
 class hrLastAttributes extends atkDateAttribute 
 {
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
+  }
+
+  function getOrderByStatement($extra='', $table='', $direction='ASC')
+  {
+    return "s.".$this->fieldName().($direction ? " {$direction}" : "");
   }
 }
 
@@ -77,8 +87,8 @@ class surveyphase extends phase
   {
     parent::phase($name,NF_NO_SEARCH);
     
-    $this->add(new hrFirstAttributes("first_hr","","",0,0,AF_NO_SORT));
-    $this->add(new hrLastAttributes("last_hr","","",0,0,AF_NO_SORT));
+    $this->add(new hrFirstAttributes("first_hr"));
+    $this->add(new hrLastAttributes("last_hr"));
      
     $this->getAttribute("projectid")->removeFlag(AF_HIDE_LIST)->addFlag(AF_RELATION_AUTOLINK);
     $this->add(new coordinator("coordinator","employee.employee"));
