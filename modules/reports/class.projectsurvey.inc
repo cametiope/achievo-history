@@ -91,7 +91,47 @@ class projectsurvey extends basereport
     return $this->getAttribute("project")->getSelectableRecords($record, $mode);
   }
 
-  private function buildSelector($filterrecord)
+  private function buildProjectSelector($filterrecord)
+  {
+    $node = &atkGetNode("project.project");
+    $where = array();
+    
+    if(!$node->allowed("any_project")) $where[] = "project.coordinator='".atkGetUserId()."'";
+    
+    if(isset($filterrecord['project']['id']))
+    {
+      if(atkArrayNvl($filterrecord,'include_subprojects'))
+      {
+        atkimport('modules.reports.utils.reportutils');
+        $ids = reportutils::getProjectAndSubProjectId($filterrecord['project']['id']);
+        $condition = "IN(".implode(",",$ids).")";
+        $where[] = "project.id $condition";
+      }
+      else 
+      {
+        $where[] = "project.id = '".$filterrecord['project']['id']."'";
+      }
+    }
+    
+    if(isset($filterrecord['coordinator']['id']))
+    {
+      $where[] = "project.coordinator = '".$filterrecord['coordinator']['id']."'";
+    }
+    
+    if(!empty($filterrecord['description']))
+    {
+      $where[] = "(LOWER(project.description) LIKE LOWER('%".$filterrecord['description']."%')";
+    }
+    
+    if($filterrecord['projectstatus']<>'all')
+    {
+      $where[] = "project.status = '".$filterrecord['projectstatus']."'";
+    }
+    
+    return implode(" AND ",$where);
+  }
+  
+  private function buildPhaseSelector($filterrecord)
   {
     $node = &atkGetNode("project.project");
     $where = array();
@@ -138,11 +178,32 @@ class projectsurvey extends basereport
   
   public function getContentElements($filterrecord)
   {
-    $node = &atkGetNode("reports.surveyphase");
+    $initial = $this->initial_values();
+    $supress = array_diff($initial['show_only_columns'],$filterrecord['show_only_columns']);
+
+    if(!in_array("name",$filterrecord['show_only_columns']))
+    {
+      sort($supress);
+      array_splice($supress,array_search("name",$supress),1);
+      
+      $key = array_search("projectid",$supress);
+      if($key!==FALSE) $supress[$key] = 'name';
+      
+      $node = &atkGetNode("reports.surveyproject");
+      $node->m_filterrecord = $filterrecord;
+      $selector = $this->buildProjectSelector($filterrecord);
+    }
+    else 
+    {
+      $node = &atkGetNode("reports.surveyphase");
+      $node->m_filterrecord = $filterrecord;
+      $selector = $this->buildPhaseSelector($filterrecord);
+    }
     
     $columnConfig = &$node->getColumnConfig();
     $orderby = atkArrayNvl($this->m_postvars,'atkorderby');
 
+    /*@var $columnConfig atkColumnConfig*/
     if ($orderby)
     {
       $columnConfig->clearOrder();
@@ -157,12 +218,8 @@ class projectsurvey extends basereport
       $orderby = $columnConfig->getOrderByStatement();
     }
     
-    $node->m_filterrecord = $filterrecord;
-    $selector = $this->buildSelector($filterrecord);
     $data = $node->selectDb($selector,$orderby);
 
-    $initial = $this->initial_values();
-    $supress = array_diff($initial['show_only_columns'],$filterrecord['show_only_columns']);
     /*@var $rl atkrecordlist*/
     $rl = &atknew("atk.recordlist.atkrecordlist");
     $content = $rl->render($node, $data,array(),RL_NO_SEARCH,$supress);
