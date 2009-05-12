@@ -93,6 +93,55 @@ class planningAttribute extends atkDurationAttribute
     else $table = 'ss';
     return $table.".".$this->fieldName().($direction ? " {$direction}" : "");
   }
+
+  /**
+   * Display override. If possible, displays a link to the hoursurvey to view details.
+   * @param array $record Record
+   * @param string $mode mode
+   * @return string
+   */
+  function display($record, $mode)
+  {
+    $value = $record[$this->fieldName()];
+    $org = parent::display($record, $mode);
+
+    $filter = $this->getOwnerInstance()->m_filterrecord;
+    
+    if ($value>0)
+    {
+      $params["phaseid"] = "phase.id='".$record['id']."'";
+      if(!empty($filter['from']))
+      {
+        $params["startdate"] = dateutil::arr2str($filter["from"],"Y-m-d");
+      }
+      else
+      {
+        $params["startdate"] = "2000-01-01";
+      }
+      
+      if(!empty($filter['to']))
+      {
+        $params["enddate"] = dateutil::arr2str($filter["to"],"Y-m-d");
+      }
+      else
+      {
+        $params["enddate"] = date("Y-m-d");
+      }
+      
+      if(isset($filter['worked_on_by']['id']))
+      {
+        $params["userid"] = $filter['worked_on_by']['id'];
+      }
+      else
+      {
+        $params["userid"] = "all";
+      }
+
+      $org = href(dispatch_url("reports.hoursurvey", "report", $params), $org, SESSION_NESTED, ($mode!="list"));
+    }
+    return $org;
+  }
+  
   
 }
 
@@ -149,7 +198,21 @@ class surveyphase extends phase
     }
   }
   
+  function rowColor($record)
+  {
+    if($record["current_planning"]>0)
+    {
+      if($record["spend_hours"]>($record["current_planning"]))
+      {
+        return COLOR_ERROR;
+      }
+      elseif($record["spend_hours"]>=($record["current_planning"])*0.9)
+      {
+        return COLOR_WARNING;
+      }
+    }
+  }
+  
 
   
 }
-?>

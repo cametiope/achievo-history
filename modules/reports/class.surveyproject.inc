@@ -98,11 +98,68 @@ class planningAttribute extends atkDurationAttribute
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
   {
-    if($this->fieldName() == 'spend_hours') $table = 's';
-    else $table = 'ss';
-    return $table.".".$this->fieldName().($direction ? " {$direction}" : "");
+    return "ss.".$this->fieldName().($direction ? " {$direction}" : "");
   }
-  
+}
+
+class spendAttribute extends atkDurationAttribute 
+{
+  public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
+  {
+  }
+
+  function getOrderByStatement($extra='', $table='', $direction='ASC')
+  {
+    return "s.".$this->fieldName().($direction ? " {$direction}" : "");
+  }
+  /**
+   * Display override. If possible, displays a link to the hoursurvey to view details.
+   * @param array $record Record
+   * @param string $mode mode
+   * @return string
+   */
+  function display($record, $mode)
+  {
+    $value = $record[$this->fieldName()];
+    $org = parent::display($record, $mode);
+
+    $filter = $this->getOwnerInstance()->m_filterrecord;
+    
+    if ($value>0)
+    {
+      $params["projectid"] = "project.id='".$record['id']."'";
+      
+      if(!empty($filter['from']))
+      {
+        $params["startdate"] = dateutil::arr2str($filter["from"],"Y-m-d");
+      }
+      else
+      {
+        $params["startdate"] = "2000-01-01";
+      }
+      
+      if(!empty($filter['to']))
+      {
+        $params["enddate"] = dateutil::arr2str($filter["to"],"Y-m-d");
+      }
+      else
+      {
+        $params["enddate"] = date("Y-m-d");
+      }
+      
+      if(isset($filter['worked_on_by']['id']))
+      {
+        $params["userid"] = $filter['worked_on_by']['id'];
+      }
+      else
+      {
+        $params["userid"] = "all";
+      }
+
+      $org = href(dispatch_url("reports.hoursurvey", "report", $params), $org, SESSION_NESTED, ($mode!="list"));
+    }
+    return $org;
+  }
 }
 
 class surveyproject extends atkNode 
@@ -112,6 +169,7 @@ class surveyproject extends atkNode
   {
     parent::atkNode($name,$flags);
     
+    $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
     $this->add(new atkAttribute("name"));
     $this->add(new atkManyToOneRelation("coordinator","employee.employeeselector"));
     $this->add(new atkDateAttribute("startdate"));
@@ -122,8 +180,24 @@ class surveyproject extends atkNode
     
     $this->add(new planningAttribute("initial_planning","","",AF_TOTAL));
     $this->add(new planningAttribute("current_planning","","",AF_TOTAL));
-    $this->add(new planningAttribute("spend_hours","","",AF_TOTAL));
+    $this->add(new spendAttribute("spend_hours","","",AF_TOTAL));
 
     $this->setTable("project");   
   }
+
+  function rowColor($record)
+  {
+    if($record["current_planning"]>0)
+    {
+      if($record["spend_hours"]>($record["current_planning"]))
+      {
+        return COLOR_ERROR;
+      }
+      elseif($record["spend_hours"]>=($record["current_planning"])*0.9)
+      {
+        return COLOR_WARNING;
+      }
+    }
+  }
+  
 }
