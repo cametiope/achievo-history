@@ -704,9 +704,9 @@
   "show_all_phases" => "Show all phases",
   "show_nonactive_phases" => "Show nonactive phases",
   "date_filter_explain" => "Show only projects that was worked on between:",
-  "onlyactiverecordsaresearch" => "Only active records are search.",
-  "clicktosearcharchive" => "Click here to search also in archived records",
-  "youareinallrecords" => "You are search in all records.",
+  "onlyactiverecordsaresearch" => "Only active records are searched.",
+  "clicktosearcharchive" => "Click here to search in archived records also",
+  "youareinallrecords" => "You are searching in all records.",
   "clicktosearchactiverecords" => "Click here to search active records only.",
   );
 

@@ -701,14 +701,14 @@
   "yearly" => "Jaar",
   "youareinthearchive" => "Je bent in het archief.",
   "zipcode" => "Postcode",
-  "virtual_time_warning"=>"note that this setting does not affect hours already registered",
-  "show_active_phases" => "Show active phases",
-  "show_all_phases" => "Show all phases",
-  "show_nonactive_phases" => "Show nonactive phases",
-  "onlyactiverecordsaresearch" => "Only active records are search.",
-  "clicktosearcharchive" => "Click here to search also in archived records",
-  "youareinallrecords" => "You are search in all records.",
-  "clicktosearchactiverecords" => "Click here to search active records only.",
+  "virtual_time_warning"=>"Houd er rekening mee dat deze instelling de al geregistreerde uren niet beinvloed.",
+  "show_active_phases" => "Toon actieve fases.",
+  "show_all_phases" => "Toon alle fases.",
+  "show_nonactive_phases" => "Toon niet actieve fases.",
+  "onlyactiverecordsaresearch" => "Alleen actieve records worden doorzocht.",
+  "clicktosearcharchive" => "Klik hier om ook in gearchiveerde records te zoeken.",
+  "youareinallrecords" => "Je zoekt in alle records.",
+  "clicktosearchactiverecords" => "Klik hier om alleen in actieve records te zoeken.",
 );
 
 ?>
