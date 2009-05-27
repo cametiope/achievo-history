@@ -34,6 +34,8 @@ Changes in Achievo 1.4
   to the Achievo wiki for current information on how to use Achievo. [Guido]
 - Removed the /contrib/phase_convert.pl script. This script is now replaced
   by the hours move function. [Guido]
+* Fixed integrity violation error when registering hours on an 'all users' 
+  project, that did not have any members added to it. [Dennis, Sandy]
 * Moved cron documentation from /cron/README to /doc/CRON. [Guido]
 * Fixed some PHP Notices. [Guido]
 * Fixed minor layout issues in the scheduler. [Guido]
