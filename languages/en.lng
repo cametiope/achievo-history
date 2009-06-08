@@ -708,6 +708,7 @@
   "clicktosearcharchive" => "Click here to search in archived records also",
   "youareinallrecords" => "You are searching in all records.",
   "clicktosearchactiverecords" => "Click here to search active records only.",
+  "virtual_hours" => "Virtual hours",
   );
 
 ?>

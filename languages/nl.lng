@@ -709,6 +709,7 @@
   "clicktosearcharchive" => "Klik hier om ook in gearchiveerde records te zoeken.",
   "youareinallrecords" => "Je zoekt in alle records.",
   "clicktosearchactiverecords" => "Klik hier om alleen in actieve records te zoeken.",
+  "virtual_hours" => "Virtual hours",
 );
 
 ?>
