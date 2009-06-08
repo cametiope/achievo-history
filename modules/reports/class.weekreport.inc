@@ -61,8 +61,9 @@ class weekreport extends atkNode
     }
 
     $this->add(new timeDisplayAttribute("overtimecompensation",AF_TOTAL));
-    $this->addAdditionalColumns();
+    $this->add(new timeDisplayAttribute("virtual_hours",AF_TOTAL));
     $this->add(new timeDisplayAttribute("total",AF_TOTAL));
+    $this->addAdditionalColumns();
     $this->add(new timeDisplayAttribute("contract",AF_TOTAL));
     $this->add(new timeDisplayAttribute("overtime",AF_TOTAL));
 
@@ -211,16 +212,17 @@ class weekreport extends atkNode
     $db = &atkGetDb();
     $query = $db->createQuery();
 
-    $query->addField("time","", "hours");
+    $query->addField("time","","hours");
     $query->addField("activityid", "", "hours");
     $query->addField("activitydate", "", "hours");
     $query->addField("userid", "", "hours");
     $query->addField("lastname", "", "person");
     $query->addField("firstname", "", "person");
     $query->addField("workperiod", "", "hours");
+    $query->addField("virtual_time","","hours");
 
     $query->addTable("person");
-    $query->addTable("hours");
+    $query->addTable("hoursbase", "hours");
 
     if ($nameswitch=="supervisor")
     {
@@ -615,6 +617,12 @@ class weekreport extends atkNode
 
         $weekdata[$key]["userdata"][$uid][$strdow[$dow]]          += $raw[$i]["time"];
         $weekdata[$key]["userdata"][$uid][$workperiod] += $raw[$i]["time"];
+        
+        //calculate virtual_hours column value
+        if($raw[$i]['virtual_time'])
+        {
+          $weekdata[$key]["userdata"][$uid]["virtual_hours"]+= $raw[$i]["time"];
+        }
 
         //we do not add overtimecompensation hours to the total
         if($isovertimecompensation)
@@ -704,6 +712,7 @@ class weekreport extends atkNode
             //subtract overtimecompensation hours from newtotal
             $newtotal -= $userdata["overtimecompensation"];
             $record["overtimecompensation"] = $userdata["overtimecompensation"];
+            $record["virtual_hours"] = $userdata["virtual_hours"];
             $record["total"] = $userdata["total"];
             $record["contract"] = $userdata["contract"];
             $record["overtime"] = $newtotal-$userdata["contract"];
