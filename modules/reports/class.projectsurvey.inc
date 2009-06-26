@@ -181,6 +181,13 @@ class projectsurvey extends basereport
     $initial = $this->initial_values();
     $supress = array_diff($initial['show_only_columns'],$filterrecord['show_only_columns']);
 
+    /**
+     * If I choose to hide the phase column, then it
+     * needs to just show 1 line per project, and the initial/current/actual should be
+     * the sum of the phases. I.o.w. if I have a 3-phase project, each with 50 hours,
+     * and I'm asking for a report on all my current projects but not at the phase
+     * level, it should just show the project with 150 as planning.
+     */
     if(!in_array("name",$filterrecord['show_only_columns']))
     {
       sort($supress);
