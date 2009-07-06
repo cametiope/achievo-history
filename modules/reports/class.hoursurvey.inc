@@ -295,6 +295,7 @@ class hoursurvey extends atkNode
     
     $hoursnode->getAttribute("workperiod")->removeFlag(AF_HIDE_LIST);
     
+    /*@var $columnConfig atkColumnConfig*/
     $columnConfig = &$hoursnode->getColumnConfig();
 
     if (is_array($orderby))

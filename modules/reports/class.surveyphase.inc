@@ -9,7 +9,7 @@ class hrFirstAttributes extends atkDateAttribute
     /*@var $query atkQuery*/
     $query->addField("first_hr","","s");
     $query->addField("last_hr","","s");
-    $query->addField("spend_hours","","s");
+    $query->addField("spend_hours","","ss");
     
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
@@ -41,13 +41,21 @@ class hrFirstAttributes extends atkDateAttribute
           (SELECT 
             MIN(h.activitydate) first_hr,
             MAX(h.activitydate) last_hr,
-            SUM(h.time) spend_hours, 
             t.projectid,
             h.userid,
             t.id phaseid
            FROM 
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
              GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",$flag);
+
+    $query->addJoin("
+          (SELECT 
+            SUM(h.time) spend_hours, 
+            t.projectid,
+            t.id phaseid
+           FROM 
+             hoursbase h JOIN phase t ON h.phaseid=t.id
+             GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",$flag);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
@@ -110,7 +118,9 @@ class planningAttribute extends atkDurationAttribute
     if ($value>0)
     {
       $params["phaseid"] = "phase.id='".$record['id']."'";
-      if(!empty($filter['from']))
+      $params["startdate"] = "2000-01-01";
+      $params["enddate"] = date("Y-m-d");
+/*      if(!empty($filter['from']))
       {
         $params["startdate"] = dateutil::arr2str($filter["from"],"Y-m-d");
       }
@@ -126,7 +136,7 @@ class planningAttribute extends atkDurationAttribute
       else
       {
         $params["enddate"] = date("Y-m-d");
-      }
+      }*/
       
       if(isset($filter['worked_on_by']['id']))
       {

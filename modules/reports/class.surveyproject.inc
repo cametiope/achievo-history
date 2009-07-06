@@ -14,7 +14,7 @@ class hrFirstAttribute extends atkDateAttribute
     $query->addField("last_hr","","s");
     $query->addField("initial_planning","","ss");
     $query->addField("current_planning","","ss");
-    $query->addField("spend_hours","","s");
+    $query->addField("spend_hours","","sss");
     
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
@@ -54,12 +54,19 @@ class hrFirstAttribute extends atkDateAttribute
           (SELECT 
             MIN(h.activitydate) first_hr, 
             MAX(h.activitydate) last_hr, 
-            SUM(h.time) spend_hours, 
             t.projectid, 
             h.userid 
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
           GROUP BY t.projectid)","s","s.projectid=project.id",$flag);
+
+    $query->addJoin("
+          (SELECT 
+            SUM(h.time) spend_hours, 
+            t.projectid
+          FROM
+             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
+          GROUP BY t.projectid)","sss","sss.projectid=project.id",$flag);
     
     $query->addJoin("
           (SELECT 
@@ -128,8 +135,10 @@ class spendAttribute extends atkDurationAttribute
     if ($value>0)
     {
       $params["projectid"] = "project.id='".$record['id']."'";
+      $params["startdate"] = "2000-01-01";
+      $params["enddate"] = date("Y-m-d");
       
-      if(!empty($filter['from']))
+/*      if(!empty($filter['from']))
       {
         $params["startdate"] = dateutil::arr2str($filter["from"],"Y-m-d");
       }
@@ -145,7 +154,7 @@ class spendAttribute extends atkDurationAttribute
       else
       {
         $params["enddate"] = date("Y-m-d");
-      }
+      }*/
       
       if(isset($filter['worked_on_by']['id']))
       {
