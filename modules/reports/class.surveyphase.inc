@@ -14,31 +14,32 @@ class hrFirstAttributes extends atkDateAttribute
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
     $where = $where1 = array();
-    $flag = true;
         
+    //filter for hours only
     if(!empty($filter['from']))
     {
       $from = dateutil::arr2str($filter["from"],"Y-m-d");
       $where[] = "h.activitydate >= '$from'";
-      $flag = false;
     }
     if(!empty($filter['to']))
     {
       $to = dateutil::arr2str($filter["to"],"Y-m-d");
       $where[] = "h.activitydate <= '$to'";
-      $flag = false;
     }
     if(isset($filter['worked_on_by']['id']))
     {
       $where[] = "h.userid='".$filter['worked_on_by']['id']."'";
-      $flag = false;
     }
-
+    //filter for phase only
     if($filter['phasestatus']<>'all')
     {
       $where[] = "t.status = '".$filter['phasestatus']."'";
       $where1[] = "t.status = '".$filter['phasestatus']."'";
-      $flag = false;
+    }
+    if(!empty($filter['description']))
+    {
+      $where[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
+      $where1[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
     }
     
     $wherestr = implode(" AND ",$where);
@@ -56,7 +57,7 @@ class hrFirstAttributes extends atkDateAttribute
             t.id phaseid
            FROM 
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
-             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",$flag);
+             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",true);
 
     $query->addJoin("
           (SELECT 
@@ -65,7 +66,7 @@ class hrFirstAttributes extends atkDateAttribute
             t.id phaseid
            FROM 
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
-             GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",$flag);
+             GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",true);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
