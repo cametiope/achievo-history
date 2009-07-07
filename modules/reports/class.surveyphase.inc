@@ -127,7 +127,7 @@ class planningAttribute extends atkDurationAttribute
     
     if ($value>0)
     {
-      $params["phase.id"] = "'".$record['id']."'";
+      $params["phaseid"] = "phase.id='".$record['id']."'";
       $params["startdate"] = "2000-01-01";
       $params["enddate"] = date("Y-m-d");
 /*      if(!empty($filter['from']))
