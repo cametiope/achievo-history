@@ -204,8 +204,7 @@ class surveyproject extends atkNode
 
     if ($value>'')
     {
-      $params["projectid"] = "project.id='".$record['id']."'";
-
+      $params["project.id"] = "'".$record['id']."'";
       $org = atkHref(dispatch_url("project.project", "edit", $params), $org, SESSION_NESTED, ($mode!="list"));
     }
     return $org;
