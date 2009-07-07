@@ -166,7 +166,7 @@ class spendAttribute extends atkDurationAttribute
         $params["userid"] = "all";
       }
 
-      $org = href(dispatch_url("reports.hoursurvey", "report", $params), $org, SESSION_NESTED, ($mode!="list"));
+      $org = atkHref(dispatch_url("reports.hoursurvey", "report", $params), $org, SESSION_NESTED, ($mode!="list"));
     }
     return $org;
   }
@@ -193,6 +193,22 @@ class surveyproject extends atkNode
     $this->add(new spendAttribute("spend_hours","","",AF_TOTAL));
 
     $this->setTable("project");   
+  }
+
+  function name_display($record, $mode)
+  //function display_name($record, $mode)
+  {
+    $p_attr = &$this->getAttribute("name");
+    $value = $record[$p_attr->fieldName()];
+    $org = $p_attr->display($record, $mode);
+
+    if ($value>'')
+    {
+      $params["projectid"] = "project.id='".$record['id']."'";
+
+      $org = atkHref(dispatch_url("project.project", "edit", $params), $org, SESSION_NESTED, ($mode!="list"));
+    }
+    return $org;
   }
 
   function rowColor($record)
