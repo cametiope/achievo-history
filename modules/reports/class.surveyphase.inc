@@ -13,7 +13,7 @@ class hrFirstAttributes extends atkDateAttribute
     
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
-    $where = array();
+    $where = $where1 = array();
     $flag = true;
         
     if(!empty($filter['from']))
@@ -33,9 +33,19 @@ class hrFirstAttributes extends atkDateAttribute
       $where[] = "h.userid='".$filter['worked_on_by']['id']."'";
       $flag = false;
     }
+
+    if($filter['phasestatus']<>'all')
+    {
+      $where[] = "t.status = '".$filter['phasestatus']."'";
+      $where1[] = "t.status = '".$filter['phasestatus']."'";
+      $flag = false;
+    }
     
     $wherestr = implode(" AND ",$where);
     if($wherestr) $wherestr = "WHERE ".$wherestr;
+    
+    $wherestr1 = implode(" AND ",$where1);
+    if($wherestr1) $wherestr1 = "WHERE ".$wherestr1;
     
     $query->addJoin("
           (SELECT 
@@ -54,7 +64,7 @@ class hrFirstAttributes extends atkDateAttribute
             t.projectid,
             t.id phaseid
            FROM 
-             hoursbase h JOIN phase t ON h.phaseid=t.id
+             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
              GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",$flag);
   }
 

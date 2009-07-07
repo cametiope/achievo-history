@@ -42,6 +42,7 @@ class hrFirstAttribute extends atkDateAttribute
     {
       $where[] = "t.status = '".$filter['phasestatus']."'";
       $where1[] = "t.status = '".$filter['phasestatus']."'";
+      $flag = false;
     }
     
     $wherestr = implode(" AND ",$where);
