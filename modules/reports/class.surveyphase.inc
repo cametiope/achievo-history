@@ -14,24 +14,28 @@ class hrFirstAttributes extends atkDateAttribute
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
     $where = $where1 = array();
+    $flag = $flag1 = true;
         
     //filter for hours only
     if(!empty($filter['from']))
     {
       $from = dateutil::arr2str($filter["from"],"Y-m-d");
       $where[] = "h.activitydate >= '$from'";
+      $flag = false;
     }
     if(!empty($filter['to']))
     {
       $to = dateutil::arr2str($filter["to"],"Y-m-d");
       $where[] = "h.activitydate <= '$to'";
+      $flag = false;
     }
     if(isset($filter['worked_on_by']['id']))
     {
       $where[] = "h.userid='".$filter['worked_on_by']['id']."'";
+      $flag = false;
     }
     //filter for phase only
-    if($filter['phasestatus']<>'all')
+    /*if($filter['phasestatus']<>'all')
     {
       $where[] = "t.status = '".$filter['phasestatus']."'";
       $where1[] = "t.status = '".$filter['phasestatus']."'";
@@ -40,13 +44,13 @@ class hrFirstAttributes extends atkDateAttribute
     {
       $where[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
       $where1[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
-    }
+    }*/
     
     $wherestr = implode(" AND ",$where);
     if($wherestr) $wherestr = "WHERE ".$wherestr;
     
-    $wherestr1 = implode(" AND ",$where1);
-    if($wherestr1) $wherestr1 = "WHERE ".$wherestr1;
+    //$wherestr1 = implode(" AND ",$where1);
+    //if($wherestr1) $wherestr1 = "WHERE ".$wherestr1;
     
     $query->addJoin("
           (SELECT 
@@ -57,7 +61,7 @@ class hrFirstAttributes extends atkDateAttribute
             t.id phaseid
            FROM 
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
-             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",true);
+             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",$flag);
 
     $query->addJoin("
           (SELECT 
@@ -65,8 +69,8 @@ class hrFirstAttributes extends atkDateAttribute
             t.projectid,
             t.id phaseid
            FROM 
-             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
-             GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",true);
+             hoursbase h JOIN phase t ON h.phaseid=t.id 
+             GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",true); //$wherestr1
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
@@ -214,16 +218,4 @@ class surveyphase extends phase
       }
     }
   }
-  
-  public function applyProjectSecurity()
-  {
-    $node = atkGetNode("project.project");
-    if(!$node->allowed("any_project"))
-    {
-      $this->addFilter("projectid.coordinator='".atkGetUserId()."'");
-    }
-
-  }
-
-  
 }

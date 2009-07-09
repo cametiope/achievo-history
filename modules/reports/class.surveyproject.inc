@@ -19,32 +19,37 @@ class hrFirstAttribute extends atkDateAttribute
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
     $where = $where1 = array();
-        
+    $flag = $flag1 = true;    
     //filter for hours only
     if(!empty($filter['from']))
     {
       $from = dateutil::arr2str($filter["from"],"Y-m-d");
       $where[] = "h.activitydate >= '$from'";
+      $flag = false;
     }
     if(!empty($filter['to']))
     {
       $to = dateutil::arr2str($filter["to"],"Y-m-d");
       $where[] = "h.activitydate <= '$to'";
+      $flag = false;
     }
     if(isset($filter['worked_on_by']['id']))
     {
       $where[] = "h.userid='".$filter['worked_on_by']['id']."'";
+      $flag = false;
     }
     //filter for phase only
     if($filter['phasestatus']<>'all')
     {
       $where[] = "t.status = '".$filter['phasestatus']."'";
       $where1[] = "t.status = '".$filter['phasestatus']."'";
+      $flag = $flag1 = false;
     }
     if(!empty($filter['description']))
     {
       $where[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
       $where1[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
+      $flag = $flag1 = false;
     }
     
     $wherestr = implode(" AND ",$where);
@@ -62,7 +67,7 @@ class hrFirstAttribute extends atkDateAttribute
             h.userid 
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
-          GROUP BY t.projectid)","s","s.projectid=project.id",true);
+          GROUP BY t.projectid)","s","s.projectid=project.id",$flag);
 
     $query->addJoin("
           (SELECT 
@@ -80,7 +85,7 @@ class hrFirstAttribute extends atkDateAttribute
           FROM 
             phase t
             $wherestr1
-          GROUP BY t.projectid)","ss","ss.projectid=project.id",true);
+          GROUP BY t.projectid)","ss","ss.projectid=project.id",$flag1);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
@@ -221,15 +226,4 @@ class surveyproject extends atkNode
       }
     }
   }
-  
-  public function applyProjectSecurity()
-  {
-    $node = atkGetNode("project.project");
-    if(!$node->allowed("any_project"))
-    {
-      $this->addFilter("project.coordinator='".atkGetUserId()."'");
-    }
-
-  }
-  
 }
