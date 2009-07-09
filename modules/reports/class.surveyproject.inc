@@ -142,24 +142,6 @@ class spendAttribute extends atkDurationAttribute
       $params["startdate"] = "2000-01-01";
       $params["enddate"] = date("Y-m-d");
       
-/*      if(!empty($filter['from']))
-      {
-        $params["startdate"] = dateutil::arr2str($filter["from"],"Y-m-d");
-      }
-      else
-      {
-        $params["startdate"] = "2000-01-01";
-      }
-      
-      if(!empty($filter['to']))
-      {
-        $params["enddate"] = dateutil::arr2str($filter["to"],"Y-m-d");
-      }
-      else
-      {
-        $params["enddate"] = date("Y-m-d");
-      }*/
-      
       if(isset($filter['worked_on_by']['id']))
       {
         $params["userid"] = $filter['worked_on_by']['id'];
@@ -198,8 +180,7 @@ class surveyproject extends atkNode
     $this->setTable("project");   
   }
 
-  function name_display($record, $mode)
-  //function display_name($record, $mode)
+  public function name_display($record, $mode)
   {
     $p_attr = &$this->getAttribute("name");
     $value = $record[$p_attr->fieldName()];
@@ -207,13 +188,26 @@ class surveyproject extends atkNode
 
     if ($value>'')
     {
-      $params["atkselector"] = "project.id='".$record['id']."'";
-      $org = atkHref(dispatch_url("project.project", "edit", $params), $org, SESSION_NESTED, ($mode!="list"));
+      $node = atkGetNode("project.project");
+      if($node->allowed("edit"))
+      {
+        $action = "edit";
+      }
+      elseif($node->allowed("view"))
+      {
+        $action = "view";
+      }
+      
+      if(isset($action))
+      {
+        $params["atkselector"] = "project.id='".$record['id']."'";
+        $org = atkHref(dispatch_url("project.project", $action, $params), $org, SESSION_NESTED, ($mode!="list"));
+      }
     }
     return $org;
   }
 
-  function rowColor($record)
+  public function rowColor($record)
   {
     if($record["current_planning"]>0)
     {
@@ -226,6 +220,16 @@ class surveyproject extends atkNode
         return COLOR_WARNING;
       }
     }
+  }
+  
+  public function applyProjectSecurity()
+  {
+    $node = atkGetNode("project.project");
+    if(!$node->allowed("any_project"))
+    {
+      $this->addFilter("project.coordinator='".atkGetUserId()."'");
+    }
+
   }
   
 }

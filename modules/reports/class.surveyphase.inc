@@ -131,23 +131,6 @@ class planningAttribute extends atkDurationAttribute
       $params["phaseid"] = "phase.id='".$record['id']."'";
       $params["startdate"] = "2000-01-01";
       $params["enddate"] = date("Y-m-d");
-/*      if(!empty($filter['from']))
-      {
-        $params["startdate"] = dateutil::arr2str($filter["from"],"Y-m-d");
-      }
-      else
-      {
-        $params["startdate"] = "2000-01-01";
-      }
-      
-      if(!empty($filter['to']))
-      {
-        $params["enddate"] = dateutil::arr2str($filter["to"],"Y-m-d");
-      }
-      else
-      {
-        $params["enddate"] = date("Y-m-d");
-      }*/
       
       if(isset($filter['worked_on_by']['id']))
       {
@@ -162,8 +145,6 @@ class planningAttribute extends atkDurationAttribute
     }
     return $org;
   }
-  
-  
 }
 
 class surveyphase extends phase 
@@ -234,6 +215,15 @@ class surveyphase extends phase
     }
   }
   
+  public function applyProjectSecurity()
+  {
+    $node = atkGetNode("project.project");
+    if(!$node->allowed("any_project"))
+    {
+      $this->addFilter("projectid.coordinator='".atkGetUserId()."'");
+    }
+
+  }
 
   
 }

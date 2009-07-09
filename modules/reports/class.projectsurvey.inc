@@ -198,12 +198,14 @@ class projectsurvey extends basereport
       
       $node = &atkGetNode("reports.surveyproject");
       $node->m_filterrecord = $filterrecord;
+      $node->applyProjectSecurity();
       $selector = $this->buildProjectSelector($filterrecord);
     }
     else 
     {
       $node = &atkGetNode("reports.surveyphase");
       $node->m_filterrecord = $filterrecord;
+      $node->applyProjectSecurity();
       $selector = $this->buildPhaseSelector($filterrecord);
     }
     
