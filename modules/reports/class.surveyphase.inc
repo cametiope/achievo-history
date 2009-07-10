@@ -35,7 +35,7 @@ class hrFirstAttributes extends atkDateAttribute
       $flag = false;
     }
     //filter for phase only
-    /*if($filter['phasestatus']<>'all')
+    if($filter['phasestatus']<>'all')
     {
       $where[] = "t.status = '".$filter['phasestatus']."'";
       $where1[] = "t.status = '".$filter['phasestatus']."'";
@@ -44,13 +44,13 @@ class hrFirstAttributes extends atkDateAttribute
     {
       $where[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
       $where1[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
-    }*/
+    }
     
     $wherestr = implode(" AND ",$where);
     if($wherestr) $wherestr = "WHERE ".$wherestr;
     
-    //$wherestr1 = implode(" AND ",$where1);
-    //if($wherestr1) $wherestr1 = "WHERE ".$wherestr1;
+    $wherestr1 = implode(" AND ",$where1);
+    if($wherestr1) $wherestr1 = "WHERE ".$wherestr1;
     
     $query->addJoin("
           (SELECT 
@@ -69,8 +69,8 @@ class hrFirstAttributes extends atkDateAttribute
             t.projectid,
             t.id phaseid
            FROM 
-             hoursbase h JOIN phase t ON h.phaseid=t.id 
-             GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",true); //$wherestr1
+             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
+             GROUP BY t.id)","ss","ss.projectid=projectid.id AND phase.id=ss.phaseid",true);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
