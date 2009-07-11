@@ -39,11 +39,13 @@ class hrFirstAttributes extends atkDateAttribute
     {
       $where[] = "t.status = '".$filter['phasestatus']."'";
       $where1[] = "t.status = '".$filter['phasestatus']."'";
+      $flag = false;
     }
     if(!empty($filter['description']))
     {
       $where[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
       $where1[] = "LOWER(t.description) LIKE LOWER('%".$filter['description']."%')";
+      $flag = false;
     }
     
     $wherestr = implode(" AND ",$where);
