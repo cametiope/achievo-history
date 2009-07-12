@@ -10,6 +10,8 @@ class hrFirstAttribute extends atkDateAttribute
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
     /*@var $query atkQuery*/
+    $query->addJoin("phase","","phase.id=project.phaseid");
+    
     $query->addField("first_hr","","s");
     $query->addField("last_hr","","s");
     $query->addField("initial_planning","","ss");
@@ -64,14 +66,16 @@ class hrFirstAttribute extends atkDateAttribute
             MIN(h.activitydate) first_hr, 
             MAX(h.activitydate) last_hr, 
             t.projectid, 
+            i.id,
             h.userid 
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
-          GROUP BY t.projectid)","s","s.projectid=project.id",$flag);
+          GROUP BY t.projectid)","s","s.projectid=project.id AND s.id=phase.id",$flag);
 
     $query->addJoin("
           (SELECT 
             SUM(h.time) spend_hours, 
+            
             t.projectid
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
@@ -85,7 +89,7 @@ class hrFirstAttribute extends atkDateAttribute
           FROM 
             phase t
             $wherestr1
-          GROUP BY t.projectid)","ss","ss.projectid=project.id",$flag1);
+          GROUP BY t.projectid)","ss","ss.projectid=project.id AND s.id=phase.id",$flag1);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')

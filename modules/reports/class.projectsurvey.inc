@@ -127,6 +127,11 @@ class projectsurvey extends basereport
     {
       $where[] = "project.status = '".$filterrecord['projectstatus']."'";
     }
+
+    if($filterrecord['phasestatus']<>'all')
+    {
+      $where[] = "phase.status = '".$filterrecord['phasestatus']."'";
+    }
     
     return implode(" AND ",$where);
   }
