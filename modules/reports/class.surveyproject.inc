@@ -66,7 +66,7 @@ class hrFirstAttribute extends atkDateAttribute
             MIN(h.activitydate) first_hr, 
             MAX(h.activitydate) last_hr, 
             t.projectid, 
-            i.id,
+            t.id,
             h.userid 
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
