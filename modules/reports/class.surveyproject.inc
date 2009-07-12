@@ -63,19 +63,24 @@ class hrFirstAttribute extends atkDateAttribute
     //always left join, because we don't add this subquery for adding some limits, we simply add columns 
     $query->addJoin("
           (SELECT DISTINCT
-            MIN(h.activitydate) first_hr, 
-            MAX(h.activitydate) last_hr, 
             t.projectid, 
-            t.id,
-            h.userid 
+            t.id
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
-          GROUP BY t.projectid)","s","s.projectid=project.id AND s.id=phase.id",$flag);
+          GROUP BY t.projectid)","s1","s1.projectid=project.id AND s1.id=phase.id",$flag);
+
+    $query->addJoin("
+          (SELECT
+            MIN(h.activitydate) first_hr, 
+            MAX(h.activitydate) last_hr, 
+            t.projectid
+          FROM
+             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
+          GROUP BY t.projectid)","s","s.projectid=project.id",$flag);
 
     $query->addJoin("
           (SELECT 
             SUM(h.time) spend_hours, 
-            
             t.projectid
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
@@ -89,7 +94,7 @@ class hrFirstAttribute extends atkDateAttribute
           FROM 
             phase t
             $wherestr1
-          GROUP BY t.projectid)","ss","ss.projectid=project.id AND s.id=phase.id",$flag1);
+          GROUP BY t.projectid)","ss","ss.projectid=project.id",$flag1);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
