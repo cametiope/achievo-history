@@ -62,7 +62,7 @@ class hrFirstAttribute extends atkDateAttribute
     
     //always left join, because we don't add this subquery for adding some limits, we simply add columns 
     $query->addJoin("
-          (SELECT 
+          (SELECT DISTINCT
             MIN(h.activitydate) first_hr, 
             MAX(h.activitydate) last_hr, 
             t.projectid, 
