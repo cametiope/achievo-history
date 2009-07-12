@@ -170,6 +170,7 @@ class surveyproject extends atkNode
     parent::atkNode($name,$flags);
     
     $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
+    $this->add(new atkAttribute("abbreviation", AF_HIDE_LIST));
     $this->add(new atkAttribute("name"));
     $this->add(new atkManyToOneRelation("coordinator","employee.employeeselector"));
     $this->add(new atkDateAttribute("startdate"));
@@ -187,9 +188,8 @@ class surveyproject extends atkNode
 
   public function name_display($record, $mode)
   {
-    $p_attr = &$this->getAttribute("name");
-    $value = $record[$p_attr->fieldName()];
-    $org = $p_attr->display($record, $mode);
+    $value = $record["name"];
+    $org = project::descriptor($record);
 
     if ($value>'')
     {
