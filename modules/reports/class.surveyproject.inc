@@ -10,7 +10,7 @@ class hrFirstAttribute extends atkDateAttribute
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
     /*@var $query atkQuery*/
-    $query->addJoin("phase","","phase.id=project.phaseid");
+    $query->addJoin("phase","","phase.projectid=project.id");
     
     $query->addField("first_hr","","s");
     $query->addField("last_hr","","s");
