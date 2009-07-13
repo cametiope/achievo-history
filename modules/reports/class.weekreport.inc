@@ -233,7 +233,7 @@ class weekreport extends atkNode
       if($userid!="all")  $query->addCondition("hours.userid='$userid'");
     }
 
-    $query->addCondition("person.role='employee'");
+    $query->addCondition("person.role='employee' AND person.status='active'");
     $query->addCondition("hours.activitydate >= '$startdate'");
     $query->addCondition("hours.activitydate <= '$enddate'");
     $query->addCondition("hours.userid = person.id");
