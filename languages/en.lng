@@ -709,6 +709,7 @@
   "youareinallrecords" => "You are searching in all records.",
   "clicktosearchactiverecords" => "Click here to search active records only.",
   "virtual_hours" => "Virtual hours",
+  "time_left_message" => 'After this time registration was made, %s hours were left in the budget for this phase',
   );
 
 ?>
