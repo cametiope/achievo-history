@@ -282,6 +282,9 @@ class hours extends atkNode
     }
 
     $this->add(new atkDateAttribute("entrydate",AF_HIDE|AF_OBLIGATORY));
+    
+    $this->add(new atkDurationAttribute("time_left","1m","10h",AF_HIDE|AF_FORCE_LOAD))->setForceInsert(true)->setForceUpdate(true);
+    $this->add(new atkDummyAttribute("message","",AF_NO_LABEL|AF_HIDE_ADD|AF_HIDE_SEARCH|AF_HIDE_SELECT));
 /**
  * @todo: we need to order by projectid.abbreviation, ATK does not include the
  * projectid and phaseid in the selectDb so we FORCE_LOAD the projectid
@@ -291,6 +294,16 @@ class hours extends atkNode
 
     $this->setTable("hours","hoursbase");
     $this->addSecurityMap("mra_move", "edit");
+  }
+
+  public function message_display($record, $mode)
+  {
+    return sprintf($this->text("time_left_message"),time_format($record['time_left'],true));  
+  }
+  
+  public function message_edit($record, $mode)
+  {
+    return $this->message_display($record, $mode);  
   }
 
   function action_mra_move(&$handler)
@@ -880,6 +893,8 @@ class hours extends atkNode
 
     // update overtime balance
     $this->calculateNewBalance($rec, "add");
+    //update time_left
+    $this->updateTimeLeft($rec);
     return true;
   }
 
@@ -894,6 +909,8 @@ class hours extends atkNode
 
     // update overtime balance
     $this->calculateNewBalance($rec, "edit");
+    //update time_left
+    $this->updateTimeLeft($rec);
     return true;
   }
 
@@ -1380,15 +1397,14 @@ class hours extends atkNode
   function preAdd(&$record)
   {
     $record['virtual_time'] = $record['phaseid']['virtual_time'];
+    
     $this->modifyfortime($record);
     return true;
   }
 
   function preUpdate(&$record)
   {
-    $record['virtual_time'] = $record['phaseid']['virtual_time'];
-    $this->modifyfortime($record);
-    return true;
+    return $this->preAdd($record);
   }
 
   function modifyfortime(&$record)
@@ -1530,6 +1546,25 @@ class hours extends atkNode
     $this->setTable("hoursbase");
     return $handler->action_update();
   }
+  
+  protected function updateTimeLeft($record)
+  {
+    $planning = null;
+    $left = null;
+    
+    $node = &atkGetNode("project.phase");
+    list($res) = $node->selectDb("phase.id='".$record['phaseid']['id']."'","","","",array('current_planning','initial_planning','spend_hours'));
+
+    if($res['current_planning']>0) $planning = $res['current_planning'];
+    elseif($res['initial_planning']>0) $planning = $res['initial_planning'];
+    
+    if($planning)
+    {
+      $left = $planning - $res['spend_hours']*60;
+    }
+    $this->getDb()->query("UPDATE ".$this->getTable()." SET time_left='$left' WHERE id='".$record['id']."'");
+  }
+  
 }
 
 ?>
