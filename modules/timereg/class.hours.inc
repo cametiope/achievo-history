@@ -284,7 +284,7 @@ class hours extends atkNode
     $this->add(new atkDateAttribute("entrydate",AF_HIDE|AF_OBLIGATORY));
     
     $this->add(new atkDurationAttribute("time_left","1m","10h",AF_HIDE|AF_FORCE_LOAD))->setForceInsert(true)->setForceUpdate(true);
-    $this->add(new atkDummyAttribute("message","",AF_NO_LABEL|AF_HIDE_ADD|AF_HIDE_SEARCH|AF_HIDE_SELECT));
+    $this->add(new atkDummyAttribute("message","",AF_NO_LABEL|AF_HIDE_ADD|AF_HIDE_SEARCH|AF_HIDE_SELECT|AF_HIDE_LIST));
 /**
  * @todo: we need to order by projectid.abbreviation, ATK does not include the
  * projectid and phaseid in the selectDb so we FORCE_LOAD the projectid
