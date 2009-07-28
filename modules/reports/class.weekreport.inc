@@ -3,7 +3,7 @@
 include_once("achievotools.inc");
 
 useattrib("atkdateattribute");
-atkImport("modules.utils.dateutil");
+atkimport("modules.utils.dateutil");
 
 define("ONEDAY", 24*60*60);
 define("ONEWEEK", 7*ONEDAY);
@@ -567,6 +567,13 @@ class weekreport extends atkNode
         $query.= "AND id = '".$userid."'";
       }
 
+      $functionlevel_condition = $repUtils->getFunctionLevelCondition($functionlevelswitch, $lowerlevels);
+      
+      if($functionlevel_condition)
+      {
+        $query .= "AND ".$functionlevel_condition;
+      }
+      
       $db = &atkGetDb();
       $persons = $db->getrows($query);
 
