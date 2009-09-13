@@ -711,6 +711,9 @@
   "clicktosearchactiverecords" => "Klik hier om alleen in actieve records te zoeken.",
   "virtual_hours" => "Virtual hours",
   "time_left_message" => 'After this time registration was made, %s hours were left in the budget for this phase',
+  "virtual_only" => "Virtual only",
+  "non-virtual_only" => "Non-virtual only",
+  "hourstype" => "Type of hours displayed",
 );
 
 ?>
