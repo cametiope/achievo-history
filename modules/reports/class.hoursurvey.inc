@@ -235,6 +235,7 @@ class hoursurvey extends atkNode
     $organizationid = $criteria['organizationid'];
     $department_name = $criteria['department_name'];
     $outputType = $criteria['outputType'];
+    $hoursType = $criteria['hourstype'];
     
     if (moduleExists("billing"))
     {
@@ -456,7 +457,8 @@ class hoursurvey extends atkNode
       "month"         =>substr($enddate,5,2),
       "day"           =>substr($enddate,8,2)),
       "aggregate"     =>$aggregate,
-      "remark"  =>$remark
+      "remark"  =>$remark,
+      "hourstype"  =>$hoursType
       );
 
       if(atkconfig::get("timereg","timereg_contact_link",false))
@@ -648,6 +650,11 @@ class hoursurvey extends atkNode
                         <option value="8">6 '.strtolower(atktext("months")).'</option>
                        </select></td></tr></table>';
       $data[] = array(atktext("lookbackperiod","project"),$lookbackperiod);
+      $data[] = array("<hr>");
+      
+
+      $p_attr = new atkListAttribute("hourstype", array("All","virtual_only","non-virtual_only"),array(1,2,3),AF_LIST_NO_NULL_ITEM);
+      $data[] = array(atktext("hourstype","project"),$p_attr->edit($dummyrec));
       $data[] = array("<hr>");
 
       $remarkattr = new atkAttribute("remark", 0, 80);
@@ -902,7 +909,18 @@ class hoursurvey extends atkNode
         $filterarray[] = $this->_addFilterArrayItem("contact_id","='$contact_id'",$this->getTable());
       }
     }
-
+    
+    //handle $hoursType
+    switch ($hoursType)
+    {
+      case '2':
+        $filterarray[] = $this->_addFilterArrayItem("virtual_time","='1'",$this->getTable());
+        break;
+      case '3':
+        $filterarray[] = $this->_addFilterArrayItem("","(hoursbase.virtual_time=0 OR hoursbase.virtual_time IS NULL)");
+        break;
+    }
+    
     $orderbystatement = $this->getOrderByStatement($columnConfig);
 
     //Check if we need to add additional columns because of the selected filter.
