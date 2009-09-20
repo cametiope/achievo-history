@@ -1,0 +1,225 @@
+<?php
+
+require_once ('lib/soapclient/SforcePartnerClient.php');
+require_once ('lib/soapclient/SforceHeaderOptions.php');
+require_once ('lib/soapclient/SforceMetadataClient.php');
+
+class sflink extends atkNode 
+{
+  protected $m_wsdl = './achievo_modules/pub/sflink/lib/soapclient/partner.wsdl.xml';
+  protected $m_userName = "ygolovnya@gmail.com";
+  protected $m_password = "Ahfq,ehu_2009qGfy1HYQp4Q47aW6JthlVrNtD";
+  protected $m_client;
+  //protected $m_metaConnection;
+
+  
+  public function __construct($type="sflink", $flag=0)
+  {
+    parent::atkNode($type,$flag);
+    
+    //connect to salesforce
+    $this->m_client = new SforcePartnerClient();
+    $this->m_client->createConnection($this->m_wsdl);
+    $loginResult = $this->m_client->login($this->m_userName, $this->m_password);
+    //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
+
+    $this->setFeedback("sfexport",ACTION_CANCELLED|ACTION_SUCCESS);
+  }
+
+  private function getAchievoAccounts($offset, $limit)
+  {
+    $rows = $this->getDb()->getrows("
+      SELECT
+       id,
+       invoice_city,
+       invoice_country,
+       invoice_zipcode,
+       invoice_state,
+       CONCAT(invoice_address,IFNULL(CONCAT(', ',invoice_address2),'')) invoice_address,
+       remark,
+       fax,
+       name,
+       employees,
+       phone,
+       mail_city,
+       mail_country,
+       mail_zipcode,
+       mail_state,
+       CONCAT(mail_address,IFNULL(CONCAT(', ',mail_address2),'')) mail_address,
+       organizationcode,
+       website,
+       type
+      FROM
+       organization o
+      WHERE sfid IS NULL
+      LIMIT $offset, $limit
+    ");
+    return $rows;    
+  }
+  
+  private function addAccount($r)
+  {
+    $id = false;
+    
+    $fields = array(
+      "Name" =>$r['name'],
+      "ShippingStreet" =>$r['mail_address'],
+      "ShippingPostalCode" =>$r['mail_zipcode'],
+      "ShippingCity" =>$r['mail_city'],
+      "ShippingState" =>$r['mail_state'],
+      "ShippingCountry" =>$r['mail_country'],
+      "ib_id__c"=>$r['id'],
+      "BillingStreet" =>$r['mail_address'],
+      "BillingPostalCode" =>$r['mail_zipcode'],
+      "BillingCity" =>$r['mail_city'],
+      "BillingState" =>$r['mail_state'],
+      "BillingCountry" =>$r['mail_country'],
+      "Phone" =>$r['phone'],
+      "Fax" =>$r['fax'],
+      "Description" =>$r['remark'],
+      "Website" =>$r['website'],
+      "Type" =>'vipcustomer',
+    );
+      
+    $sObject = new SObject();
+    $sObject->fields = $fields;
+    $sObject->type = 'Account';
+    $createResponse = $this->m_client->create(array($sObject));
+      
+    //check that account has been created ok
+    if($createResponse->success)
+    {
+      $id = $createResponse->id;
+      $this->getDb()->query("UPDATE organization SET sfid='$id'");
+    }
+    return $id; 
+  }
+  
+  public function action_sfexport()
+  {
+    if (!empty($this->m_postvars['confirm'])) $this->_doSfExport();
+    elseif (empty($this->m_postvars['cancel']))
+    {
+      $page = &$this->getPage();
+      $page->addContent($this->confirmAction("1=0", "sfexport", false, false, false) );
+    }
+    else
+    {
+      $location = $this->feedbackUrl("sfexport", ACTION_CANCELLED);
+      $this->redirect($location);
+    }
+  }
+  
+  private function _doSfExport()
+  {
+    $offset = 0;
+    $limit = atkConfig::get("sflink","limit");
+    
+    $accountCounts = 0;
+    $contactCounts = 0;
+    
+    do
+    {
+      //get data portin
+      $rows = $this->getAchievoAccounts($offset,$limit);
+      $offset += $limit;
+      ini_set('max_execution_time',150);
+            
+      //iterate currect portion
+      foreach ($rows as $r)
+      {
+        //add account
+        $accountId = $this->addAccount($r);
+      
+        //if ok - add account's contacts
+        if($accountId)
+        {
+          //get account's contacts
+          $accountCounts++;
+          $contacts = $this->getAccountContacts($r['id']);
+          foreach ($contacts as $c)
+          {
+            //add contact
+            $contactCounts += $this->addContact($c, $accountId);
+          }
+        }
+      }
+    }
+    //when we get less then $limit - this is last portion
+    while (count($rows)==$limit);
+
+    $location = $this->feedbackUrl("sfexport", ACTION_SUCCESS,"","$accountCounts accounts and $contactCounts contacts have been added");
+    $this->redirect($location);
+  }
+  
+  private function addContact($c,$accountId)
+  {
+    $count = 0;
+    
+    $fields = array(
+    "ib_id__c" => $c['id'],
+    "title" => $c['title'],
+    "AccountId" => $accountId,
+    "LastName" =>$c['lastname'],
+    "FirstName" =>$c['firstname'],
+    "Phone" => $c["phone"],
+    "Fax" => $c["fax"],
+    "Email" => $c["email"],
+    //"Birthdate" => $c["birthdate"],
+    "MailingStreet" => $c["address"],
+    "MailingCity" => $c["city"],
+    "MailingState" => $c["state"],
+    "MailingPostalCode" => $c["zipcode"],
+    "MailingCountry" => $c["country"],
+    "MobilePhone" => $c["cellular"],
+    "Description" => $c["remark"],
+    );
+
+    $sObject = new SObject();
+    $sObject->fields = $fields;
+    $sObject->type = 'Contact';
+    $createResponse = $this->m_client->create(array($sObject));
+    
+    //check that account has been created ok
+    if(!$createResponse->success)
+    {
+      atkerror("Contact creating Error");
+    }
+    else 
+    {
+      $count++;
+      $id = $createResponse->id;
+      $this->getDb()->query("UPDATE person SET sfid='$id'");
+    }
+    return $count;
+  }
+  
+  private function getAccountContacts($accountId)
+  {
+    return $this->getDb()->getrows("
+      SELECT
+        p.id,
+        t.title,
+        p.lastname,
+        p.firstname,
+        p.birthdate,
+        p.phone,
+        p.fax,
+        p.email,
+        p.cellular,
+        p.city,
+        p.country,
+        p.zipcode,
+        p.state,
+        p.address,
+        p.remark
+      FROM
+        person p
+        LEFT JOIN title t ON p.title_id=t.id
+      WHERE
+        role='contact'
+        AND p.company='$accountId'
+      ");
+  }
+
+}
