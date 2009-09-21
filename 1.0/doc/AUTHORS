@@ -1,0 +1,208 @@
+Author
+------
+Ivo Jansch         <ivo@achievo.org>
+
+
+Additional Development
+----------------------
+Sandy Pleyte       <sandy@achievo.org>
+Peter Verhage      <peter@achievo.org>
+Rene Bakx          <rene@ibuildings.nl>
+Wim Kosten         <wim@ibuildings.nl>
+Maurice Maas       <maurice@ibuildings.nl>
+Martin Roest       <martin@ibuildings.nl>
+Lineke Willems     <lineke@achievo.org>
+
+
+Marketing and Support
+---------------------
+Tom M. Schenkenberg <tom@achievo.org>
+Jeroen Stephan      <jeroen@ibuildings.nl>
+
+
+Sponsors
+--------
+Achievo grows not only through contributions from the Open Source community,
+but also through financial donations from sponsors, who finance the
+development of new features.
+
+* Ibuildings.nl BV, Netherlands (http://www.ibuildings.nl) sponsors the 
+  development of Achievo and sponsors Achievo's hosting and development
+  facilities (site, mailinglists, cvs etc).
+
+* Tryllian BV, Netherlands (http://www.tryllian.nl) sponsored the following
+  enhancements: hourlocking feature, employee week report, CSV export
+  function, employee contracts, the timereg_check cron script and various
+  hoursurvey improvements.
+
+* S&W Consultancy BV, Netherlands (http://www.s-w.nl) sponsored the following
+  enhancements: contactpersons per project, userinterface improvements, 
+  improvements to the extended search feature, and several additional fields 
+  for customers and projects.
+
+* Lilleborg AG, Norway (http://www.lilleborg.no) sponsored some parts of
+  the billing feature.
+
+* Plan42 GMBH, Germany (http://www.plan42.de) sponsored the development
+  of the Deposit add-on module, some parts of the billing module, the
+  privilege to register time for any user and the limitation of time
+  registration to team-members only.
+
+* Prosa.dk, Denmark (http://www.prosa.dk) sponsored the development of the
+  weektimereg add-on module, the weekday stats and the multi-sort and 
+  subtotals/aggregation for the hoursurvey report.
+  
+* Kern8, The Netherlands (http://www.kern8.nl) sponsored the development
+  of cumulative usercontracts, the displaying of shortages in the employee 
+  weekreport and the holidayreport add-on module.
+
+* Petrosys Pty, Australia (http://www.petrosys.com.au) sponsored the 
+  fix for bug #269.
+
+* Langzaam Verkeer, Belgium (http://www.langzaamverkeer.be) sponsored the
+  overtime balance features, configurable overtime periods, time survey
+  date navigation, employee function levels, phase employee planning and
+  the detail planning tool.
+
+* Dataroomservices, The Netherlands (http://www.dataroomservices.nl) sponsored
+  the PDA mode, the configurable timereg confirmation message, the ability to
+  register based on time indication instead of duration and several 
+  enhancements to employee management.
+
+* Veronica Digitaal, The Netherlands (http://www.veronicadigitaal.nl) sponsored
+  the ability to approve locked weeks and the employee department feature.
+
+To become a sponsor, please read http://www.achievo.org/support/sponsor.
+
+
+Translators
+-----------
+The following people contributed a translation or updated an existing one:
+
+Braz. Portuguese: Armando M. Baratti   <ambaratti@aduaneiras.com.br>
+                  Kevin Golding        <kevin@caomhin.demon.co.uk>
+                  Geraldo L M Fonseca  <glmfonseca@uol.com.br>
+                  Marcus TB de Aquino  <tulio@mondo.com.br>
+                  Wanderlei Antonio Cavassin <cavassin@conectiva.com.br>
+Catalan         : Lluís Torrent        <lluis6a@teleline.es>
+Chinese         : Xiaogang Sun         <sun.xiao.g@263.net>
+Czech           : Jakub Kahovec        <jakub.kahovec@newton.cz>
+Dutch           : Ivo Jansch           <ivo@achievo.org>
+Danish          : Morten Oersted       <mo@moch.dk>
+                  Junaid Mukhtar       <JUM@prosa.dk>
+Finnish         : Skyttä Kari          <kari.skytta@koskisen.fi>
+                  Arto Saraniva        <arto.saraniva@imnetti.fi>
+French          : Benoit des Ligneris  <benoit.des.ligneris@physique.usherb.ca>
+                  Olivier Fourdan      <fourdan@xfce.org>
+                  Kevin Golding        <kevin@caomhin.demon.co.uk>
+                  Timduru              <timduru@timduru.org>
+                  Hicham Abassi        <h.abassi@datapresse.com>
+German          : Bastian Kleineidam   <bastian.kleineidam@triplex.de>
+                  Lars Martin          <lars@smb-tec.com>
+                  Michael Gaehwiler    <pegatron@gmx.net>
+                  Lucas Smith          <smith@dybnet.de>
+                  Dirk Weigenand       <Dirk.Weigenand@smb-tec.com>
+                  Rainer Wedrich       <rainer.wedrich@ebd-networks.de>
+                  Nele Vogel           <nele.vogel@hamburg.de>
+                  Stephan Reichhelm    <reichhelm@grit.de>
+                  Christian Veron      <veronc@schneiderkreuznach.com>
+                  Udo Werner           <udo_werner@gmx.net>
+Hungarian       : Miklos Bagi Jr.      <bagim@muszakikiado.hu>
+Italian         : Marco De Toni        <marco.detoni@dedalomedia.it>
+                  Luca Pescatore       <l.pescatore@network.it>
+                  Christophe Vallet    <chris@prismanet.com>
+                  Nicola Busetto       <nicola@cnbtech.it>
+                  Andrea Trasatti      <trasatti@bware.it>
+Norwegian       : Stein Bjorndal       <stein@proact.no>
+                  Tommy Stiansen       <Tommy@tradeit.as>
+                  Stian Hartviksen     <stian.hartviksen@itsopen.no>
+                  Kjetil Byklum        <kbyklum@itsopen.net>
+                  Bjørn Langfors       <bjorn@kulturkonsult.no>
+                  Olav B. Lygre        <olav@lygre.no>
+Polish          : Lech Nowak           <lechnowak@op.pl>
+Portuguese      : Pedro Vieira         <pedro.vieira@filbox.com>
+Russian         : Vitaliy Perekupka    <vit@uptsoft.com>
+                  Maryia I. Davidouskaia <maryia@iatp.by> 
+                  Konstantin Starodubtsev <kostya@ptc.spbu.ru>
+Slovak          : Daniel Kulifaj [danielk] <kulifaj@emark.sk>
+Spanish         : Jorge Ibsen          <jibsen@eso.org>
+                  Armando Montiel Caba <amontiel@mpsnet.net.mx>
+                  Oswaldo Gómez        <odgomez@cantv.net>
+                  Antonio              <avico@menta.net>
+                  Kevin Golding        <kevin@caomhin.demon.co.uk>
+                  Daniel Adad          <info@adad.net>
+                  Pavel F.             <pavelfg@hotmail.com>
+                  José E.R. Valenciano <eruiz@disid.com>
+Swedish         : Thomas Karlsson      <thomas.karlsson@relea.se>
+
+
+Major Contributors
+------------------
+We like to thank the following people especially, since they made
+significant contributions to the Achievo project.
+
+Stefan Niederhauser <sn@atelier-w.ch>
+
+  Stefan came up with the idea and design of the 'node' concept, which 
+  later became the basis of the ATK backend.
+
+William Rhee <willrhee@umich.edu>
+
+  William, of the University of Michigan, added Oracle 8i Support
+  to Achievo.
+
+Marc van Agteren <mva@buzzmachines.com>
+
+  Marc developed the initial version of the finance menu, during
+  an internship at ibuildings.nl.
+
+Ludo Beumer <l.m.beumer@home.nl>
+
+  Ludo developed the initial version of the resource planning feature,
+  during an internship at ibuildings.nl.
+
+
+Other Contributors
+------------------
+We received bugfixes and other contributions from the following people:
+
+Alexandre Carmel-Veilleux             <saruman@mondo-live.com>
+Jan Peter Hecking                     <jhecking@informatik.uni-rostock.de>
+Jason Kohles                          <jason@mediabang.com>
+Javier Ledesma                        <javier.ledesma@ubs.com>
+T. Luyben                             <tycho@e-lab.nl>
+Martin Pruijssers
+Wayne T. Ethier                       <wte@websynergyinternet.com>
+Michel Marti                          <michel.marti@ubs.com>
+Paul Verhoeff                         <paul@ibuildings.nl>
+Lucas Smith                           <smith@dybnet.de>
+Daniel Frame                          <dframe@tampabay.rr.com>
+Jakub Kahovec                         <jakub.kahovec@newton.cz>
+Paul Tiemann                          <pault@center7.com>
+Tobias Henle                          <t.henle@thiesen.com>
+Andrei Dragomir                       <adragomir@iakt.rdsnet.ro>
+Harry School                          <harryschool@netscape.net>
+Sergio Fernandez                      <sergio.fernandez@agoratechnologies.com>
+Maciej Maczynski                      <macmac@xdsnet.pl>
+Dan Frame                             <dan_frame@jabil.com>
+Marcel van Rooijen                    <achievo@acha.nl>
+Herman Reintke                        <hreintke@tauri.nl>
+Jeroen Latour                         <jlatour@calaquendi.net>
+Soh Kok Hong                          <kokhong@mobiwave.com>
+Kevin Golding                         <kevin@caomhin.demon.co.uk>
+Joachim Nübold                        <joachim.nuebold@syngenio.de>
+Bruno Meneuvrier                      <bruno@cameleons.net>
+Ajit Deshpande                        <ajit@pobox.com>
+Jean-Charles Rogez                    <jean-charles.rogez@edfgdf.fr>
+Jonas Lincoln                         <lincoln@unit.liu.se>
+Jaap Bouma                            <jaap@buyways.nl>
+Martin ?                 [MartinAc]   <acmail@sebastian.nl>
+Mike Izydorski                        <achievobug@mizydors.rubikon.pl>
+Stefan Leblanc                        <sleblanc@radicalhorizon.com>
+Christian Lotz           [ChristianL] <cl@plan42.de>
+Joop van de Wege                      <joopvandewege@mococo.nl>
+Ruhshad Master                        <rmaster@csi-wireless.com>
+Brian Gillis                          <brian@thegillis.net>
+
+Names between [] are the names they are refered by in the CHANGES file. (If
+different from their first name).
