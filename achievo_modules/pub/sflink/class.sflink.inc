@@ -6,9 +6,6 @@ require_once ('lib/soapclient/SforceMetadataClient.php');
 
 class sflink extends atkNode 
 {
-  protected $m_wsdl = './achievo_modules/pub/sflink/lib/soapclient/partner.wsdl.xml';
-  protected $m_userName = "ygolovnya@gmail.com";
-  protected $m_password = "Ahfq,ehu_2009qGfy1HYQp4Q47aW6JthlVrNtD";
   protected $m_client;
   //protected $m_metaConnection;
 
@@ -19,8 +16,8 @@ class sflink extends atkNode
     
     //connect to salesforce
     $this->m_client = new SforcePartnerClient();
-    $this->m_client->createConnection($this->m_wsdl);
-    $loginResult = $this->m_client->login($this->m_userName, $this->m_password);
+    $this->m_client->createConnection(moduleDir($this->getModule()).'lib/soapclient/partner.wsdl.xml');
+    $loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
     //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
 
     $this->setFeedback("sfexport",ACTION_CANCELLED|ACTION_SUCCESS);
