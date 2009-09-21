@@ -1,0 +1,21 @@
+<?php
+  module("utils");
+  module("email_template");
+  module("setup");
+  module("employee");
+  module("person");
+  module("timereg");
+  module("timereg_advanced");
+  module("project");
+  module("organization");
+  module("notes");
+  module("scheduler");
+  module("todo");
+  module("reports");
+  module("pim");
+  module("search");
+  module("graph");
+  module("quotation");
+  module("docmanager");
+  module("crm");
+  module("history");
