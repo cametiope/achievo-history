@@ -1,0 +1,122 @@
+Author
+------
+Ivo Jansch         <ivo@achievo.org> 
+
+
+Additional Development
+----------------------
+Sandy Pleyte       <sandy@achievo.org>
+Peter Verhage      <peter@achievo.org>
+Rene Bakx          <rene@ibuildings.nl>
+Wim Kosten         <wim@ibuildings.nl>
+Maurice Maas       <maurice@ibuildings.nl>
+
+
+Marketing and Support
+---------------------
+Tom M. Schenkenberg <tom@achievo.org>
+Jeroen Stephan      <jeroen@ibuildings.nl>
+
+
+Sponsors
+--------
+Achievo grows not only through contributions from the Open Source community,
+but also through financial donations from sponsors, who finance the 
+development of new features.
+
+* Tryllian BV, Netherlands (http://www.tryllian.nl) sponsored the following 
+  developments:
+
+  - hourlocking feature
+  - employee week report
+  - CSV export function
+  - employee contracts
+  - timereg_check cron script
+  - hoursurvey improvements
+
+* S&W Consultancy BV, Netherlands (http://www.s-w.nl) sponsored the following
+  enhancements:
+
+  - contactpersons per project
+  - userinterface improvements
+  - improvements to the extended search feature
+  - additional fields to customers and projects
+
+* Lilleborg AG, Norway (http://www.lilleborg.no) sponsored some parts of 
+  the billing feature.
+  
+To become a sponsor, please read http://www.ibuildings.nl/en/sponsor/achievo.
+
+
+Translators
+-----------
+The following people contributed a translation or updated an existing one:
+
+Braz. Portuguese: Armando M. Baratti   <ambaratti@aduaneiras.com.br>
+Dutch           : Ivo Jansch           <ivo@achievo.org>
+Czech           : Jakub Kahovec        <jakub.kahovec@newton.cz>
+Finnish         : Skyttä Kari          <kari.skytta@koskisen.fi>
+                  Arto Saraniva        <arto.saraniva@imnetti.fi>
+French          : Benoit des Ligneris  <benoit.des.ligneris@physique.usherb.ca>
+                  Olivier Fourdan      <fourdan@xfce.org>
+German          : Bastian Kleineidam   <bastian.kleineidam@triplex.de>
+                  Lars Martin          <lars@smb-tec.com>
+                  Michael Gaehwiler    <pegatron@gmx.net>
+                  Lucas Smith          <smith@dybnet.de>
+                  Dirk Weigenand       <Dirk.Weigenand@smb-tec.com>
+Hungarian       : Miklos Bagi Jr.      <bagim@muszakikiado.hu>
+Italian         : Marco De Toni        <marco.detoni@dedalomedia.it>
+                  Luca Pescatore       <l.pescatore@network.it>
+                  Christophe Vallet    <chris@prismanet.com>
+                  Nicola Busetto       <nicola@cnbtech.it>
+Norwegian       : Stein Bjorndal       <stein@proact.no>
+                  Tommy Stiansen       <Tommy@tradeit.as>                   
+Russian         : Vitaliy Perekupka    <vit@uptsoft.com>
+Spanish         : Jorge Ibsen          <jibsen@eso.org>
+                  Armando Montiel Caba <amontiel@mpsnet.net.mx>
+                  Oswaldo Gómez        <odgomez@cantv.net>
+
+
+Major Contributors
+------------------
+We like to thank the following people especially, since they made
+significant contributions to the Achievo project.
+
+Stefan Niederhauser <sn@atelier-w.ch>
+
+  Stefan came up with the aditional idea and design of the 'node' 
+  concept, which later became the basis of the ATK backend.
+
+William Rhee <willrhee@umich.edu>
+
+  William, of the University of Michigan, added Oracle 8i Support
+  to Achievo.
+
+
+Other Contributors
+------------------
+We received bugfixes and other contributions from the following people:
+
+Alexandre Carmel-Veilleux             <saruman@mondo-live.com>	
+Jan Peter Hecking                     <jhecking@informatik.uni-rostock.de>
+Jason Kohles                          <jason@mediabang.com>      
+Javier Ledesma                        <javier.ledesma@ubs.com> 
+T. Luyben                             <tycho@e-lab.nl>
+Martin Pruijssers                       
+Wayne T. Ethier                       <wte@websynergyinternet.com>
+Michel Marti                          <michel.marti@ubs.com>
+Paul Verhoeff                         <paul@ibuildings.nl>
+Lucas Smith                           <smith@dybnet.de>
+Daniel Frame                          <dframe@tampabay.rr.com>
+Jakub Kahovec                         <jakub.kahovec@newton.cz>
+Paul Tiemann                          <pault@center7.com>
+Tobias Henle                          <t.henle@thiesen.com>
+Andrei Dragomir                       <adragomir@iakt.rdsnet.ro>
+Harry School                          <harryschool@netscape.net>
+Sergio Fernandez                      <sergio.fernandez@agoratechnologies.com>
+Maciej Maczynski                      <macmac@xdsnet.pl>
+Herman Reintke                        <hreintke@tauri.nl>
+Jeroen Latour                         <jlatour@calaquendi.net>
+Kevin Golding                         <kevin@caomhin.demon.co.uk>
+Bruno Meneuvrier                      <bruno@cameleons.net>
+Joachim Nübold                        <joachim.nuebold@syngenio.de>
