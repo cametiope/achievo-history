@@ -1,0 +1,20 @@
+<?php
+  module("utils");
+  module("email_template");
+  module("setup");
+  module("employee");
+  module("person");
+  module("timereg");
+  module("project");
+  module("organization");
+  module("notes");
+  module("scheduler");
+  module("todo");
+  module("reports");
+  module("pim");
+  module("search");
+  module("graph");
+  module("quotation");
+  module("docmanager");
+  module("crm");
+?>
