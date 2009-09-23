@@ -48,9 +48,9 @@ class sflink extends atkNode
        type
       FROM
        organization o
-      WHERE sfid IS NULL
       LIMIT $offset, $limit
     ");
+//      WHERE sfid IS NULL
     return $rows;    
   }
   
@@ -112,6 +112,9 @@ class sflink extends atkNode
     $offset = 0;
     $limit = atkConfig::get("sflink","limit");
     
+    $total = 500;
+    $totalcount = 0;
+    
     $accountCounts = 0;
     $contactCounts = 0;
     
@@ -141,9 +144,10 @@ class sflink extends atkNode
           }
         }
       }
+      $totalcount += count($rows);
     }
     //when we get less then $limit - this is last portion
-    while (count($rows)==$limit);
+    while ((count($rows)==$limit) && ($totalcount<$total));
 
     $location = $this->feedbackUrl("sfexport", ACTION_SUCCESS,"","$accountCounts accounts and $contactCounts contacts have been added");
     $this->redirect($location);
