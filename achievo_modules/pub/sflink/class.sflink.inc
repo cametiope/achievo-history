@@ -61,7 +61,7 @@ class sflink extends atkNode
     $id = false;
     
     $fields = array(
-      "Name" =>$r['name'],
+      "Name" =>htmlspecialchars($r['name']),
       "ShippingStreet" =>$r['mail_address'],
       "ShippingPostalCode" =>$r['mail_zipcode'],
       "ShippingCity" =>$r['mail_city'],
@@ -91,6 +91,7 @@ class sflink extends atkNode
       $id = $createResponse->id;
       $this->getDb()->query("UPDATE organization SET sfid='$id'");
     }
+    else halt("Error adding organization");
     return $id; 
   }
   
