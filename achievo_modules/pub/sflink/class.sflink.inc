@@ -132,17 +132,17 @@ class sflink extends atkNode
         $accountId = $this->addAccount($r);
       
         //if ok - add account's contacts
-/*        if($accountId)
+        if($accountId)
         {
           //get account's contacts
           $accountCounts++;
-          $contacts = $this->getAccountContacts($r['id']);
+/*          $contacts = $this->getAccountContacts($r['id']);
           foreach ($contacts as $c)
           {
             //add contact
             $contactCounts += $this->addContact($c, $accountId);
-          }
-        }*/
+          }*/
+        }
       }
       $totalcount += count($rows);
     }
