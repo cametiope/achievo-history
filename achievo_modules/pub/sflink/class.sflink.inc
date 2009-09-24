@@ -178,50 +178,61 @@ class sflink extends atkNode
     $location = $this->feedbackUrl("accountexport", ACTION_SUCCESS,"","$accountCounts accounts and $contactCounts contacts have been added");
     $this->redirect($location);
   }
-  
-  private function addContact($c,$accountId)
-  {
-    $count = 0;
-    
-    $fields = array(
-    "ib_id__c" => $c['id'],
-    "title" => $c['title'],
-    "AccountId" => $accountId,
-    "LastName" =>$c['lastname'],
-    "FirstName" =>$c['firstname'],
-    "Phone" => $c["phone"],
-    "Fax" => $c["fax"],
-    "Email" => $c["email"],
-    //"Birthdate" => $c["birthdate"],
-    "MailingStreet" => $c["address"],
-    "MailingCity" => $c["city"],
-    "MailingState" => $c["state"],
-    "MailingPostalCode" => $c["zipcode"],
-    "MailingCountry" => $c["country"],
-    "MobilePhone" => $c["cellular"],
-    "Description" => $c["remark"],
-    );
 
-    $sObject = new SObject();
-    $sObject->fields = $fields;
-    $sObject->type = 'Contact';
-    $createResponse = $this->m_client->create(array($sObject));
-    
-    //check that account has been created ok
-    if(!$createResponse->success)
+  public function action_contactexport()
+  {
+    if (!empty($this->m_postvars['confirm'])) $this->_doContactExport();
+    elseif (empty($this->m_postvars['cancel']))
     {
-      atkerror("Contact creating Error");
+      $page = &$this->getPage();
+      $page->addContent($this->confirmAction("1=0", "contactexport", false, false, false) );
     }
-    else 
+    else
     {
-      $count++;
-      $id = $createResponse->id;
-      $this->getDb()->query("UPDATE person SET sfid='$id'");
+      $location = $this->feedbackUrl("contactexport", ACTION_CANCELLED);
+      $this->redirect($location);
     }
-    return $count;
   }
-  
-  private function getAccountContacts($accountId)
+
+  private function _doContactExport()
+  {
+    $offset = 0;
+    $limit = atkConfig::get("sflink","limit");
+    
+    $total = 500;
+    $totalcount = 0;
+    
+    $contactCount = 0;
+    
+    do
+    {
+      //get data portin
+      $rows = $this->getAchievoContact($offset,$limit);
+      $offset += $limit;
+      ini_set('max_execution_time',150);
+            
+      //iterate currect portion
+      foreach ($rows as $r)
+      {
+        //add account
+        $contactId = $this->addContact($r);
+      
+        //if ok - 
+        if($contactId)
+        {
+          $contactCount++;
+        }
+      }
+      $totalcount += count($rows);
+    }
+    //when we get less then $limit - this is last portion
+    while ((count($rows)==$limit) && ($totalcount<$total));
+
+    $location = $this->feedbackUrl("contactexport", ACTION_SUCCESS,"","$contactCount contacts have been added");
+    $this->redirect($location);
+  }
+
+  private function getAchievoContact($offset, $limit)
   {
     return $this->getDb()->getrows("
       SELECT
@@ -239,14 +250,62 @@ class sflink extends atkNode
         p.zipcode,
         p.state,
         p.address,
-        p.remark
+        p.remark,
+        p.sfid
       FROM
         person p
         LEFT JOIN title t ON p.title_id=t.id
+        JOIN organization o ON o.id=p.company
       WHERE
         role='contact'
-        AND p.company='$accountId'
+        AND o.sfid IS NOT NULL
+        AND p.sfid IS NULL
+      LIMIT $offset, $limit
       ");
   }
+  
+  
+  private function addContact($c)
+  {
+    $count = 0;
+    
+    $fields = array(
+    "ib_id__c" => $c['id'],
+    "title" => htmlspecialchars($c['title']),
+    "AccountId" => htmlspecialchars($c['sfid']),
+    "LastName" =>htmlspecialchars($c['lastname']),
+    "FirstName" =>htmlspecialchars($c['firstname']),
+    "Phone" => htmlspecialchars($c["phone"]),
+    "Fax" => htmlspecialchars($c["fax"]),
+    "Email" => htmlspecialchars($c["email"]),
+    //"Birthdate" => $c["birthdate"],//only for employees in Achievo
+    "MailingStreet" => htmlspecialchars($c["address"]),
+    "MailingCity" => htmlspecialchars($c["city"]),
+    "MailingState" => htmlspecialchars($c["state"]),
+    "MailingPostalCode" => htmlspecialchars($c["zipcode"]),
+    "MailingCountry" => htmlspecialchars($c["country"]),
+    "MobilePhone" => htmlspecialchars($c["cellular"]),
+    "Description" => htmlspecialchars($c["remark"]),
+    );
+
+    $sObject = new SObject();
+    $sObject->fields = $fields;
+    $sObject->type = 'Contact';
+    $createResponse = $this->m_client->create(array($sObject));
+    
+    //check that account has been created ok
+    if(!$createResponse->success)
+    {
+      atkerror("Contact creating Error");
+    }
+    else 
+    {
+      $count++;
+      $id = $createResponse->id;
+      $this->getDb()->query("UPDATE person SET sfid='$id' WHERE id='".$c['id']."'");
+    }
+    return $count;
+  }
+  
 
 }
