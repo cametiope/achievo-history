@@ -77,7 +77,7 @@ class sflink extends atkNode
       "Fax" =>$r['fax'],
       "Description" =>$r['remark'],
       "Website" =>$r['website'],
-      "Type" =>'vipcustomer',
+      "Type" =>$r['type'],
     );
       
     $sObject = new SObject();
@@ -89,7 +89,7 @@ class sflink extends atkNode
     if($createResponse->success)
     {
       $id = $createResponse->id;
-      $this->getDb()->query("UPDATE organization SET sfid='$id'");
+      $this->getDb()->query("UPDATE organization SET sfid='$id' WHERE id='".$r['id']."'");
     }
     else halt("Error adding organization");
     return $id; 
