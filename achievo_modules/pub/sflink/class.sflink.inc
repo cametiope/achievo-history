@@ -20,7 +20,7 @@ class sflink extends atkNode
     $loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
     //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
 
-    $this->setFeedback("sfexport",ACTION_CANCELLED|ACTION_SUCCESS);
+    $this->setFeedback(array("accountexport","contactexport"), ACTION_CANCELLED|ACTION_SUCCESS);
   }
 
   private function getAchievoAccounts($offset, $limit)
@@ -48,9 +48,9 @@ class sflink extends atkNode
        type
       FROM
        organization o
+      WHERE sfid IS NULL
       LIMIT $offset, $limit
     ");
-//      WHERE sfid IS NULL
     return $rows;    
   }
   
@@ -92,22 +92,22 @@ class sflink extends atkNode
     return $id; 
   }
   
-  public function action_sfexport()
+  public function action_accountexport()
   {
-    if (!empty($this->m_postvars['confirm'])) $this->_doSfExport();
+    if (!empty($this->m_postvars['confirm'])) $this->_doAccountExport();
     elseif (empty($this->m_postvars['cancel']))
     {
       $page = &$this->getPage();
-      $page->addContent($this->confirmAction("1=0", "sfexport", false, false, false) );
+      $page->addContent($this->confirmAction("1=0", "accountexport", false, false, false) );
     }
     else
     {
-      $location = $this->feedbackUrl("sfexport", ACTION_CANCELLED);
+      $location = $this->feedbackUrl("accountexport", ACTION_CANCELLED);
       $this->redirect($location);
     }
   }
   
-  private function _doSfExport()
+  private function _doAccountExport()
   {
     $offset = 0;
     $limit = atkConfig::get("sflink","limit");
@@ -132,7 +132,7 @@ class sflink extends atkNode
         $accountId = $this->addAccount($r);
       
         //if ok - add account's contacts
-        if($accountId)
+/*        if($accountId)
         {
           //get account's contacts
           $accountCounts++;
@@ -142,14 +142,14 @@ class sflink extends atkNode
             //add contact
             $contactCounts += $this->addContact($c, $accountId);
           }
-        }
+        }*/
       }
       $totalcount += count($rows);
     }
     //when we get less then $limit - this is last portion
     while ((count($rows)==$limit) && ($totalcount<$total));
 
-    $location = $this->feedbackUrl("sfexport", ACTION_SUCCESS,"","$accountCounts accounts and $contactCounts contacts have been added");
+    $location = $this->feedbackUrl("accountexport", ACTION_SUCCESS,"","$accountCounts accounts and $contactCounts contacts have been added");
     $this->redirect($location);
   }
   

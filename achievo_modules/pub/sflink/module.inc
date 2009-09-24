@@ -4,13 +4,14 @@
   {
     function getNodes()
     {
-      registerNode("sflink.sflink", array("sfexport"));
+      registerNode("sflink.sflink", array("accountexport","contactexport"));
     }
 
     function getMenuItems()
     {
-      $this->menuitem("sflink","","main",array("sflink.sflink", "sfexport"),750);
-      $this->menuitem("sfexport",dispatch_url("sflink.sflink", "sfexport"),"sflink",dispatch_url("sflink.sflink", "sfexport"),760);
+      $this->menuitem("sflink","","main",array("sflink.sflink", "accountexport"),750);
+      $this->menuitem("accountexport",dispatch_url("sflink.sflink", "accountexport"),"sflink",dispatch_url("sflink.sflink", "accountexport"),760);
+      //$this->menuitem("sfexport",dispatch_url("sflink.sflink", "contactexport"),"sflink",dispatch_url("sflink.sflink", "contactexport"),770);
     }
 
 
