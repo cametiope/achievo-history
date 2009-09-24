@@ -20,7 +20,8 @@ class sflink extends atkNode
     $loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
     //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
 
-    $this->setFeedback(array("accountexport","contactexport"), ACTION_CANCELLED|ACTION_SUCCESS);
+    $this->setFeedback(array("accountexport","contactexport","clearsfid"), ACTION_CANCELLED|ACTION_SUCCESS);
+    $this->m_securityImplied = array("clearsfid"=>"accountexport");
   }
 
   private function getAchievoAccounts($offset, $limit)
@@ -91,6 +92,29 @@ class sflink extends atkNode
       $this->getDb()->query("UPDATE organization SET sfid='$id'");
     }
     return $id; 
+  }
+  
+  public function action_clearsfid()
+  {
+    if (!empty($this->m_postvars['confirm'])) $this->_doClearSid();
+    elseif (empty($this->m_postvars['cancel']))
+    {
+      $page = &$this->getPage();
+      $page->addContent($this->confirmAction("1=0", "clearsfid", false, false, false) );
+    }
+    else
+    {
+      $location = $this->feedbackUrl("clearsfid", ACTION_CANCELLED);
+      $this->redirect($location);
+    }
+  }
+
+  private function _doClearSid()
+  {
+    $this->getDb()->query("update organization set sfid =null");
+    $count = $this->getDb()->affected_rows();
+    $location = $this->feedbackUrl("clearsfid", ACTION_SUCCESS,"",$count." records has been update");
+    $this->redirect($location);
   }
   
   public function action_accountexport()
