@@ -51,6 +51,7 @@ class sflink extends atkNode
       WHERE sfid IS NULL
       LIMIT $offset, $limit
     ");
+    atkdebug("COUNT ROWS:".count($rows));
     return $rows;    
   }
   
