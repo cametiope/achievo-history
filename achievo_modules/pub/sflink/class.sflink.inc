@@ -24,77 +24,6 @@ class sflink extends atkNode
     $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport");
   }
 
-  private function getAchievoAccounts($offset, $limit)
-  {
-    $rows = $this->getDb()->getrows("
-      SELECT
-       id,
-       invoice_city,
-       invoice_country,
-       invoice_zipcode,
-       invoice_state,
-       CONCAT(invoice_address,IFNULL(CONCAT(', ',invoice_address2),'')) invoice_address,
-       remark,
-       fax,
-       name,
-       employees,
-       phone,
-       mail_city,
-       mail_country,
-       mail_zipcode,
-       mail_state,
-       CONCAT(mail_address,IFNULL(CONCAT(', ',mail_address2),'')) mail_address,
-       organizationcode,
-       website,
-       type
-      FROM
-       organization o
-      WHERE sfid IS NULL
-      LIMIT $offset, $limit
-    ");
-    atkdebug("COUNT ROWS:".count($rows));
-    return $rows;    
-  }
-  
-  private function addAccount($r)
-  {
-    $id = false;
-    
-    $fields = array(
-      "Name" =>htmlspecialchars($r['name']),
-      "ShippingStreet" =>htmlspecialchars($r['mail_address']),
-      "ShippingPostalCode" =>htmlspecialchars($r['mail_zipcode']),
-      "ShippingCity" =>htmlspecialchars($r['mail_city']),
-      "ShippingState" =>htmlspecialchars($r['mail_state']),
-      "ShippingCountry" =>htmlspecialchars($r['mail_country']),
-      "ib_id__c"=>$r['id'],
-      "BillingStreet" =>htmlspecialchars($r['mail_address']),
-      "BillingPostalCode" =>htmlspecialchars($r['mail_zipcode']),
-      "BillingCity" =>htmlspecialchars($r['mail_city']),
-      "BillingState" =>htmlspecialchars($r['mail_state']),
-      "BillingCountry" =>htmlspecialchars($r['mail_country']),
-      "Phone" =>htmlspecialchars($r['phone']),
-      "Fax" =>htmlspecialchars($r['fax']),
-      "Description" =>htmlspecialchars($r['remark']),
-      "Website" =>htmlspecialchars($r['website']),
-      "Type" =>htmlspecialchars($r['type']),
-    );
-      
-    $sObject = new SObject();
-    $sObject->fields = $fields;
-    $sObject->type = 'Account';
-    $createResponse = $this->m_client->create(array($sObject));
-      
-    //check that account has been created ok
-    if($createResponse->success)
-    {
-      $id = $createResponse->id;
-      $this->getDb()->query("UPDATE organization SET sfid='$id' WHERE id='".$r['id']."'");
-    }
-    else halt("Error adding organization");
-    return $id; 
-  }
-  
   public function action_clearsfid()
   {
     if (!empty($this->m_postvars['confirm'])) $this->_doClearSfid();
@@ -112,7 +41,7 @@ class sflink extends atkNode
 
   private function _doClearSfid()
   {
-    $this->getDb()->query("update organization set sfid =null");
+    $this->getDb()->query("update organization set salesforce_id =null");
     $count = $this->getDb()->affected_rows();
     $location = $this->feedbackUrl("clearsfid", ACTION_SUCCESS,"",$count." records has been update");
     $this->redirect($location);
@@ -135,7 +64,7 @@ class sflink extends atkNode
 
   private function _doClearContactSfid()
   {
-    $this->getDb()->query("update person set sfid=null");
+    $this->getDb()->query("update person set salesforce_id=null");
     $count = $this->getDb()->affected_rows();
     $location = $this->feedbackUrl("clearcontactsfid", ACTION_SUCCESS,"",$count." records has been update");
     $this->redirect($location);
@@ -202,6 +131,97 @@ class sflink extends atkNode
     $this->redirect($location);
   }
 
+  private function getAchievoAccounts($offset, $limit)
+  {
+    $rows = $this->getDb()->getrows("
+      SELECT
+       id,
+       invoice_city,
+       invoice_country,
+       invoice_zipcode,
+       invoice_state,
+       CONCAT(invoice_address,IFNULL(CONCAT(', ',invoice_address2),'')) invoice_address,
+       remark,
+       fax,
+       name,
+       employees,
+       phone,
+       mail_city,
+       mail_country,
+       mail_zipcode,
+       mail_state,
+       CONCAT(mail_address,IFNULL(CONCAT(', ',mail_address2),'')) mail_address,
+       organizationcode,
+       website,
+       type
+      FROM
+       organization o
+      WHERE salesforce_id IS NULL
+      LIMIT $offset, $limit
+    ");
+    return $rows;    
+  }
+  
+  private function addAccount($r)
+  {
+    $id = false;
+    
+    $fields = array(
+      "Name" =>$r['name'],
+      "ShippingStreet" =>$r['mail_address'],
+      "ShippingPostalCode" =>$r['mail_zipcode'],
+      "ShippingCity" =>$r['mail_city'],
+      "ShippingState" =>$r['mail_state'],
+      "ShippingCountry" =>$r['mail_country'],
+      "Achievo_ID__c"=>$r['id'],
+      "BillingStreet" =>$r['invoice_address'],
+      "BillingPostalCode" =>$r['invoice_zipcode'],
+      "BillingCity" =>$r['invoice_city'],
+      "BillingState" =>$r['invoice_state'],
+      "BillingCountry" =>$r['invoice_country'],
+      "Phone" =>$r['phone'],
+      "Fax" =>$r['fax'],
+      "Description" =>$r['remark'],
+      "Website" =>$r['website'],
+      "Type" =>$r['type'],
+    );
+    
+    $this->atk_array_iconv($fields);
+      
+    $sObject = new SObject();
+    $sObject->fields = $fields;
+    $sObject->type = 'Account';
+    $createResponse = $this->m_client->create(array($sObject));
+      
+    //check that account has been created ok
+    if($createResponse->success)
+    {
+      $id = $createResponse->id;
+      $this->getDb()->query("UPDATE organization SET salesforce_id='$id' WHERE id='".$r['id']."'");
+      if($this->isAccountExist($r))
+      {
+        $this->getDb()->query("
+          INSERT INTO sf_dupe (type, id, name) 
+          VALUES('account','".$r['id']."','".$r['name']."')");
+      } 
+      
+    }
+    else atkerror("Error adding organization");
+    return $id; 
+  }
+
+  private function isAccountExist($c)
+  {
+    $query = "SELECT id FROM Account 
+              WHERE Name ='".$c['name']."'"; 
+
+  	$result = $this->m_client->query($query);
+    
+  	if(count($result->records)>1) return true;
+  	return false;
+  	
+  }
+  
   public function action_contactexport()
   {
     if (!empty($this->m_postvars['confirm'])) $this->_doContactExport();
@@ -274,15 +294,16 @@ class sflink extends atkNode
         p.state,
         p.address,
         p.remark,
-        p.sfid
+        o.salesforce_id
       FROM
         person p
         LEFT JOIN title t ON p.title_id=t.id
         JOIN organization o ON o.id=p.company
       WHERE
         role='contact'
-        AND o.sfid IS NOT NULL
-        AND p.sfid IS NULL
+        AND o.salesforce_id IS NOT NULL
+        AND p.salesforce_id IS NULL
+        AND p.lastname>''
       LIMIT $offset, $limit
       ");
   }
@@ -293,24 +314,26 @@ class sflink extends atkNode
     $count = 0;
     
     $fields = array(
-    "ib_id__c" => $c['id'],
-    "title" => htmlspecialchars($c['title']),
-    "AccountId" => htmlspecialchars($c['sfid']),
-    "LastName" =>htmlspecialchars($c['lastname']),
-    "FirstName" =>htmlspecialchars($c['firstname']),
-    "Phone" => htmlspecialchars($c["phone"]),
-    "Fax" => htmlspecialchars($c["fax"]),
-    "Email" => htmlspecialchars($c["email"]),
+    "Achievo_ID__c" => $c['id'],
+    "title" => $c['title'],
+    "AccountId" => $c['salesforce_id'],
+    "LastName" => $c['lastname'],
+    "FirstName" => $c['firstname'],
+    "Phone" => $c["phone"],
+    "Fax" => $c["fax"],
+    "Email" => $c["email"],
     //"Birthdate" => $c["birthdate"],//only for employees in Achievo
-    "MailingStreet" => htmlspecialchars($c["address"]),
-    "MailingCity" => htmlspecialchars($c["city"]),
-    "MailingState" => htmlspecialchars($c["state"]),
-    "MailingPostalCode" => htmlspecialchars($c["zipcode"]),
-    "MailingCountry" => htmlspecialchars($c["country"]),
-    "MobilePhone" => htmlspecialchars($c["cellular"]),
-    "Description" => htmlspecialchars($c["remark"]),
+    "MailingStreet" => $c["address"],
+    "MailingCity" => $c["city"],
+    "MailingState" => $c["state"],
+    "MailingPostalCode" => $c["zipcode"],
+    "MailingCountry" => $c["country"],
+    "MobilePhone" => $c["cellular"],
+    "Description" => $c["remark"],
     );
 
+    $this->atk_array_iconv($fields);
+    
     $sObject = new SObject();
     $sObject->fields = $fields;
     $sObject->type = 'Contact';
@@ -319,15 +342,42 @@ class sflink extends atkNode
     //check that account has been created ok
     if(!$createResponse->success)
     {
-      atkerror("Contact creating Error");
+      atkerror("Contact creating Error".$c['lastname']." ".$c['firstname']);
     }
     else 
     {
       $count++;
       $id = $createResponse->id;
-      $this->getDb()->query("UPDATE person SET sfid='$id' WHERE id='".$c['id']."'");
+      $this->getDb()->query("UPDATE person SET salesforce_id='$id' WHERE id='".$c['id']."'");
+      
+      if($this->isContactExist($c))
+      {
+        $this->getDb()->query("
+          INSERT INTO sf_dupe (type, id, name, name1) 
+          VALUES('contact','".$c['id']."','".$c['lastname']."','".$c['firstname']."')");
+      } 
     }
     return $count;
+  }
+  
+  private function isContactExist($c)
+  {
+    $query = "SELECT id FROM Contact 
+              WHERE Firstname ='".$c['firstname']."' AND LastName ='".$c['lastname']."'"; 
+
+  	$result = $this->m_client->query($query);
+    
+  	if(count($result->records)>1) return true;
+  	return false;
+  	
+  }
+  
+  private function atk_array_iconv(&$fields)
+  {
+    foreach ($fields as $key => $value)
+    {
+      $fields[$key] = htmlspecialchars((atk_iconv(atktext("charset"),"utf-8",$value)),ENT_QUOTES,"utf-8");
+    }
   }
   
 
