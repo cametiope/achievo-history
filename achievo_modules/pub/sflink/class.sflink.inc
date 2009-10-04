@@ -213,7 +213,7 @@ class sflink extends atkNode
   private function isAccountExist($c)
   {
     $query = "SELECT id FROM Account 
-              WHERE Name ='".$c['name']."'"; 
+              WHERE Name ='".escapeSQL($c['name'],true)."'"; 
 
   	$result = $this->m_client->query($query);
     
@@ -363,7 +363,7 @@ class sflink extends atkNode
   private function isContactExist($c)
   {
     $query = "SELECT id FROM Contact 
-              WHERE Firstname ='".$c['firstname']."' AND LastName ='".$c['lastname']."'"; 
+              WHERE Firstname ='".escapeSQL($c['firstname'],true)."' AND LastName ='".escapeSQL($c['lastname'],true)."'"; 
 
   	$result = $this->m_client->query($query);
     
