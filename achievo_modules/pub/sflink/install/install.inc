@@ -10,3 +10,5 @@ $setup->executeSQL("
   `name1` varchar(100) default NULL,
   KEY `typeid` (`type`,`id`)
 )");
+
+$setup->setVersion(1);
