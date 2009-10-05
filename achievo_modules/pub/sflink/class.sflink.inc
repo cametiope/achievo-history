@@ -90,11 +90,10 @@ class sflink extends atkNode
     $offset = 0;
     $limit = atkConfig::get("sflink","limit");
     
-    $total = 500;
+    $total = 100;
     $totalcount = 0;
     
     $accountCounts = 0;
-    $contactCounts = 0;
     
     do
     {
@@ -109,17 +108,9 @@ class sflink extends atkNode
         //add account
         $accountId = $this->addAccount($r);
       
-        //if ok - add account's contacts
         if($accountId)
         {
-          //get account's contacts
           $accountCounts++;
-/*          $contacts = $this->getAccountContacts($r['id']);
-          foreach ($contacts as $c)
-          {
-            //add contact
-            $contactCounts += $this->addContact($c, $accountId);
-          }*/
         }
       }
       $totalcount += count($rows);
@@ -127,7 +118,7 @@ class sflink extends atkNode
     //when we get less then $limit - this is last portion
     while ((count($rows)==$limit) && ($totalcount<$total));
 
-    $location = $this->feedbackUrl("accountexport", ACTION_SUCCESS,"","$accountCounts accounts and $contactCounts contacts have been added");
+    $location = $this->feedbackUrl("accountexport", ACTION_SUCCESS,"","$accountCounts accounts have been added, step/total:$limit/$totalcount");
     $this->redirect($location);
   }
 
@@ -157,6 +148,7 @@ class sflink extends atkNode
       FROM
        organization o
       WHERE salesforce_id IS NULL
+      AND invoice_country IN('NL','UK')
       LIMIT $offset, $limit
     ");
     return $rows;    
@@ -206,14 +198,17 @@ class sflink extends atkNode
       } 
       
     }
-    else atkerror("Error adding organization");
+    else
+    {
+      atkerror("Error adding organization id:".$r['id'].", Name:".$r['name']."fields:".$createResponse->fields." messsage:".$createResponse->message);
+    }
     return $id; 
   }
 
   private function isAccountExist($c)
   {
     $query = "SELECT id FROM Account 
-              WHERE Name ='".$this->escape($c['name'])."'"; 
+              WHERE Name ='".$this->escape(atk_iconv(atktext("charset"),"utf-8",$c['name']))."'"; 
 
   	$result = $this->m_client->query($query);
     
@@ -242,7 +237,7 @@ class sflink extends atkNode
     $offset = 0;
     $limit = atkConfig::get("sflink","limit");
     
-    $total = 500;
+    $total = 100;
     $totalcount = 0;
     
     $contactCount = 0;
@@ -342,7 +337,7 @@ class sflink extends atkNode
     //check that account has been created ok
     if(!$createResponse->success)
     {
-      atkerror("Contact creating Error".$c['lastname']." ".$c['firstname']);
+      atkerror("Contact creating Error".$c['lastname']." ".$c['firstname']."fields:".$createResponse->fields." messsage:".$createResponse->message);
     }
     else 
     {
@@ -363,7 +358,7 @@ class sflink extends atkNode
   private function isContactExist($c)
   {
     $query = "SELECT id FROM Contact 
-              WHERE Firstname ='".$this->escape($c['firstname'])."' AND LastName ='".$this->escape($c['lastname'])."'"; 
+              WHERE Firstname ='".$this->escape(atk_iconv(atktext("charset"),"utf-8",$c['firstname']))."' AND LastName ='".$this->escape(atk_iconv(atktext("charset"),"utf-8",$c['lastname']))."'"; 
 
   	$result = $this->m_client->query($query);
     
