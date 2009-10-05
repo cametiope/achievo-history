@@ -202,7 +202,7 @@ class sflink extends atkNode
       {
         $this->getDb()->query("
           INSERT INTO sf_dupe (type, id, name) 
-          VALUES('account','".$r['id']."','".$r['name']."')");
+          VALUES('account','".$r['id']."','".escapeSQL($r['name'],true)."')");
       } 
       
     }
@@ -354,7 +354,7 @@ class sflink extends atkNode
       {
         $this->getDb()->query("
           INSERT INTO sf_dupe (type, id, name, name1) 
-          VALUES('contact','".$c['id']."','".$c['lastname']."','".$c['firstname']."')");
+          VALUES('contact','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."')");
       } 
     }
     return $count;
@@ -382,7 +382,7 @@ class sflink extends atkNode
 
   private function escape($string)
   {
-    $result = str_replace("'","\'",$string);
+    return str_replace("'","\'",$string);
   }
 
 }
