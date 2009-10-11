@@ -87,38 +87,24 @@ class sflink extends atkNode
   
   private function _doAccountExport()
   {
-    $offset = 0;
     $limit = atkConfig::get("sflink","limit");
-    
-    $total = 100;
-    $totalcount = 0;
-    
     $accountCounts = 0;
     
-    do
+    //get data
+    $rows = $this->getAchievoAccounts(0,$limit);
+          
+    //iterate data
+    foreach ($rows as $r)
     {
-      //get data portin
-      $rows = $this->getAchievoAccounts($offset,$limit);
-      $offset += $limit;
-      ini_set('max_execution_time',150);
-            
-      //iterate currect portion
-      foreach ($rows as $r)
+      ini_set('max_execution_time',30);
+      //add account
+      if($this->addAccount($r))
       {
-        //add account
-        $accountId = $this->addAccount($r);
-      
-        if($accountId)
-        {
-          $accountCounts++;
-        }
+        $accountCounts++;
       }
-      $totalcount += count($rows);
     }
-    //when we get less then $limit - this is last portion
-    while ((count($rows)==$limit) && ($totalcount<$total));
-
-    $location = $this->feedbackUrl("accountexport", ACTION_SUCCESS,"","$accountCounts accounts have been added, step/total:$limit/$totalcount");
+    
+    $location = $this->feedbackUrl("accountexport", ACTION_SUCCESS,"","$accountCounts accounts have been added");
     $this->redirect($location);
   }
 
@@ -147,8 +133,7 @@ class sflink extends atkNode
        type
       FROM
        organization o
-      WHERE salesforce_id IS NULL
-      AND invoice_country IN('NL','UK')
+      WHERE salesforce_id IS NULL OR salesforce_id=''
       LIMIT $offset, $limit
     ");
     return $rows;    
@@ -190,17 +175,20 @@ class sflink extends atkNode
     {
       $id = $createResponse->id;
       $this->getDb()->query("UPDATE organization SET salesforce_id='$id' WHERE id='".$r['id']."'");
-      if($this->isAccountExist($r))
-      {
-        $this->getDb()->query("
-          INSERT INTO sf_dupe (type, id, name) 
-          VALUES('account','".$r['id']."','".escapeSQL($r['name'],true)."')");
-      } 
       
+      $msg = $this->isAccountExist($r);
+      $this->getDb()->query("
+          INSERT INTO sf_dupe (type, id, name,message) 
+          VALUES('account','".$r['id']."','".escapeSQL($r['name'],true)."','".escapeSQL($msg,true)."')");
     }
     else
     {
-      atkerror("Error adding organization id:".$r['id'].", Name:".$r['name']."fields:".$createResponse->fields." messsage:".$createResponse->message);
+      $this->getDb()->query("
+        INSERT INTO sf_dupe (type, id, name, fields, message,statuscode) 
+        VALUES('account','".$r['id']."','".escapeSQL($r['name'],true)."',
+        '".escapeSQL($createResponse->errors->fields)."',
+        '".escapeSQL($createResponse->errors->message)."',
+        '".escapeSQL($createResponse->errors->statusCode)."')");
     }
     return $id; 
   }
@@ -209,11 +197,17 @@ class sflink extends atkNode
   {
     $query = "SELECT id FROM Account 
               WHERE Name ='".$this->escape(atk_iconv(atktext("charset"),"utf-8",$c['name']))."'"; 
-
-  	$result = $this->m_client->query($query);
+  	try 
+  	{
+      $result = $this->m_client->query($query);
     
-  	if(count($result->records)>1) return true;
-  	return false;
+  	  if(count($result->records)>1) return "dupe";
+  	  return "single";
+  	}
+  	catch (Exception $e)
+  	{
+  	  return $e->getMessage();
+  	}
   	
   }
   
@@ -234,37 +228,21 @@ class sflink extends atkNode
 
   private function _doContactExport()
   {
-    $offset = 0;
     $limit = atkConfig::get("sflink","limit");
-    
-    $total = 100;
-    $totalcount = 0;
-    
     $contactCount = 0;
     
-    do
+    //get data
+    $rows = $this->getAchievoContact(0,$limit);
+          
+    foreach ($rows as $r)
     {
-      //get data portin
-      $rows = $this->getAchievoContact($offset,$limit);
-      $offset += $limit;
-      ini_set('max_execution_time',150);
-            
-      //iterate currect portion
-      foreach ($rows as $r)
+      ini_set('max_execution_time',30);
+      //add account
+      if($this->addContact($r))
       {
-        //add account
-        $contactId = $this->addContact($r);
-      
-        //if ok - 
-        if($contactId)
-        {
-          $contactCount++;
-        }
+        $contactCount++;
       }
-      $totalcount += count($rows);
     }
-    //when we get less then $limit - this is last portion
-    while ((count($rows)==$limit) && ($totalcount<$total));
 
     $location = $this->feedbackUrl("contactexport", ACTION_SUCCESS,"","$contactCount contacts have been added");
     $this->redirect($location);
@@ -306,7 +284,7 @@ class sflink extends atkNode
   
   private function addContact($c)
   {
-    $count = 0;
+    $result = false;
     
     $fields = array(
     "Achievo_ID__c" => $c['id'],
@@ -334,25 +312,27 @@ class sflink extends atkNode
     $sObject->type = 'Contact';
     $createResponse = $this->m_client->create(array($sObject));
     
-    //check that account has been created ok
-    if(!$createResponse->success)
+    if($createResponse->success)
     {
-      atkerror("Contact creating Error".$c['lastname']." ".$c['firstname']."fields:".$createResponse->fields." messsage:".$createResponse->message);
-    }
-    else 
-    {
-      $count++;
       $id = $createResponse->id;
+      $result = true;
       $this->getDb()->query("UPDATE person SET salesforce_id='$id' WHERE id='".$c['id']."'");
       
-      if($this->isContactExist($c))
-      {
-        $this->getDb()->query("
-          INSERT INTO sf_dupe (type, id, name, name1) 
-          VALUES('contact','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."')");
-      } 
+      $msg = $this->isContactExist($c);
+      $this->getDb()->query("
+          INSERT INTO sf_dupe (type, id, name, name1,message) 
+          VALUES('contact','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."','".escapeSQL($msg,true)."')");
     }
-    return $count;
+    else
+    {
+      $this->getDb()->query("
+        INSERT INTO sf_dupe (type, id, name, name1, fields, message,statuscode) 
+        VALUES('contact','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."',
+        '".escapeSQL($createResponse->errors->fields)."',
+        '".escapeSQL($createResponse->errors->message)."',
+        '".escapeSQL($createResponse->errors->statusCode)."')");
+    }
+    return $result; 
   }
   
   private function isContactExist($c)
@@ -360,11 +340,17 @@ class sflink extends atkNode
     $query = "SELECT id FROM Contact 
               WHERE Firstname ='".$this->escape(atk_iconv(atktext("charset"),"utf-8",$c['firstname']))."' AND LastName ='".$this->escape(atk_iconv(atktext("charset"),"utf-8",$c['lastname']))."'"; 
 
-  	$result = $this->m_client->query($query);
+  	try 
+  	{
+      $result = $this->m_client->query($query);
     
-  	if(count($result->records)>1) return true;
-  	return false;
-  	
+  	  if(count($result->records)>1) return "dupe";
+  	  return "single";
+  	}
+  	catch (Exception $e)
+  	{
+  	  return $e->getMessage();
+  	}
   }
   
   private function atk_array_iconv(&$fields)
@@ -377,6 +363,7 @@ class sflink extends atkNode
 
   private function escape($string)
   {
+    $string = str_replace("\\","\\\\",$string);
     return str_replace("'","\'",$string);
   }
 
