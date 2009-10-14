@@ -9,7 +9,7 @@
   useattrib("atklistattribute");
   useattrib("atkboolattribute");
   useattrib("atkRadioAttribute");
-  useattrib("atkDurationAttribute" );  
+  useattrib("atkDurationAttribute" );
   useattrib("project.dependencyattrib");
   useattrib("project.projecttemplateattribute");
   useattrib("atknumberattribute");
@@ -26,7 +26,7 @@
 
   class project extends atkNode
   {
-         
+
     /**
      * Constructor
      *
@@ -38,7 +38,7 @@
       global $ATK_VARS, $g_sessionManager;
 
       $this->setProjectId();
-      
+
       $this->atkNode($name,$flags|NF_ADD_LINK|NF_EDITAFTERADD|NF_IMPORT);
       if($name=="project")
       {
@@ -51,18 +51,18 @@
       // The next three attributes have to be the first three attributes in this node
       $this->add(new trafficLightAttribute('trafficlight', AF_HIDE_LIST));
       $radio = &$this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A'), AF_FORCE_LOAD|AF_HIDE_LIST|AF_HIDE_ADD|AF_DISPLAY_VERT));
-                  
+
       $radio->addDependee('trafficlight_selection');
-      
+
       $color = &$this->add(new atkDummyAttribute('trafficlight_selection', '', AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD));
 
       $memo = &$this->add(new oneToManyMemoRelation( 'memo', 'project.memo', 'project_id', AF_HIDE_LIST|AF_HIDE_ADD ) );
-      
+
       if( $ATK_VARS['atkaction'] != 'add' && atkArrayNvl($ATK_VARS,'atkprevaction') != 'add' && $ATK_VARS['atkaction'] != 'search' && $ATK_VARS['atknodetype'] == 'project.project')
-      {       
+      {
         $this->add(new memoAttribute( 'memo_add', AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW, 60 ) );
       }
-      
+
       $this->add(new atkAttribute("abbreviation", AF_SEARCHABLE|AF_UNIQUE, 10));
       $this->add(new atkAttribute("name",AF_UNIQUE|AF_OBLIGATORY|AF_SEARCHABLE, 200));
       $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
@@ -116,7 +116,7 @@
       $this->add(new atkDurationAttribute('remaining_effort_time', '15m', '100h', AF_READONLY|AF_HIDE_LIST|AF_HIDE_ADD));
 
       $this->add( new atkBoolAttribute( 'description_obligatory', AF_HIDE_ADD|AF_FORCE_LOAD ) );
-      $this->add( new atkBoolAttribute( 'use_activities', AF_HIDE_ADD|AF_FORCE_LOAD ) );     
+      $this->add( new atkBoolAttribute( 'use_activities', AF_HIDE_ADD|AF_FORCE_LOAD ) );
 
       // If we are in project administration mode, we show all projects. Otherwise, we only
       // show active projects.
@@ -124,23 +124,23 @@
         $reportnodetype = $g_sessionManager->stackVar("reportnodetype");
       else
         $reportnodetype = "";
-      
+
       if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' )
-      { 
+      {
         $deliverable = &$this->add(new atkOneToManyRelation("deliverable", "project.deliverable","project_id", AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD|AF_CASCADE_DELETE));
         $deliverable->setDestinationFilter('deliverable.project_id=[id] AND deliverable.status <> "complete"');
-      
+
         $team = &$this->add(new atkOneToManyRelation("team", "project.project_personemployee_projectview", "projectid", AF_NO_LABEL|AF_HIDE_LIST|AF_CASCADE_DELETE));
-  
+
         $contact = $this->add( new atkOneToManyRelation('contacts', 'project.project_contact', 'project', AF_NO_LABEL ) );
       }
-      $this->setColumnAttribs(array('deliverable', 'team', 'contacts'));
+      //$this->setColumnAttribs(array('deliverable', 'team', 'contacts'));
 
       $this->setTable("project","project");
 
       $this->setOrder('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_selection', 'memo', 'memo_add');
       $this->setIndex("name");
-      
+
       // @todo: commented because these attributes aren't needed in the General tab.
       //if (($ATK_VARS['atkaction'] == "edit" || $ATK_VARS['atkaction'] == "update") && atkconfig("project_contact_obligatory"))
       //{
@@ -186,10 +186,10 @@
       //$tab = ($ATK_VARS["atkaction"]=="view"||$ATK_VARS["atkaction"]=="edit"||$ATK_VARS["atkaction"]=="update"?"planning":"default");
       //$this->add($tmp, $tab);
     }
-    
+
     /**
      * Generate output to show or hide a selectlist for the trafficlight attribute
-     * 
+     *
      * @param array
      * @param string
      * @return string
@@ -198,23 +198,23 @@
     {
       $output = '<div id="project_project_trafficlight_selection">';
       if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'M' )
-      {       
+      {
         $red    = atkConfig::get('project', 'trafficlight_red');
-        $yellow = atkConfig::get('project', 'trafficlight_yellow'); 
-        $green  = atkConfig::get('project', 'trafficlight_green'); 
-        
+        $yellow = atkConfig::get('project', 'trafficlight_yellow');
+        $green  = atkConfig::get('project', 'trafficlight_green');
+
         $output.= '<select name="trafficlight" '.(!$record['trafficlight'] ? 'selected' : '' ).'>';
         $output.= '<option value="">'.atktext('list_null_value_obligatory').'</option>';
         $output.= '<option value="'.$red['end'].'">'.atktext('red').'</option>';
         $output.= '<option value="'.$yellow['start'].'">'.atktext('yellow').'</option>';
         $output.= '<option value="'.$green['start'].'">'.atktext('green').'</option>';
-       
+
         $output.= '</select></div><br />';
-      }     
+      }
       return $output;
-    }    
-    
-        
+    }
+
+
     function graph_topprojects($params)
     {
       $db = &atkGetDb();
@@ -358,7 +358,7 @@
       $this->updatePhaseFields($record, "add");
       return true;
     }
-         
+
 
     /**
      * One line description of the function
@@ -938,8 +938,8 @@
       return $this->m_attribList["contract_id"]->edit($record, $mode);
     }
 
-    
-    
+
+
     function preUpdate($record)
     {
       if( $record['trafficlight_updatestyle'] == 'M' )
@@ -947,19 +947,19 @@
         $this->getAttribute('memo_add')->addFlag( AF_OBLIGATORY );
       }
     }
-    
-    
+
+
     function postUpdate($record)
     {
       if( array_key_exists( 'memo_add', $record ) && $record['memo_add'] != '' )
       {
         $db = atkGetDb();
         $user     = atkGetUser();
-        $username = array_key_exists( 'firstname', $user ) && array_key_exists( 'lastname', $user )  
-                      ? $user['firstname'] . ' ' . $user['lastname'] 
-                      : 'administrator';  
-        $id = $db->nextid('seq_memo');        
-        
+        $username = array_key_exists( 'firstname', $user ) && array_key_exists( 'lastname', $user )
+                      ? $user['firstname'] . ' ' . $user['lastname']
+                      : 'administrator';
+        $id = $db->nextid('seq_memo');
+
         $query = '
           INSERT INTO memo (
             id,
@@ -980,12 +980,12 @@
             NOW(),
             "'.$username.'",
             "Project: '.mysql_real_escape_string( $record['name'] ) .'",
-            "m"            
+            "m"
           )';
-        
+
         $db->query( $query );
       }
-      
+
       $this->addCoordinatorToTeam($record);
     	$this->updatePhaseFields($record, "update");
       return true;
@@ -1119,7 +1119,7 @@
     * Set the project id.
     */
     private function setProjectId()
-    {    
+    {
       $vars = atkGetPostVar();
       if ($vars['atknodetype'] == 'project.project' && array_key_exists('atkselector', $vars) && $vars['atkselector'] != '')
       {
@@ -1131,11 +1131,11 @@
         $this->project = sessionLoad('projectid');
       }
     }
-    
+
     /**
      * Add coordinator from current record to team
      *
-     * @param array $rec - current project record 
+     * @param array $rec - current project record
      */
     private function addCoordinatorToTeam($rec)
     {
@@ -1145,16 +1145,16 @@
     		$this->_addMemberRecord($rec["id"], $rec['coordinator']['id'], $role_id);
     		//delete old coordinator from team
     		$this->getDb()->query("
-    			DELETE FROM project_person 
+    			DELETE FROM project_person
     			WHERE
-    				projectid='".$rec["id"]."' AND 
+    				projectid='".$rec["id"]."' AND
     				personid!='".$rec['coordinator']['id']."' AND
     				role='".$role_id."'
     		");
     	}
     }
 
-    
+
     /**
      * Override searchDB, so that we can add an additional filter that determines if the logged in user
      * may actually see the project
@@ -1166,13 +1166,13 @@
     function searchDb($expression, $searchmethod="OR")
     {
       $records = parent::searchDb( $expression, $searchmethod );
-      
+
       // User may see all projects
       if ( $this->allowed("any_project") )
       {
         return $records;
       }
-      
+
       // Fetch all projects a user belongs to
       $user = atkGetUser();
       if( array_key_exists( 'id', $user ) )
@@ -1180,7 +1180,7 @@
         $db       = atkGetDb();
         $query    = 'SELECT DISTINCT( projectid ) FROM project_person WHERE personid = '.$user['id'];
         $projects = $db->getRows( $query );
-        
+
         foreach( $records AS $key => $record ) // Loop all records that match the expression
         {
           $flag = false;
@@ -1188,10 +1188,10 @@
           {
             if( $record['id'] == $project['projectid'] )
             {
-              $flag = true;                    
+              $flag = true;
             }
           }
-          
+
           // Unset all projects the user can't see
           if( false == $flag )
           {

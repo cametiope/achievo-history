@@ -31,7 +31,7 @@
       useattrib( 'atkboolattribute' );
       $node->add( new atkDummyAttribute( 'timereg_phase', $this->getPhaseTimeRegistration($node), AF_HIDE_LIST|AF_NO_LABEL ) );
       $node->add( new atkBoolAttribute( 'is_favorite',AF_HIDE_LIST));
-      $node->setColumnAttribs(array('timereg_phase'));
+      //$node->setColumnAttribs(array('timereg_phase'));
     }
 
 
@@ -45,12 +45,12 @@
       global $ATK_VARS;
 
       $phase_id = array_shift( decodeKeyValuePair( $ATK_VARS['atkselector'] ) );
-      
+
       atkimport('atk.ui.atkdialog');
       $dialog = new atkDialog('timereg_advanced.timereg_phase', 'add', 'dialog', array('atkfilter' => 'phaseid="'.$phase_id.'"'));
       $dialog->setModifierObject('timereg_advanced.timereg_phase');
       $onClick = $dialog->getCall();
-      
+
       $completed = atkGetDb()->getvalue("SELECT completed FROM phase WHERE id='" . $phase_id . "'");
       if ($completed == 100)
         return '';

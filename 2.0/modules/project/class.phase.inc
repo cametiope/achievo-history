@@ -111,7 +111,7 @@ class phase extends atkNode
     $this->add( new atkDurationAttribute( "initial_planning", '1m', '10h', ($initialplanningallowed ? 0 : AF_READONLY_EDIT) | AF_TOTAL | AF_DURATION_STRING ) );
     $current = &$this->add( new atkDurationAttribute( "current_planning", "1m", "10h", AF_READONLY|AF_HIDE_ADD|AF_FORCE_LOAD | AF_DURATION_STRING ) );
     $current->setForceUpdate(true);
-    
+
     $this->add( new remainingEffortTimeAttribute( "remaining_effort_time", "1m", "10h", AF_DURATION_STRING ) );
 
     // deliverable dependency
@@ -135,12 +135,12 @@ class phase extends atkNode
     $this->setOrder( 'id', 'trafficlight', 'trafficlight_updatestyle', 'memo', 'trafficlight_selection', 'memo_add' );
     $this->setTable( "phase", "phase" );
 
-    $this->setColumnAttribs( array(
-        'deliverable_phase' ) );
-        
-    /* 
+    //$this->setColumnAttribs( array(
+    //    'deliverable_phase' ) );
+
+    /*
      * For Support tasks the remaining effort time will be calculated automatically using this formula:
-     * remaining effort time = actual planning - booked time. 
+     * remaining effort time = actual planning - booked time.
      * For Support tasks the remaining effort time field is read-only."
      */
     $this->add(new atkBoolAttribute("is_support_task",AF_HIDE_LIST|AF_FORCE_LOAD));
@@ -167,7 +167,7 @@ class phase extends atkNode
    */
   public function preUpdate( &$record )
   {
-    
+
     if( $record['trafficlight_updatestyle'] == 'M' )
     {
       $this->getAttribute( 'memo_add' )->addFlag( AF_OBLIGATORY );
@@ -192,7 +192,7 @@ class phase extends atkNode
       $this->addMemo( $record );
 
     $this->recalculateInformation( $record );
-    
+
     return true;
   }
 
@@ -242,16 +242,16 @@ class phase extends atkNode
   protected function recalculateInformation( $record )
   {
     list($master,$master_id) = explode("s_",$record['project_package']);
-    if($master) 
+    if($master)
     {
       $master = "project.".$master;
-      
+
       /*@var $information projecttreeutils*/
       if(isset($record['atkorgrec']) && ($master != $record['atkorgrec']['master'] || $master_id != $record['atkorgrec']['master_id']))
         $information = atkNew( 'module.project.utils.projecttreeutils', $record['atkorgrec']['master'], $record['atkorgrec']['master_id'], $master, $master_id );
       else
         $information = atkNew( 'module.project.utils.projecttreeutils', $record['master'], $record['master_id'] );
-  
+
       $information->updateTree($record['projectid']['id']);
       $information->updateTrafficLight($record['id']);
     }
@@ -427,7 +427,7 @@ class phase extends atkNode
 
   public function addDb( &$record, $exectrigger = true, $mode = "add" )
   {
-    // This override makes sure that the current_planning and remaining_effort_time 
+    // This override makes sure that the current_planning and remaining_effort_time
     // is set equal to the number of initial_planning.
     $record["current_planning"] = $record["initial_planning"];
     $record["remaining_effort_time"] = $record["initial_planning"];
@@ -777,8 +777,8 @@ class phase extends atkNode
     {
       $initalplaning_attr->addFlag( AF_READONLY );
     }
-    
-    /*    
+
+    /*
      * For Support tasks the remaining effort time field is read-only."
      */
     if ($record['completed'] == 100 || $record['is_support_task'])
@@ -786,7 +786,7 @@ class phase extends atkNode
       $remainingefforttime_attr->addFlag( AF_READONLY );
       $currentplanning_attr->removeFlag( AF_READONLY_EDIT );
     }
-    
+
     atk_var_dump($record['completed'], 'COMPLETED');
 
     if( $this->atkNodeType() != $this->m_postvars['atknodetype'] )
@@ -902,7 +902,7 @@ To add the dates we need a small node where we can define high days (Edit, Delet
       $this->project = sessionLoad( 'projectid' );
     }
   }
-  
+
   public function fixMasterFields(&$record)
   {
     if(isset($record['project_package']))
@@ -927,11 +927,11 @@ To add the dates we need a small node where we can define high days (Edit, Delet
   {
     return $record['completed'].'%';
   }
-  
+
   public function is_support_task($id)
   {
     $is = $this->getDb()->getrows("SELECT is_support_task FROM phase WHERE id='$id'");
     return $is[0]['is_support_task'] == '1';
   }
-  
+
 }

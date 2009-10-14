@@ -41,7 +41,7 @@
      */
     private $project;
 
-    
+
     /**
      * Constructor.
      */
@@ -59,7 +59,7 @@
     public static function meta(atkMetaPolicy $policy)
     {
       global $ATK_VARS;
-      
+
       // The next three attributes have to be the first three attributes in this node
       $policy->add('trafficlight','trafficLightAttribute', array(), AF_HIDE_LIST);
       $policy->add('trafficlight_updatestyle', 'atkradioattribute', array(array('manual', 'automatic'), array('M', 'A')), AF_FORCE_LOAD|AF_HIDE_LIST|AF_DISPLAY_VERT|AF_HIDE_ADD);
@@ -67,11 +67,11 @@
       $policy->setTypeAndParams('memo', 'project.onetomanymemorelation', array( 'destination' => 'project.memo', 'refKey' => 'project_id',  'flags' =>  AF_HIDE_LIST|AF_HIDE_ADD ) );
 
       if( $ATK_VARS['atkaction'] != 'add' && $ATK_VARS['atkprevaction'] != 'add' && $ATK_VARS['atknodetype'] == 'project.package')
-      {       
+      {
         $policy->add( 'memo_add', 'memoAttribute', array(), AF_HIDE_LIST|AF_HIDE_ADD|AF_HIDE_VIEW );
-      }      
-            
-      $policy->add('trafficlight_selection', 'atkdummyattribute', array(), AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD);      
+      }
+
+      $policy->add('trafficlight_selection', 'atkdummyattribute', array(), AF_NO_LABEL|AF_HIDE_LIST|AF_HIDE_ADD);
 
       $policy->hasOne("employee.employee",array("source"=>"coordinator_id","filter"=>"person.status='active'"));
 
@@ -79,7 +79,7 @@
 
       $policy->hasOne("project.project",array("source"=>"projectid"),array(),AF_HIDE);
       $policy->addFlags('projectid', AF_HIDE);
-      
+
       $policy->addFlags('completed', AF_FORCE_LOAD);
 
       $policy->addFlag('id', AF_FORCE_LOAD);
@@ -105,14 +105,14 @@
 
       $policy->setOrder(array('id', 'trafficlight', 'trafficlight_updatestyle', 'trafficlight_selection', 'memo', 'memo_add', 'abbreviation_package', 'name', 'projectid',
                               'category_id', 'coordinator_id', 'description', 'status', 'project_package'));
-      
+
       $policy->addFlag('trafficlight',AF_HIDE_ADD);
-                              
+
     }
 
       /**
      * Generate output to show or hide a selectlist for the trafficlight attribute
-     * 
+     *
      * @param array
      * @param string
      * @return string
@@ -121,23 +121,23 @@
     {
       $output = '<div id="project_package_trafficlight_selection">';
       if( isset( $record['trafficlight_updatestyle'] ) && $record['trafficlight_updatestyle'] == 'M' )
-      {       
+      {
         $red    = atkConfig::get('project', 'trafficlight_red');
-        $yellow = atkConfig::get('project', 'trafficlight_yellow'); 
-        $green  = atkConfig::get('project', 'trafficlight_green'); 
-        
+        $yellow = atkConfig::get('project', 'trafficlight_yellow');
+        $green  = atkConfig::get('project', 'trafficlight_green');
+
         $output.= '<select name="trafficlight" '.(!$record['trafficlight'] ? 'selected' : '' ).'>';
         $output.= '<option value="">'.atktext('list_null_value_obligatory').'</option>';
         $output.= '<option value="'.$red['end'].'">'.atktext('red').'</option>';
         $output.= '<option value="'.$yellow['start'].'">'.atktext('yellow').'</option>';
         $output.= '<option value="'.$green['start'].'">'.atktext('green').'</option>';
-       
+
         $output.= '</select></div><br />';
-      }     
+      }
       return $output;
-    }    
-    
-      
+    }
+
+
     function preUpdate($record)
     {
       if( $record['trafficlight_updatestyle'] == 'M' )
@@ -145,7 +145,7 @@
         $this->getAttribute('memo_add')->addFlag( AF_OBLIGATORY );
       }
     }
-    
+
     public function postAdd($rec)
     {
     	$teamNode = &atkGetNode('project.package_person');
@@ -161,11 +161,11 @@
       {
         $db = atkGetDb();
         $user     = atkGetUser();
-        $username = array_key_exists( 'firstname', $user ) && array_key_exists( 'lastname', $user )  
-                      ? $user['firstname'] . ' ' . $user['lastname'] 
-                      : 'administrator';  
-        $id = $db->nextid('seq_memo'); 
-        
+        $username = array_key_exists( 'firstname', $user ) && array_key_exists( 'lastname', $user )
+                      ? $user['firstname'] . ' ' . $user['lastname']
+                      : 'administrator';
+        $id = $db->nextid('seq_memo');
+
         $query = '
           INSERT INTO memo (
             id,
@@ -186,12 +186,12 @@
             NOW(),
             "'.$username.'",
             "Package: '.mysql_real_escape_string( $record['name'] ) .'",
-            "m"            
+            "m"
           )';
-        
+
         $db->query( $query );
       }
-      
+
       //coordinator has been changed?
       if($record['coordinator_id']['id'] <> $record["atkorgrec"]['coordinator_id']['id'])
     	{
@@ -209,7 +209,7 @@
     	}
 
       return true;
-    }    
+    }
 
     /**
      * Call custom validation methods for the startdate field
@@ -426,12 +426,12 @@
      */
     public function postMeta()
     {
-      $this->setColumnAttribs(array('deliverable_package', 'package_person'));
-      
+      //$this->setColumnAttribs(array('deliverable_package', 'package_person'));
+
       $this->getAttribute("trafficlight_updatestyle")->addDependee('trafficlight_selection');
       $this->getAttribute('deliverable_package')->setDestinationFilter('deliverable_id.status <> "complete"');
     }
-    
+
     /**
      * Display override for the completed attribute
      *
@@ -492,7 +492,7 @@
       }
       return parent::getTemplate($action, $record, $tab);
     }
-     
+
     /**
      * Edit action handler override.
      *

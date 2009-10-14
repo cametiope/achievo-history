@@ -36,7 +36,7 @@
       $this->add(new trafficLightAttribute('trafficlight'));
       $this->add(new atkRadioAttribute('trafficlight_updatestyle', array('manual', 'automatic'), array('M', 'A')));
       $this->add(new oneToManyMemoRelation( 'memo', 'project.memo', 'project_id', AF_HIDE_LIST|AF_HIDE_ADD ) );
-      
+
       $this->add(new atkAttribute("name",AF_READONLY));
       $this->add(new atkDateAttribute("startdate","","","","",AF_READONLY));
       $this->add(new atkDateAttribute("enddate","","","","",AF_READONLY));
@@ -70,7 +70,7 @@
       $this->setOrder("project.abbreviation, project.name");
       $this->setIndex("name");
       $this->setDescriptorTemplate('[name]');
-      $this->setColumnAttribs(array('deliverable', 'history'));
+      //$this->setColumnAttribs(array('deliverable', 'history'));
     }
 
     /**
