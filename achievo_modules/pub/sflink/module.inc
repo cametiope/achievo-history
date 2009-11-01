@@ -4,7 +4,7 @@
   {
     function getNodes()
     {
-      registerNode("sflink.sflink", array("accountexport","contactexport"));
+      registerNode("sflink.sflink", array("accountexport","contactexport","getupdated"));
       registerNode("sflink.sf_dupe", array("admin"));
     }
 
@@ -17,6 +17,7 @@
       $this->menuitem("clearcontact",dispatch_url("sflink.sflink", "clearcontactsfid"),"sflink",dispatch_url("sflink.sflink", "accountexport"),790);
       $this->menuitem("contactexport",dispatch_url("sflink.sflink", "contactexport"),"sflink",dispatch_url("sflink.sflink", "contactexport"),770);
       $this->menuitem("sf_dupe",dispatch_url("sflink.sf_dupe", "admin"),"sflink",array("sflink.sf_dupe", "admin"),750);
+      $this->menuitem("getUpdated",dispatch_url("sflink.sflink", "getupdated"),"sflink",array("sflink.sflink", "getupdated"),750);
     }
 
 
