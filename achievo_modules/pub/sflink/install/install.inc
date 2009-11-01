@@ -11,6 +11,7 @@ $setup->executeSQL("
     `fields` varchar(200) default NULL,
     `message` varchar(255) default NULL,
     `statuscode` varchar(100) default NULL,
+    `direction` varchar(20) default NULL,
      KEY `type_id` (`type`,`id`)
 )");
 
