@@ -214,17 +214,17 @@ class sflink extends atkNode
       
       $msg = $this->isAccountExist($r);
       $this->getDb()->query("
-          INSERT INTO sf_dupe (type, direction, id, name,message) 
-          VALUES('account','Achievo->SF','".$r['id']."','".escapeSQL($r['name'],true)."','".escapeSQL($msg,true)."')");
+          INSERT INTO sf_dupe (type, direction, id, name,message,created_at) 
+          VALUES('account','Achievo->SF','".$r['id']."','".escapeSQL($r['name'],true)."','".escapeSQL($msg,true)."',NOW()");
     }
     else
     {
       $this->getDb()->query("
-        INSERT INTO sf_dupe (type, direction, id, name, fields, message,statuscode) 
+        INSERT INTO sf_dupe (type, direction, id, name, fields, message,statuscode,created_at) 
         VALUES('account','Achievo->SF','".$r['id']."','".escapeSQL($r['name'],true)."',
         '".escapeSQL($createResponse->errors->fields)."',
         '".escapeSQL($createResponse->errors->message)."',
-        '".escapeSQL($createResponse->errors->statusCode)."')");
+        '".escapeSQL($createResponse->errors->statusCode)."',NOW())");
     }
     return $id; 
   }
@@ -364,17 +364,17 @@ class sflink extends atkNode
       
       $msg = $this->isContactExist($c);
       $this->getDb()->query("
-          INSERT INTO sf_dupe (type,direction, id, name, name1,message) 
-          VALUES('contact','Achievo->SF','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."','".escapeSQL($msg,true)."')");
+          INSERT INTO sf_dupe (type,direction, id, name, name1,message,created_at) 
+          VALUES('contact','Achievo->SF','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."','".escapeSQL($msg,true)."',NOW())");
     }
     else
     {
       $this->getDb()->query("
-        INSERT INTO sf_dupe (type, direction, id, name, name1, fields, message,statuscode) 
+        INSERT INTO sf_dupe (type, direction, id, name, name1, fields, message,statuscode,created_at) 
         VALUES('contact','Achievo->SF','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."',
         '".escapeSQL($createResponse->errors->fields)."',
         '".escapeSQL($createResponse->errors->message)."',
-        '".escapeSQL($createResponse->errors->statusCode)."')");
+        '".escapeSQL($createResponse->errors->statusCode)."',NOW())");
     }
     return $result; 
   }
@@ -482,7 +482,7 @@ class sflink extends atkNode
   
   private function logStartUpdate()
   {
-    $this->getDb()->query("INSERT INTO sf_dupe(message) VALUES ('Start update SF->achievo')");
+    $this->getDb()->query("INSERT INTO sf_dupe(message,created_at) VALUES ('Start update SF->achievo',NOW())");
   }
   
   public function action_getupdated()
@@ -607,11 +607,11 @@ class sflink extends atkNode
   {
     $this->getDb()->query("
       INSERT INTO 
-        sf_dupe (type, direction, id, name, name1, message) 
+        sf_dupe (type, direction, id, name, name1, message,created_at) 
       VALUES('$entity','SF->Achievo','$id',
       '".escapeSQL($name,true)."',
       '".escapeSQL($name1,true)."',
-      '".escapeSQL($message)."')");
+      '".escapeSQL($message)."',NOW())");
   }
   
   private function updateContact($startTime, $endTime)
