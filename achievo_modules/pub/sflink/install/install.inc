@@ -8,7 +8,7 @@ $setup->executeSQL("
   `id` int(10) NOT NULL,
   `name` varchar(100) default NULL,
   `name1` varchar(100) default NULL,
-  `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  `created_at` datetime default NULL,
   `message` varchar(200) default NULL,
   `fields` varchar(200) default NULL,
   `statuscode` varchar(200) default NULL,
