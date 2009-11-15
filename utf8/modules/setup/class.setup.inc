@@ -629,7 +629,7 @@
     }
 
     /**
-     * Get install file
+     * Get install file, sql files have an higher priority
      *
      * @param string $modname Module name
      * @return string Install file
@@ -1094,7 +1094,7 @@
       //change db_sequence name
       return $ddl->renameSequence($old, $new);
     }
-    
+
     /**
      * Create index
      *
@@ -1124,9 +1124,9 @@
       $ddl = &$db->createDDL();
       $ddl->setTable($table);
       return $ddl->dropIndex($name);
-    }    
-    
-    
+    }
+
+
 
     /**
      * Add column
