@@ -165,8 +165,7 @@
     {
       $query = "SELECT id, Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
           Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
-        ShippingCountry FROM Account WHERE Achievo_ID__c = null Limit ".$limit; 
-        //ShippingCountry FROM Account Limit ".$limit; 
+          ShippingCountry, OwnerId, ParentId,AnnualRevenue,NumberOfEmployees FROM Account WHERE Achievo_ID__c = null Limit ".$limit; 
       $response = $this->m_client->query($query);
   	  $queryResult = new QueryResult($response);
        
@@ -724,6 +723,12 @@
       $r['visit_state'] = $rez->fields->ShippingState;
       $r['visit_country'] = $rez->fields->ShippingCountry;
       $r['salesforce_id'] = $rez->Id;
+      $r['revenue'] = $rez->fields->AnnualRevenue;
+      $r['employees'] = $rez->fields->NumberOfEmployees;
+      
+      //relation
+      $r['member_of'] = array('id'=>$this->getOrganizationId($rez->fields->ParentId));
+      
 
       //encode from UTF-8 to ATK CHARSET
       $this->strConvertSfToAtk($r);
@@ -861,7 +866,19 @@
       }
     }
     
-    private function _doFix()
+    private function _doFix3()
+    {
+      try {
+        
+        print_r($this->m_client->describeSObject('User'));
+      
+      } catch (Exception $e) {
+        echo $this->m_client->getLastRequest();
+        echo $e->faultstring;
+      }      
+    }
+    
+    private function _doFix2()
     {
       $rows = $this->getFixRecord();
       $db = $this->getDb();
@@ -881,7 +898,7 @@
       $this->redirect($location);
     }
     
-    private function getFixRecord()
+    private function getFixRecord2()
     {
       $query = "SELECT id, AccountId, Achievo_ID__c FROM Contact WHERE Achievo_ID__c>4765 ORDER BY Achievo_ID__c Limit 2000"; 
       //$query = "SELECT id, AccountId, Achievo_ID__c FROM Contact ORDER BY Achievo_ID__c Limit 2000"; 
@@ -891,7 +908,7 @@
   	  return $queryResult;
     }
 
-    private function _doFix1()
+    private function _doFix()
     {
       $rows = $this->getFixRecord();
       $db = $this->getDb();
@@ -900,7 +917,11 @@
       {
         $db->query("
           UPDATE organization
-          SET salesforce_id='".$r->Id."'
+          SET 
+            revenue='".$r->fields->AnnualRevenue."',
+            employees='".$r->fields->NumberOfEmployees."',
+            member_of='".$this->getOrganizationId($r->fields->ParentId)."'
+          
           WHERE id='".$r->fields->Achievo_ID__c."';
         ");
         $count++;
@@ -909,10 +930,9 @@
       $this->redirect($location);
     }
     
-    private function getFixRecord1()
+    private function getFixRecord()
     {
-      $query = "SELECT id, Achievo_ID__c FROM Account WHERE Achievo_ID__c>3000 ORDER BY Achievo_ID__c Limit 2000"; 
-      //$query = "SELECT id, Achievo_ID__c FROM Account ORDER BY Achievo_ID__c Limit 2000"; 
+      $query = "SELECT id, Achievo_ID__c,ParentId,AnnualRevenue,NumberOfEmployees FROM Account WHERE Achievo_ID__c>2698 ORDER BY Achievo_ID__c Limit 2000"; 
       $response = $this->m_client->query($query);
   	  $queryResult = new QueryResult($response);
        
