@@ -8,5 +8,5 @@ $config['report_hide_parameters']=false;
 $config['filename'] = 'module.ibscustomizations.utils.';
 
 // Hide inactive users off the report
-$config[report_hide_inactive_persons]=false;
+$config['report_hide_inactive_persons']=true;
 ?>

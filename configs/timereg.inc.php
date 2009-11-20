@@ -89,7 +89,7 @@
   $config['timereg_incompleteweeklock']=false;
   
   // Allow future time registrations
-  $config['timereg_allowfuture']=false;
+  $config['timereg_allowfuture']=true;
   
   
   // Confirm hours are saved
@@ -109,6 +109,6 @@
   $config['overtimebalancedebugging']=false;
   
   // Check weeks in the reminder cron
-  $config['timereg_checkweeks']=true;
+  $config['timereg_checkweeks']=5;
   
 ?>
