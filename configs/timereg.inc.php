@@ -106,7 +106,7 @@
 
   // Turn Overtime debug on and it will write
   // a log file into achievotmp/overtime.log
-  $config['overtimebalancedebugging']=false;
+  $config['overtimebalancedebugging']=true;
   
   // Check weeks in the reminder cron
   $config['timereg_checkweeks']=5;
