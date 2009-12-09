@@ -2,7 +2,7 @@
 
   require_once ('lib/soapclient/SforcePartnerClient.php');
   require_once ('lib/soapclient/SforceHeaderOptions.php');
-  require_once ('lib/soapclient/SforceMetadataClient.php');
+  //require_once ('lib/soapclient/SforceMetadataClient.php');
   
   class sflink extends atkNode 
   {
@@ -18,7 +18,9 @@
     protected $m_contactupdateok = 0;
     protected $m_contactupdateerror = 0;
     protected $m_destnode;
-  
+    protected $m_response;  
+    protected $m_qposition = 0;
+    protected $m_queryresult;  
     
     public function __construct($type="sflink", $flag=0)
     {
@@ -30,26 +32,41 @@
       $loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
       //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
   
-      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix"), ACTION_CANCELLED|ACTION_SUCCESS);
-      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport");
+      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix","employeelink"), ACTION_CANCELLED|ACTION_SUCCESS);
+      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","employeelink"=>"contactexport");
     }
-  
+    
+    /**
+     * Next code clear salesforce_id field in organization and contact entity accordingly
+     * Just convinient methods in case of wrong export iterations
+     *
+     */
     public function action_clearsfid()
     {
-      if (!empty($this->m_postvars['confirm'])) $this->_doClearSfid();
+      $this->_doclear("clearsfid");
+    }
+
+    public function action_clearcontactsfid()
+    {
+      $this->_doclear("clearcontactsfid");
+    }
+      
+    private function _doclear($action)
+    {  
+      if (!empty($this->m_postvars['confirm'])) $this->{'_do'.$action}();
       elseif (empty($this->m_postvars['cancel']))
       {
         $page = &$this->getPage();
-        $page->addContent($this->confirmAction("1=0", "clearsfid", false, false, false) );
+        $page->addContent($this->confirmAction("1=0", $action, false, false, false) );
       }
       else
       {
-        $location = $this->feedbackUrl("clearsfid", ACTION_CANCELLED);
+        $location = $this->feedbackUrl($action, ACTION_CANCELLED);
         $this->redirect($location);
       }
     }
   
-    private function _doClearSfid()
+    private function _doclearsfid()
     {
       $this->getDb()->query("update organization set salesforce_id =null");
       $count = $this->getDb()->affected_rows();
@@ -57,22 +74,7 @@
       $this->redirect($location);
     }
   
-    public function action_clearcontactsfid()
-    {
-      if (!empty($this->m_postvars['confirm'])) $this->_doClearContactSfid();
-      elseif (empty($this->m_postvars['cancel']))
-      {
-        $page = &$this->getPage();
-        $page->addContent($this->confirmAction("1=0", "clearcontactsfid", false, false, false) );
-      }
-      else
-      {
-        $location = $this->feedbackUrl("clearcontactsfid", ACTION_CANCELLED);
-        $this->redirect($location);
-      }
-    }
-  
-    private function _doClearContactSfid()
+    private function _doclearcontactsfid()
     {
       $this->getDb()->query("update person set salesforce_id=null");
       $count = $this->getDb()->affected_rows();
@@ -80,6 +82,10 @@
       $this->redirect($location);
     }
     
+    /**
+     * Next methods import account, contact from Sales Force to Achievo 
+     *
+     */
     public function action_Accountimport()
     {
       $this->m_destnode = &atkGetNode("organization.organization");
@@ -106,6 +112,73 @@
         $this->redirect($location);
       }
     }
+    /*
+    private function _doAccountContactImport($type)
+    {
+      $this->_iniQuery($this->{'_get'.$type.'Query'}());
+      $r = $this->_getQueryMore();
+      while($r) 
+      {
+        ini_set('max_execution_time',30);
+        $this->addAccountContactToAchievo($type, $r);
+        $r = $this->_getQueryMore();
+      }
+      $location = $this->feedbackUrl($type."import", ACTION_SUCCESS,"",$this->m_accountaddok."/".$this->m_accountadderror. " ".$type."s have been added/error");
+      $this->redirect($location);
+    }
+    
+    private function _getAccountQuery()
+    {
+      return "SELECT Id, Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
+          Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
+          ShippingCountry, OwnerId, ParentId,AnnualRevenue,NumberOfEmployees FROM Account"; 
+          //ShippingCountry, OwnerId, ParentId,AnnualRevenue,NumberOfEmployees FROM Account WHERE Achievo_ID__c = null"; 
+    }
+    
+    private function _getContactQuery()
+    {
+      return "SELECT id, Achievo_ID__c,Salutation,Title,AccountId,LastName,FirstName,Phone,Fax,Email,
+          MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description
+          FROM Contact WHERE Achievo_ID__c = null AND AccountId <> null";
+    }
+
+    private function _getQueryMore()
+    {
+      $result = false;
+      
+      if(isset($this->m_queryresult->records[$this->m_qposition]))
+      {
+        $result = $this->m_queryresult->records[$this->m_qposition];
+        $this->m_qposition++;
+        atkdebug("          ID:".$this->m_qposition);
+      }
+      elseif(!$this->m_queryresult->done)
+      {
+        try
+        {
+          $response = $this->m_client->queryMore($this->m_queryresult->queryLocator);
+          $this->m_queryresult = new QueryResult($response);
+          
+          $this->m_qposition = 0;
+          $result = $this->m_queryresult->records[$this->m_qposition];
+        } catch (Exception $e) {
+          atkerror($this->m_client->getLastRequest());
+          atkerror($e->faultstring);
+        }
+      }
+      return $result;
+    }
+    
+    private function _iniQuery($querystring)
+    {
+      $this->m_qposition = 0;
+      $options = new QueryOptions(500);
+      $this->m_client->setQueryOptions($options);
+
+      $response = $this->m_client->query($querystring);
+      $this->m_queryresult = new QueryResult($response);
+    }
+    */
     
     private function _doAccountContactImport($type)
     {
@@ -149,23 +222,12 @@
       $this->$logmethod($type, $r, $message);
     }
     
-    private function _updateAchievoId($type, $id, $sfid)
-    {
-      $fields = array("Achievo_ID__c"=>$id);
-      
-      $sObject = new SObject();
-      $sObject->fields = $fields;
-      $sObject->type = $type;
-      $sObject->Id = $sfid;
-      
-      $this->m_client->update(array ($sObject));      
-    }
-    
     private function getSalesForceAccount($limit)
     {
-      $query = "SELECT id, Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
+      $query = "SELECT Id, Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
           Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
           ShippingCountry, OwnerId, ParentId,AnnualRevenue,NumberOfEmployees FROM Account WHERE Achievo_ID__c = null Limit ".$limit; 
+
       $response = $this->m_client->query($query);
   	  $queryResult = new QueryResult($response);
        
@@ -184,6 +246,86 @@
   	  return $queryResult;
   	}
 
+  	private function _updateAchievoId($type, $id, $sfid)
+    {
+      $fields = array("Achievo_ID__c"=>$id);
+      
+      $sObject = new SObject();
+      $sObject->fields = $fields;
+      $sObject->type = $type;
+      $sObject->Id = $sfid;
+      
+      $this->m_client->update(array ($sObject));      
+    }
+    
+    private function prepareContactRecord($rez)
+    {
+        $c = array();
+        $c['function'] = $rez->fields->Title;
+        $c['lastname'] = $rez->fields->LastName;
+        $c['firstname'] = $rez->fields->FirstName;
+        $c["phone"] = $rez->fields->Phone;
+        $c["fax"] = $rez->fields->Fax;
+        $c["email"] = $rez->fields->Email;
+        $c["address"] = $rez->fields->MailingStreet;
+        $c["city"] = $rez->fields->MailingCity;
+        $c["state"] = $rez->fields->MailingState;
+        $c["zipcode"] = $rez->fields->MailingPostalCode; 
+        $c["country"] = $rez->fields->MailingCountry;
+        $c["cellular"] = $rez->fields->MobilePhone;
+        $c["remark"] = $rez->fields->Description;
+        $c["salesforce_id"] = $rez->Id;
+        $c["role"] = 'contact';
+        
+        //relations
+        $c['company'] = array('id'=>$this->getOrganizationId($rez->fields->AccountId));
+        $c['title_id'] = array('id'=>$this->getTitleId($rez->fields->Salutation));
+          
+        //encode from UTF-8 to ATK CHARSET
+        $this->strConvertSfToAtk($c);
+        
+        return $c;
+    }
+    
+    private function prepareAccountRecord($rez)
+    {
+      $r = array();
+      
+      $r['name'] = $rez->fields->Name;
+      
+      $r['invoice_address'] = $rez->fields->BillingStreet;
+      $r['invoice_zipcode'] = $rez->fields->BillingPostalCode;
+      $r['invoice_city'] = $rez->fields->BillingCity;
+      $r['invoice_state'] = $rez->fields->BillingState;
+      $r['invoice_country'] = $rez->fields->BillingCountry;
+      $r['phone'] = $rez->fields->Phone;
+      $r['fax'] = $rez->fields->Fax;
+      $r['remark'] = $rez->fields->Description;
+      $r['website'] = $rez->fields->Website;
+      $r['type'] = $rez->fields->Type;
+      $r['visit_address'] = $rez->fields->ShippingStreet;
+      $r['visit_zipcode'] = $rez->fields->ShippingPostalCode;
+      $r['visit_city'] = $rez->fields->ShippingCity;
+      $r['visit_state'] = $rez->fields->ShippingState;
+      $r['visit_country'] = $rez->fields->ShippingCountry;
+      $r['salesforce_id'] = $rez->Id;
+      $r['revenue'] = $rez->fields->AnnualRevenue;
+      $r['employees'] = $rez->fields->NumberOfEmployees;
+      
+      //relation
+      $r['member_of'] = array('id'=>$this->getOrganizationId($rez->fields->ParentId));
+      $r['assigned_to'] = array('id'=>$this->getEmployeeId($rez->fields->OwnerId));
+
+      //encode from UTF-8 to ATK CHARSET
+      $this->strConvertSfToAtk($r);
+      
+      return $r;
+    }
+
+    /**
+     * Next methods export Organizations, Contacts from Achievo to Sales Force
+     *
+     */
   	public function action_accountexport()
     {
       if (!empty($this->m_postvars['confirm'])) $this->_doAccountExport();
@@ -226,33 +368,35 @@
     {
       $rows = $this->getDb()->getrows("
         SELECT
-         id,
-         invoice_city,
-         invoice_country,
-         invoice_zipcode,
-         invoice_state,
-         CONCAT(IFNULL(invoice_address,''),IFNULL(CONCAT(', ',invoice_address2),'')) invoice_address,
-         visit_city,
-         visit_country,
-         visit_zipcode,
-         visit_state,
-         CONCAT(IFNULL(visit_address,''),IFNULL(CONCAT(', ',visit_address2),'')) visit_address,
-         remark,
-         fax,
-         name,
-         employees,
-         phone,
-         mail_city,
-         mail_country,
-         mail_zipcode,
-         mail_state,
-         CONCAT(IFNULL(mail_address,''),IFNULL(CONCAT(', ',mail_address2),'')) mail_address,
-         organizationcode,
-         website,
-         type
+         o.id,
+         o.invoice_city,
+         o.invoice_country,
+         o.invoice_zipcode,
+         o.invoice_state,
+         CONCAT(IFNULL(o.invoice_address,''),IFNULL(CONCAT(', ',o.invoice_address2),'')) invoice_address,
+         o.visit_city,
+         o.visit_country,
+         o.visit_zipcode,
+         o.visit_state,
+         CONCAT(IFNULL(o.visit_address,''),IFNULL(CONCAT(', ',o.visit_address2),'')) visit_address,
+         o.remark,
+         o.fax,
+         o.name,
+         o.employees,
+         o.phone,
+         o.mail_city,
+         o.mail_country,
+         o.mail_zipcode,
+         o.mail_state,
+         CONCAT(IFNULL(o.mail_address,''),IFNULL(CONCAT(', ',o.mail_address2),'')) mail_address,
+         o.organizationcode,
+         o.website,
+         o.type,
+         p.salesforce_id
         FROM
          organization o
-        WHERE salesforce_id IS NULL OR salesforce_id=''
+         LEFT JOIN person p ON p.id=o.assigned_to
+        WHERE o.salesforce_id IS NULL OR o.salesforce_id=''
         LIMIT $offset, $limit
       ");
       return $rows;    
@@ -275,6 +419,7 @@
         "Description" =>$r['remark'],
         "Website" =>$r['website'],
         "Type" =>$r['type'],
+        "OwnerId"=>$r['salesforce_id']
       );
       
       /**
@@ -319,13 +464,13 @@
         
         $msg = $this->isAccountExist($r);
         $this->getDb()->query("
-            INSERT INTO sf_dupe (type, direction, id, name,message,created_at) 
+            INSERT INTO sf_dupe (type, direction, type_id, name,message,created_at) 
             VALUES('account','Achievo->SF','".$r['id']."','".escapeSQL($r['name'],true)."','".escapeSQL($msg,true)."',NOW()");
       }
       else
       {
         $this->getDb()->query("
-          INSERT INTO sf_dupe (type, direction, id, name, fields, message,statuscode,created_at) 
+          INSERT INTO sf_dupe (type, direction, type_id, name, fields, message,statuscode,created_at) 
           VALUES('account','Achievo->SF','".$r['id']."','".escapeSQL($r['name'],true)."',
           '".escapeSQL($createResponse->errors->fields)."',
           '".escapeSQL($createResponse->errors->message)."',
@@ -350,6 +495,21 @@
     	  return $e->getMessage();
     	}
     	
+    }
+
+    public function action_contactexport()
+    {
+      if (!empty($this->m_postvars['confirm'])) $this->_doContactExport();
+      elseif (empty($this->m_postvars['cancel']))
+      {
+        $page = &$this->getPage();
+        $page->addContent($this->confirmAction("1=0", "contactexport", false, false, false) );
+      }
+      else
+      {
+        $location = $this->feedbackUrl("contactexport", ACTION_CANCELLED);
+        $this->redirect($location);
+      }
     }
   
     private function _doContactExport()
@@ -382,7 +542,6 @@
           t.title,
           p.lastname,
           p.firstname,
-          p.birthdate,
           p.phone,
           p.fax,
           p.email,
@@ -429,7 +588,6 @@
       "Phone" => $c["phone"],
       "Fax" => $c["fax"],
       "Email" => $c["email"],
-      //"Birthdate" => $c["birthdate"],//only for employees in Achievo
       "MailingStreet" => $c["address"],
       "MailingCity" => $c["city"],
       "MailingState" => $c["state"],
@@ -454,13 +612,13 @@
         
         $msg = $this->isContactExist($c);
         $this->getDb()->query("
-            INSERT INTO sf_dupe (type,direction, id, name, name1,message,created_at) 
+            INSERT INTO sf_dupe (type,direction, type_id, name, name1,message,created_at) 
             VALUES('contact','Achievo->SF','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."','".escapeSQL($msg,true)."',NOW())");
       }
       else
       {
         $this->getDb()->query("
-          INSERT INTO sf_dupe (type, direction, id, name, name1, fields, message,statuscode,created_at) 
+          INSERT INTO sf_dupe (type, direction, type_id, name, name1, fields, message,statuscode,created_at) 
           VALUES('contact','Achievo->SF','".$c['id']."','".escapeSQL($c['lastname'],true)."','".escapeSQL($c['firstname'],true)."',
           '".escapeSQL($createResponse->errors->fields)."',
           '".escapeSQL($createResponse->errors->message)."',
@@ -575,6 +733,10 @@
       $this->getDb()->query("INSERT INTO sf_dupe(message,created_at) VALUES ('Start update SF->achievo',NOW())");
     }
     
+    /**
+     * Next method update Achievo records according to Sales Force records
+     *
+     */
     public function action_getupdated()
     {
       if (!empty($this->m_postvars['confirm'])) $this->_doGetUpdated();
@@ -632,7 +794,7 @@
         list($rez) = $this->m_client->retrieve(
           "Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
           Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
-          ShippingCountry","Account",array($id));
+          ShippingCountry,OwnerId","Account",array($id));
   
         $r = $this->prepareAccountRecord($rez);
         $r['salesforce_id'] = $id;
@@ -672,75 +834,11 @@
       }
     }
     
-    private function prepareContactRecord($rez)
-    {
-        $c = array();
-        $c['function'] = $rez->fields->Title;
-        $c['lastname'] = $rez->fields->LastName;
-        $c['firstname'] = $rez->fields->FirstName;
-        $c["phone"] = $rez->fields->Phone;
-        $c["fax"] = $rez->fields->Fax;
-        $c["email"] = $rez->fields->Email;
-        $c["address"] = $rez->fields->MailingStreet;
-        $c["city"] = $rez->fields->MailingCity;
-        $c["state"] = $rez->fields->MailingState;
-        $c["zipcode"] = $rez->fields->MailingPostalCode; 
-        $c["country"] = $rez->fields->MailingCountry;
-        $c["cellular"] = $rez->fields->MobilePhone;
-        $c["remark"] = $rez->fields->Description;
-        $c["salesforce_id"] = $rez->Id;
-        $c["role"] = 'contact';
-        
-        //relations
-        $c['company'] = array('id'=>$this->getOrganizationId($rez->fields->AccountId));
-        $c['title_id'] = array('id'=>$this->getTitleId($rez->fields->Salutation));
-          
-        //encode from UTF-8 to ATK CHARSET
-        $this->strConvertSfToAtk($c);
-        
-        return $c;
-    }
-    
-    private function prepareAccountRecord($rez)
-    {
-      $r = array();
-      
-      $r['name'] = $rez->fields->Name;
-      
-      $r['invoice_address'] = $rez->fields->BillingStreet;
-      $r['invoice_zipcode'] = $rez->fields->BillingPostalCode;
-      $r['invoice_city'] = $rez->fields->BillingCity;
-      $r['invoice_state'] = $rez->fields->BillingState;
-      $r['invoice_country'] = $rez->fields->BillingCountry;
-      $r['phone'] = $rez->fields->Phone;
-      $r['fax'] = $rez->fields->Fax;
-      $r['remark'] = $rez->fields->Description;
-      $r['website'] = $rez->fields->Website;
-      $r['type'] = $rez->fields->Type;
-      $r['visit_address'] = $rez->fields->ShippingStreet;
-      $r['visit_zipcode'] = $rez->fields->ShippingPostalCode;
-      $r['visit_city'] = $rez->fields->ShippingCity;
-      $r['visit_state'] = $rez->fields->ShippingState;
-      $r['visit_country'] = $rez->fields->ShippingCountry;
-      $r['salesforce_id'] = $rez->Id;
-      $r['revenue'] = $rez->fields->AnnualRevenue;
-      $r['employees'] = $rez->fields->NumberOfEmployees;
-      
-      //relation
-      $r['member_of'] = array('id'=>$this->getOrganizationId($rez->fields->ParentId));
-      
-
-      //encode from UTF-8 to ATK CHARSET
-      $this->strConvertSfToAtk($r);
-      
-      return $r;
-    }
-    
     private function logImportContact($entity,$r,$message)
     {
       $this->getDb()->query("
         INSERT INTO 
-          sf_dupe (type, direction, id, name, name1, message,created_at) 
+          sf_dupe (type, direction, type_id, name, name1, message,created_at) 
         VALUES('$entity','SF->Achievo','".$r['id']."',
         '".escapeSQL($r['lastname'],true)."',
         '".escapeSQL($r['firstname'],true)."',
@@ -751,7 +849,7 @@
     {
       $this->getDb()->query("
         INSERT INTO 
-          sf_dupe (type, direction, id, name, message,created_at) 
+          sf_dupe (type, direction, type_id, name, message,created_at) 
         VALUES('$entity','SF->Achievo','".$r['id']."',
         '".escapeSQL($r['name'],true)."',
         '".escapeSQL($message)."',NOW())");
@@ -782,7 +880,7 @@
           MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description",
           "Contact",array($id));
           
-        $c = $this->prepareContactRecord();
+        $c = $this->prepareContactRecord($rez);
           
         list($old) = $contact->selectDb("person.salesforce_id='".$id."'","","","",array("id"));
         
@@ -851,91 +949,51 @@
       return $row['id'];
     }
 
-    public function action_fix()
+    private function getEmployeeId($salesforceId)
     {
-      if (!empty($this->m_postvars['confirm'])) $this->_doFix();
+      list($row) = $this->getDb()->getrows("SELECT id FROM person WHERE salesforce_id='$salesforceId'");
+      return $row['id'];
+    }
+
+    /**
+     * Link Achievo employees with Sales Force users. We use email for linking
+     *
+     */
+    public function action_employeelink()
+    {
+      if (!empty($this->m_postvars['confirm'])) $this->_employeelink();
       elseif (empty($this->m_postvars['cancel']))
       {
         $page = &$this->getPage();
-        $page->addContent($this->confirmAction("1=0", "fix", false, false, false) );
+        $page->addContent($this->confirmAction("1=0", "employeelink", false, false, false) );
       }
       else
       {
-        $location = $this->feedbackUrl("fix", ACTION_CANCELLED);
+        $location = $this->feedbackUrl("employeelink", ACTION_CANCELLED);
         $this->redirect($location);
       }
     }
     
-    private function _doFix3()
+    private function _employeelink()
     {
-      try {
-        
-        print_r($this->m_client->describeSObject('User'));
+      /*@var $node atkNode*/
+      $node = &atkGetNode("employee.employee");
+      $rows = $node->selectDb("","","","",array("email"));
+      $count = 0;
       
-      } catch (Exception $e) {
-        echo $this->m_client->getLastRequest();
-        echo $e->faultstring;
-      }      
-    }
-    
-    private function _doFix2()
-    {
-      $rows = $this->getFixRecord();
-      $db = $this->getDb();
-      $count = 0;
-      foreach ($rows->records as $r)
+      foreach ($rows as $r)
       {
-        $accountId = $this->getOrganizationId($r->fields->AccountId);
-        $db->query("
-          UPDATE person
-          SET salesforce_id='".$r->Id."',
-          company='$accountId'
-          WHERE id='".$r->fields->Achievo_ID__c."';
-        ");
-        $count++;
+        $query = "SELECT Id FROM User WHERE Email='".$r['email']."'";
+        $response = $this->m_client->query($query);
+        
+        if($response->size == 1)
+        {
+          $record = array("atkprimkey"=>$r['atkprimkey'],'salesforce_id'=>$response->records[0]->Id);
+          if($node->updateDb($record,false,"",array('salesforce_id'))) $count++;
+        }
       }
-      $location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","$count accounts have been fixed:".$r->fields->Achievo_ID__c);
+      $location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","salesforce_id have been set for $count employees");
       $this->redirect($location);
     }
     
-    private function getFixRecord2()
-    {
-      $query = "SELECT id, AccountId, Achievo_ID__c FROM Contact WHERE Achievo_ID__c>4765 ORDER BY Achievo_ID__c Limit 2000"; 
-      //$query = "SELECT id, AccountId, Achievo_ID__c FROM Contact ORDER BY Achievo_ID__c Limit 2000"; 
-      $response = $this->m_client->query($query);
-  	  $queryResult = new QueryResult($response);
-       
-  	  return $queryResult;
-    }
-
-    private function _doFix()
-    {
-      $rows = $this->getFixRecord();
-      $db = $this->getDb();
-      $count = 0;
-      foreach ($rows->records as $r)
-      {
-        $db->query("
-          UPDATE organization
-          SET 
-            revenue='".$r->fields->AnnualRevenue."',
-            employees='".$r->fields->NumberOfEmployees."',
-            member_of='".$this->getOrganizationId($r->fields->ParentId)."'
-          
-          WHERE id='".$r->fields->Achievo_ID__c."';
-        ");
-        $count++;
-      }
-      $location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","$count accounts have been fixed".$r->fields->Achievo_ID__c);
-      $this->redirect($location);
-    }
-    
-    private function getFixRecord()
-    {
-      $query = "SELECT id, Achievo_ID__c,ParentId,AnnualRevenue,NumberOfEmployees FROM Account WHERE Achievo_ID__c>2698 ORDER BY Achievo_ID__c Limit 2000"; 
-      $response = $this->m_client->query($query);
-  	  $queryResult = new QueryResult($response);
-       
-  	  return $queryResult;
-    }
   }
