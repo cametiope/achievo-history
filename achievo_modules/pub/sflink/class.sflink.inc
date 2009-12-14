@@ -432,7 +432,7 @@
         $msg = $this->isAccountExist($r);
         $this->getDb()->query("
             INSERT INTO sf_dupe (type, direction, type_id, name,message,created_at) 
-            VALUES('account','Achievo->SF','".$r['id']."','".escapeSQL($r['name'],true)."','".escapeSQL($msg,true)."',NOW()");
+            VALUES('account','Achievo->SF','".$r['id']."','".escapeSQL($r['name'],true)."','".escapeSQL($msg,true)."',NOW())");
       }
       else
       {
