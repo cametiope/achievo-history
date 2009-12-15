@@ -136,7 +136,7 @@
     
     private function _getContactQuery()
     {
-      return "SELECT id, Achievo_ID__c,Salutation,Title,AccountId,LastName,FirstName,Phone,Fax,Email,
+      return "SELECT Id, Achievo_ID__c,Salutation,Title,AccountId,LastName,FirstName,Phone,Fax,Email,
           MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description
           FROM Contact WHERE Achievo_ID__c = null AND AccountId <> null";
     }
@@ -189,7 +189,14 @@
       {
         $message = "Add ok";
         $this->m_accountaddok++;
-        $this->_updateAchievoId($type, $r['id'], $rez->Id);
+        if($this->_updateAchievoId($type, $r['id'], $rez->Id))
+        {
+          $message .= ", Achievo_ID updated";
+        }
+        else 
+        {
+          $message .= ", Achievo_ID don't updated";
+        }
       }
       else 
       {
@@ -222,7 +229,8 @@
       $sObject->type = $type;
       $sObject->Id = $sfid;
       
-      $this->m_client->update(array ($sObject));      
+      $res = $this->m_client->update(array ($sObject));
+      return $res->success;      
     }
     
     private function prepareContactRecord($rez)
@@ -421,7 +429,7 @@
       $sObject = new SObject();
       $sObject->fields = $fields;
       $sObject->type = 'Account';
-      $createResponse = $this->m_client->create(array($sObject));
+      $createResponse = $this->m_client->create(array($sObject));//we can add several object at once!!!, use and speed up
         
       //check that account has been created ok
       if($createResponse->success)
