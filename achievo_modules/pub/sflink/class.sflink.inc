@@ -32,8 +32,8 @@
       $loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
       //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
   
-      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix","employeelink"), ACTION_CANCELLED|ACTION_SUCCESS);
-      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","employeelink"=>"contactexport");
+      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix","employeelink","check"), ACTION_CANCELLED|ACTION_SUCCESS);
+      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","check"=>"contactexport","employeelink"=>"contactexport");
     }
     
     /**
@@ -187,16 +187,8 @@
       //new account - add it to Achievo
       if($this->m_destnode->addDb($r,true,"add",$this->getOneToManyRelationList($this->m_destnode)))
       {
-        $message = "Add ok";
         $this->m_accountaddok++;
-        if($this->_updateAchievoId($type, $r['id'], $rez->Id))
-        {
-          $message .= ", Achievo_ID updated";
-        }
-        else 
-        {
-          $message .= ", Achievo_ID don't updated";
-        }
+        $message .= "Add ok, ".$this->_updateAchievoId($type, $r['id'], $rez->Id);
       }
       else 
       {
@@ -229,8 +221,22 @@
       $sObject->type = $type;
       $sObject->Id = $sfid;
       
-      $res = $this->m_client->update(array ($sObject));
-      return $res->success;      
+      try 
+      {
+        $res = $this->m_client->update(array ($sObject));
+        if($res->success)
+        {
+          return ", Achievo_ID updated";
+        }
+        else 
+        {
+          return ", Achievo_ID don't updated. StatusCode:".$res->errors->statusCode.".Message:".$res->errors->message;
+        }
+      }
+    	catch (Exception $e)
+    	{
+    	  return "Exception take place:".$e->getMessage();
+    	}
     }
     
     private function prepareContactRecord($rez)
@@ -988,6 +994,51 @@
     
     private function _doFix()
     {
+      $this->_doFixAccount();
+      $this->_doFixContact();
+      
+      $location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","Account Total/Error/Don't Present/OK:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateerror."/".$this->m_accountupdateok."| Contact Total/Error/Don't Present/OK:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateerror."/".$this->m_contactupdateok);
+      $this->redirect($location);
+    }
+      
+    private function _doFixAccount()
+    {  
+      $query = "SELECT Id, Achievo_ID__c FROM Account WHERE Achievo_ID__c <> null";
+      
+      $this->_iniQuery($query);
+      $r = $this->_getQueryMore();
+      while($r) 
+      {
+        ini_set('max_execution_time',30);
+        $this->m_accountaddok++;//total
+        $this->_fixAccountAchievoId($r);
+        $r = $this->_getQueryMore();
+      }
+    }
+    
+    private function _fixAccountAchievoId($r)
+    {
+      list($row) = $this->getDb()->getrows("SELECT id FROM organization WHERE salesforce_id='".$r->Id."'");
+      if(isset($row['id']))
+      {
+        if($row['id'] != $r->fields->Achievo_ID__c)
+        {
+          $this->m_accountadderror++;
+          $this->_updateAchievoId("Account",$row['id'],$r->Id);     
+        }
+        else 
+        {
+          $this->m_accountupdateok++;
+        }
+      }
+      else 
+      {
+        $this->m_accountupdateerror++;
+      }
+    }
+    
+    private function _doFixContact()
+    {  
       $query = "SELECT Id, Achievo_ID__c FROM Contact WHERE Achievo_ID__c <> null";
       
       $this->_iniQuery($query);
@@ -995,29 +1046,123 @@
       while($r) 
       {
         ini_set('max_execution_time',30);
-        $this->_fixAchievoId($r);
+        $this->m_contactaddok++;//total
+        $this->_fixContactAchievoId($r);
         $r = $this->_getQueryMore();
       }
-      $location = $this->feedbackUrl("fix", ACTION_SUCCESS,"",$this->m_accountaddok."/".$this->m_accountadderror. " "."s have been added/error");
-      $this->redirect($location);
     }
     
-    private function _fixAchievoId($r)
+    private function _fixContactAchievoId($r)
     {
       list($row) = $this->getDb()->getrows("SELECT id FROM person WHERE salesforce_id='".$r->Id."'");
       if(isset($row['id']))
       {
-        
-        if($row['id'] == $r->fields->Achievo_ID__c)
+        if($row['id'] != $r->fields->Achievo_ID__c)
         {
-          $this->m_accountaddok++;
+          $this->m_contactadderror++;
+          $this->_updateAchievoId("Contact",$row['id'],$r->Id);     
         }
         else 
         {
-          $this->m_accountadderror++;
-          $this->_updateAchievoId("Contact",$row['id'],$r->Id);     
+          $this->m_contactupdateok++;
         }
+      }
+      else 
+      {
+        $this->m_contactupdateerror++;
       }
     }
     
+    public function action_check()
+    {
+      if (!empty($this->m_postvars['confirm'])) $this->_doCheck();
+      elseif (empty($this->m_postvars['cancel']))
+      {
+        $page = &$this->getPage();
+        $page->addContent($this->confirmAction("1=0", "check", false, false, false) );
+      }
+      else
+      {
+        $location = $this->feedbackUrl("check", ACTION_CANCELLED);
+        $this->redirect($location);
+      }
+    }
+    
+    private function _doCheck()
+    {
+      $this->_doCheckAccount();
+      $this->_doCheckContact();
+      
+      $location = $this->feedbackUrl("check", ACTION_SUCCESS,"","Account Total/Error/Don't Present/OK:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateerror."/".$this->m_accountupdateok."| Contact Total/Error/Don't Present/OK:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateerror."/".$this->m_contactupdateok);
+      $this->redirect($location);
+    }
+      
+    private function _doCheckAccount()
+    {  
+      $query = "SELECT Id, Achievo_ID__c FROM Account WHERE Achievo_ID__c <> null";
+      
+      $this->_iniQuery($query);
+      $r = $this->_getQueryMore();
+      while($r) 
+      {
+        ini_set('max_execution_time',30);
+        $this->m_accountaddok++;//total
+        $this->_checkAccountAchievoId($r);
+        $r = $this->_getQueryMore();
+      }
+    }
+    
+    private function _checkAccountAchievoId($r)
+    {
+      list($row) = $this->getDb()->getrows("SELECT id FROM organization WHERE salesforce_id='".$r->Id."'");
+      if(isset($row['id']))
+      {
+        if($row['id'] != $r->fields->Achievo_ID__c)
+        {
+          $this->m_accountadderror++;
+        }
+        else 
+        {
+          $this->m_accountupdateok++;
+        }
+      }
+      else 
+      {
+        $this->m_accountupdateerror++;
+      }
+    }
+    private function _docheckContact()
+    {  
+      $query = "SELECT Id, Achievo_ID__c FROM Contact WHERE Achievo_ID__c <> null";
+      
+      $this->_iniQuery($query);
+      $r = $this->_getQueryMore();
+      while($r) 
+      {
+        ini_set('max_execution_time',30);
+        $this->m_contactaddok++;//total
+        $this->_checkContactAchievoId($r);
+        $r = $this->_getQueryMore();
+      }
+    }
+    
+    private function _checkContactAchievoId($r)
+    {
+      list($row) = $this->getDb()->getrows("SELECT id FROM person WHERE salesforce_id='".$r->Id."'");
+      if(isset($row['id']))
+      {
+        if($row['id'] != $r->fields->Achievo_ID__c)
+        {
+          $this->m_contactadderror++;
+        }
+        else 
+        {
+          $this->m_contactupdateok++;
+        }
+      }
+      else 
+      {
+        $this->m_contactupdateerror++;
+      }
+    }    
   }
