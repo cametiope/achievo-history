@@ -21,6 +21,8 @@
     protected $m_response;
     protected $m_qposition = 0;
     protected $m_queryresult;
+    protected $m_message;
+    protected $m_statusCode;
 
     public function __construct($type="sflink", $flag=0)
     {
@@ -32,8 +34,8 @@
       $loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
       //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
 
-      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix","employeelink","check"), ACTION_CANCELLED|ACTION_SUCCESS);
-      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","check"=>"contactexport","employeelink"=>"contactexport");
+      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix","fixcontact","employeelink","check"), ACTION_CANCELLED|ACTION_SUCCESS);
+      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","fixcontact"=>"contactexport","check"=>"contactexport","employeelink"=>"contactexport");
     }
 
     /**
@@ -212,8 +214,39 @@
       return $res;
     }
 
-  	private function _updateAchievoId($type, $id, $sfid)
+  	private function _toNullAchievoId($type, $sfid)
+  	{
+      $this->m_message = '';
+      $this->m_statusCode = '';
+
+      $sObject = new SObject();
+    	$sObject->fieldsToNull = array("Achievo_ID");
+      $sObject->type = $type;
+      $sObject->Id = $sfid;
+      try
+      {
+        $this->m_response = $this->m_client->update(array($sObject));
+        if($this->m_response->success)
+        {
+          $this->m_message = "Achievo_ID has been set to null";
+        }
+        else 
+        {
+          $this->m_message = "Achievo_ID can't be set to null. Message:".$this->m_response->errors->message;
+          $this->m_statusCode = $this->m_response->errors->statusCode;
+        }
+      }
+      catch(Exception $e)
+      {
+        $this->m_message = "Exception take place:".$e->getMessage();
+      }
+  	}
+  	
+    private function _updateAchievoId($type, $id, $sfid)
     {
+      $this->m_message = '';
+      $this->m_statusCode = '';
+      
       $fields = array("Achievo_ID__c"=>$id);
 
       $sObject = new SObject();
@@ -223,20 +256,22 @@
 
       try
       {
-        $res = $this->m_client->update(array ($sObject));
-        if($res->success)
+        $this->m_response = $this->m_client->update(array ($sObject));
+        if($this->m_response->success)
         {
-          return ", Achievo_ID updated";
+          $this->m_message = ", Achievo_ID updated";
         }
         else
         {
-          return ", Achievo_ID don't updated. StatusCode:".$res->errors->statusCode.".Message:".$res->errors->message;
+          $this->m_message = ", Achievo_ID don't updated. StatusCode:".$this->m_response->errors->statusCode.".Message:".$this->m_response->errors->message;
+          $this->m_statusCode = $this->m_response->errors->statusCode;
         }
       }
     	catch (Exception $e)
     	{
-    	  return "Exception take place:".$e->getMessage();
+    	  $this->m_message = "Exception take place:".$e->getMessage();
     	}
+      return $this->m_message;
     }
 
     private function prepareContactRecord($rez)
@@ -977,6 +1012,31 @@
       $this->redirect($location);
     }
 
+    public function action_fixcontact()
+    {
+      if (!empty($this->m_postvars['confirm'])) $this->_doFixContactOnly();
+      elseif (empty($this->m_postvars['cancel']))
+      {
+        $page = &$this->getPage();
+        $page->addContent($this->confirmAction("1=0", "fixcontact", false, false, false) );
+      }
+      else
+      {
+        $location = $this->feedbackUrl("fixcontact", ACTION_CANCELLED);
+        $this->redirect($location);
+      }
+    }
+
+    private function _doFixContactOnly()
+    {
+      //$this->_doFixAccount();
+      $this->_doFixContact();
+
+      //$location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","Account Total/Error/Don't Present/OK:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateerror."/".$this->m_accountupdateok."| Contact Total/Error/Don't Present/OK:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateerror."/".$this->m_contactupdateok);
+      $location = $this->feedbackUrl("fixcontact", ACTION_SUCCESS,"","Contact Total/Error/Don't Present/OK:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateerror."/".$this->m_contactupdateok);
+      $this->redirect($location);
+    }
+
     public function action_fix()
     {
       if (!empty($this->m_postvars['confirm'])) $this->_doFix();
@@ -995,9 +1055,10 @@
     private function _doFix()
     {
       $this->_doFixAccount();
-      $this->_doFixContact();
+    //  $this->_doFixContact();
 
-      $location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","Account Total/Error/Don't Present/OK:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateerror."/".$this->m_accountupdateok."| Contact Total/Error/Don't Present/OK:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateerror."/".$this->m_contactupdateok);
+      //$location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","Account Total/Error/Don't Present/OK:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateerror."/".$this->m_accountupdateok."| Contact Total/Error/Don't Present/OK:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateerror."/".$this->m_contactupdateok);
+      $location = $this->feedbackUrl("fix", ACTION_SUCCESS,"","Account Total/Error/Don't Present/OK:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateerror."/".$this->m_accountupdateok);
       $this->redirect($location);
     }
 
@@ -1025,6 +1086,7 @@
         {
           $this->m_accountadderror++;
           $this->_updateAchievoId("Account",$row['id'],$r->Id);
+          $this->_logging("Account","SF<->Achievo",$row['id'],$r->Id);
         }
         else
         {
@@ -1035,10 +1097,22 @@
       {
         //We didn't found in Achievo this salesforce_id, so this Achievo_ID is WRONG and we have to clear it
         $this->m_accountupdateerror++;
-        $this->_updateAchievoId("Account","",$r->Id);
+        $this->_toNullAchievoId("Account",$r->Id);
+        $this->_logging("Account","SF<->Achievo",'',$r->Id);
       }
     }
-
+    
+    private function _logging($entity,$direction,$id, $sfid)
+    {
+      $this->getDb()->query("
+        INSERT INTO
+          sf_dupe (type, direction, type_id, message,statuscode,created_at)
+        VALUES
+          (LOWER('$entity'),'$direction','$id',
+        '".escapeSQL($this->m_message.".Sfid:".$sfid)."',
+        '".escapeSQL($this->m_statusCode)."',NOW())");
+    }
+    
     private function _doFixContact()
     {
       $query = "SELECT Id, Achievo_ID__c FROM Contact WHERE AccountId <> null";// We check all Contacts (that have account), so comment this - Achievo_ID__c <> null
@@ -1063,6 +1137,7 @@
         {
           $this->m_contactadderror++;
           $this->_updateAchievoId("Contact",$row['id'],$r->Id);
+          $this->_logging("Contact","SF<->Achievo",$row['id'],$r->Id);
         }
         else
         {
@@ -1072,8 +1147,10 @@
       else
       {
         //We didn't found in Achievo this salesforce_id, so this Achievo_ID is WRONG and we have to clear it
-        $this->_updateAchievoId("Contact","",$r->Id);
         $this->m_contactupdateerror++;
+        $this->_toNullAchievoId("Contact",$r->Id);
+        $this->_logging("Contact","SF<->Achievo",'',$r->Id);
+        
       }
     }
 
