@@ -2,6 +2,18 @@
   $modifiers[] = "organization.organization";
   $modifiers[] = "employee.employee";
   $modifiers[] = "organization.contact";
+  
+  //setNodeOverloader("organization.organization","sflink.sflorganization");
+  //check, if project node is alredy overloaded
+  /*$project = atkArrayNvl($g_overloaders,"organization.organization");
+  if($project)
+  {
+    $overloaders[$project] = "sflink.sflorganization";
+  }
+  else 
+  {
+    $overloaders["organization.organization"] = "sflink.sflorganization";
+  }*/
 
   class mod_sflink extends achievoModule
   {
@@ -26,6 +38,7 @@
       $this->menuitem("sf_dupe",dispatch_url("sflink.sf_dupe", "admin"),"sflink",array("sflink.sf_dupe", "admin"),820);
       $this->menuitem("check",dispatch_url("sflink.sflink", "check"),"sflink",array("sflink.sflink", "contactexport"),830);
       $this->menuitem("fix",dispatch_url("sflink.sflink", "fix"),"sflink",array("sflink.sflink", "contactexport"),830);
+      $this->menuitem("fixcontact",dispatch_url("sflink.sflink", "fixcontact"),"sflink",array("sflink.sflink", "contactexport"),830);
     }
     
     function organization_modifier(&$node)
@@ -36,7 +49,7 @@
         "invoice_city","invoice_country","invoice_zipcode","invoice_state","invoice_address","invoice_address2",
         "visit_city","visit_country","visit_zipcode","visit_state","visit_address","visit_address2","remark",
         "fax","name","employees","phone","mail_city","mail_country","mail_zipcode","mail_state","mail_address",
-        "mail_address2","organizationcode","website","type","assigned_to"
+        "mail_address2","organizationcode","website","type","assigned_to","contactperson"
       );
       foreach ($list as $l)
       {
