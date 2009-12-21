@@ -1095,10 +1095,14 @@
       }
       else
       {
-        //We didn't found in Achievo this salesforce_id, so this Achievo_ID is WRONG and we have to clear it
-        $this->m_accountupdateerror++;
-        $this->_toNullAchievoId("Account",$r->Id);
-        $this->_logging("Account","SF<->Achievo",'',$r->Id);
+        if(!empty($r->fields->Achievo_ID__c))
+        {        
+          //We clear Achievo_ID only if its not empty
+          //We didn't found in Achievo this salesforce_id, so this Achievo_ID is WRONG and we have to clear it
+          $this->m_accountupdateerror++;
+          $this->_toNullAchievoId("Account",$r->Id);
+          $this->_logging("Account","SF<->Achievo",'',$r->Id);
+        }
       }
     }
     
@@ -1146,11 +1150,14 @@
       }
       else
       {
-        //We didn't found in Achievo this salesforce_id, so this Achievo_ID is WRONG and we have to clear it
-        $this->m_contactupdateerror++;
-        $this->_toNullAchievoId("Contact",$r->Id);
-        $this->_logging("Contact","SF<->Achievo",'',$r->Id);
-        
+        if(!empty($r->fields->Achievo_ID__c))
+        {        
+          //We clear Achievo_ID only if its not empty
+          //We didn't found in Achievo this salesforce_id, so this Achievo_ID is WRONG and we have to clear it
+          $this->m_contactupdateerror++;
+          $this->_toNullAchievoId("Contact",$r->Id);
+          $this->_logging("Contact","SF<->Achievo",'',$r->Id);
+        }
       }
     }
 
