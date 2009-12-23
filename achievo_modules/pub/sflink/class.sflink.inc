@@ -35,7 +35,7 @@
       //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
 
       $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix","fixcontact","employeelink","check"), ACTION_CANCELLED|ACTION_SUCCESS);
-      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","fixcontact"=>"contactexport","check"=>"contactexport","employeelink"=>"contactexport");
+      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","fixcontact"=>"contactexport","check"=>"contactexport","employeelink"=>"contactexport","checkupdated"=>"getupdated");
     }
 
     /**
@@ -220,7 +220,7 @@
       $this->m_statusCode = '';
 
       $sObject = new SObject();
-    	$sObject->fieldsToNull = array("Achievo_ID");
+    	$sObject->fieldsToNull = array("Achievo_ID__c");
       $sObject->type = $type;
       $sObject->Id = $sfid;
       try
@@ -691,7 +691,7 @@
       return str_replace("'","\'",$string);
     }
 
-    private function getLastUpdateTime()
+    public function getLastUpdateTime()
     {
       $db = &$this->getDb();
       $rows = $db->getrows("
@@ -1252,5 +1252,33 @@
       {
         $this->m_contactupdateerror++;
       }
+    }
+    
+    public function buildSelector($filterrecord)
+    {
+      $selector = null;
+      $getUpdateddResponse = $this->m_client->getUpdated(
+        $filterrecord['node'], 
+        atkDateTimeAttribute::arrayToDateTime($filterrecord['from']),
+        atkDateTimeAttribute::arrayToDateTime($filterrecord['to']));
+
+      $ids = array();
+      if(isset($getUpdateddResponse->ids))
+      {
+        if(is_array($getUpdateddResponse->ids))
+        {
+          $ids = $getUpdateddResponse->ids;
+        }
+        else
+        {
+          $ids = array($getUpdateddResponse->ids);
+        }
+      }
+      
+      $c = count($ids);
+      $ids = array_unique($ids);
+      $selector = "salesforce_id IN('".implode("','",$ids)."')";
+      
+      return $selector;       
     }
   }
