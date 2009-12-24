@@ -31,7 +31,31 @@ class sflinkcheckupdate extends basereport
   
   public function getContentElements($filterrecord)
   {
+    $result = array();
+    
+    $account = &atkGetNode("sflink.sfaccountnode");
     $node = &atkGetNode("sflink.sflink");
+    
+    $account->m_client = &$node->m_client;
+    
+    $data = $account->selectDb($filterrecord);
+    
+    $actions = array();
+
+    /*@var $rl atkrecordlist*/
+    $rl = &atknew("atk.recordlist.atkrecordlist");
+    //$content = $rl->render($object, $data, $actions,RL_NO_SEARCH|RL_NO_SORT);
+    $content = $rl->render($account, $data, $actions);
+
+    if(count($data)==0) 
+    {
+      $result["sfsideaccount"] = $this->text("empty_resultset");
+    }
+    else
+    {
+      $result["sfsideaccount"] = $content;
+    }
+
     if($filterrecord['node']=='Account')
     {
       $objName = "organization.organization";      
@@ -75,12 +99,20 @@ class sflinkcheckupdate extends basereport
 
       /*@var $rl atkrecordlist*/
       $rl = &atknew("atk.recordlist.atkrecordlist");
-      $content = $rl->render($object, $data, $actions,RL_NO_SEARCH|RL_NO_SORT);
+      //$content = $rl->render($object, $data, $actions,RL_NO_SEARCH|RL_NO_SORT);
+      $content = $rl->render($object, $data, $actions);
   
-      if(count($data)==0) return array("sflinkcheckupdate"=>$this->text("empty_resultset"));
-  
-      return array("sflinkcheckupdate"=>$content);
+      if(count($data)==0) 
+      {
+        $result["achievosideaccount"] = $this->text("empty_resultset");
+      }
+      else
+      {
+        $result["achievosideaccount"] = $content;
+      }
     }
+    
+    return $result;
   }
 
 }

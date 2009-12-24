@@ -7,7 +7,7 @@
   class sflink extends atkNode
   {
     /*var $m_client SforcePartnerClient*/
-    protected $m_client;
+    public $m_client;
     //protected $m_metaConnection;
     protected $m_accountaddok = 0;
     protected $m_accountadderror = 0;
