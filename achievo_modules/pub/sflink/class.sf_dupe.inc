@@ -10,7 +10,7 @@ class sf_dupe extends atkMetaNode
   {
     /*@var $policy atkMetaPolicy*/
     $policy->setTypeAndParams("type","atk.attributes.atklistattribute",array(array("account","contact")));
-    $policy->setTypeAndParams("direction","atk.attributes.atklistattribute",array(array("Achievo->SF","SF->Achievo")));
+    $policy->setTypeAndParams("direction","atk.attributes.atklistattribute",array(array("Achievo->SF","SF->Achievo","SF<->Achievo")));
     
     $policy->addFlags("type","type_id","name","name1","fields","message","statuscode","direction","created_at",AF_SEARCHABLE);
   }
