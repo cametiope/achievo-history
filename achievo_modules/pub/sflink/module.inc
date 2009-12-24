@@ -20,6 +20,7 @@
     function getNodes()
     {
       registerNode("sflink.sflink", array("accountexport","contactexport","getupdated"));
+      registerNode("sflink.accountnode", array("admin","add","edit","delete"));
       registerNode("sflink.sf_dupe", array("admin"));
       registerNode("sflink.sflinkcheckupdate", array("report"));
     }
