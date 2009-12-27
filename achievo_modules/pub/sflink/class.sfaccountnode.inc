@@ -6,16 +6,15 @@ useattrib("atkdatetimeattribute");
 
 class sfaccountnode extends atkDataNode
 {
-  public $m_client;
+  private $m_client;
   
   public function __construct()
   {
     parent::__construct($type="sfaccountnode", $flags=0);
 
-    //$this->m_client = new SforcePartnerClient();
-    //$this->m_client->createConnection(moduleDir($this->getModule()).'lib/soapclient/partner.wsdl.xml');
-    //$loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
+    $this->m_client = &atkGetNode("sflink.sflink")->m_client;
 
+    $this->add(new atkAttribute('id'));
     $this->add(new atkAttribute('name'));
     $this->add(new atkAttribute('invoice_address'));
     $this->add(new atkAttribute('invoice_zipcode'));
@@ -40,13 +39,15 @@ class sfaccountnode extends atkDataNode
   protected function findData($params=array())
   {
     $selector = @$params['selector'] ? $params['selector'] : '';
+    $sfnode = &atkGetNode("sflink.sflink");
     //$keyValueSet = decodeKeyValueSet($selector);
 
+    $method = "getUpdated";
     $from = $selector['from'];
     $to = $selector['to'];
     
 
-    $getUpdateddResponse = $this->m_client->getUpdated(
+    $getUpdateddResponse = $this->m_client->$method(
       'Account', 
       atkDateTimeAttribute::arrayToDateTime($from),
       atkDateTimeAttribute::arrayToDateTime($to));
@@ -75,6 +76,7 @@ class sfaccountnode extends atkDataNode
     {
       $r = array();
 
+      $r['id'] = $rez->fields->Achievo_ID__c;
       $r['name'] = $rez->fields->Name;
 
       $r['invoice_address'] = $rez->fields->BillingStreet;
@@ -96,6 +98,8 @@ class sfaccountnode extends atkDataNode
       $r['revenue'] = $rez->fields->AnnualRevenue;
       $r['employees'] = $rez->fields->NumberOfEmployees;
 
+      $sfnode->strConvertSfToAtk($r);
+      
       $result[] = $r;	
     }
 
@@ -104,5 +108,3 @@ class sfaccountnode extends atkDataNode
     return parent::findData($params);
   }
 }
-
-?>
