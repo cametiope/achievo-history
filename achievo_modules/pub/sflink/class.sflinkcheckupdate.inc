@@ -13,6 +13,7 @@ class sflinkcheckupdate extends basereport
     parent::basereport("sflinkcheckupdate");
 
     $this->add(new atkListAttribute("node",array("Account","Contact"),"",AF_LIST_NO_NULL_ITEM));
+    //$this->add(new atkListAttribute("method",array("getUpdated","getDeleted"),"",AF_LIST_NO_NULL_ITEM));
     $this->add(new atkDateTimeAttribute("from"));
     $this->add(new atkDateTimeAttribute("to"));
   }
@@ -33,10 +34,18 @@ class sflinkcheckupdate extends basereport
   {
     $result = array();
     
-    $account = &atkGetNode("sflink.sfaccountnode");
+    if($filterrecord['node']=='Account')
+    {
+      $objName = "organization.organization";      
+      $account = &atkGetNode("sflink.sfaccountnode");
+    }
+    else 
+    {
+      $objName = "organization.contact";      
+      $account = &atkGetNode("sflink.sfcontactnode");
+    }
+
     $node = &atkGetNode("sflink.sflink");
-    
-    $account->m_client = &$node->m_client;
     
     $data = $account->selectDb($filterrecord);
     
@@ -49,20 +58,11 @@ class sflinkcheckupdate extends basereport
 
     if(count($data)==0) 
     {
-      $result["sfsideaccount"] = $this->text("empty_resultset");
+      $result["sfside".$filterrecord['node']] = $this->text("empty_resultset");
     }
     else
     {
-      $result["sfsideaccount"] = $content;
-    }
-
-    if($filterrecord['node']=='Account')
-    {
-      $objName = "organization.organization";      
-    }
-    else 
-    {
-      $objName = "organization.contact";      
+      $result["sfside".$filterrecord['node']] = $content;
     }
     
     $object = &atkGetNode($objName);
@@ -104,11 +104,11 @@ class sflinkcheckupdate extends basereport
   
       if(count($data)==0) 
       {
-        $result["achievosideaccount"] = $this->text("empty_resultset");
+        $result["achievoside".$filterrecord['node']] = $this->text("empty_resultset");
       }
       else
       {
-        $result["achievosideaccount"] = $content;
+        $result["achievoside".$filterrecord['node']] = $content;
       }
     }
     
