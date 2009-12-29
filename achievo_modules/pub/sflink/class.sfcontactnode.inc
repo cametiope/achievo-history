@@ -61,43 +61,48 @@ class sfcontactnode extends atkDataNode
       }
     }
 
-    $list = $this->m_client->retrieve(
-          "Achievo_ID__c,Salutation,Title,LastName,FirstName,Phone,Fax,Email,
-          MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description",
-          "Contact",$ids);
-    
+    $chunks = array_chunk($ids,2000);
     $result = array();
     
-    foreach ($list as $rez)
+    foreach ($chunks as $c)
     {
-      $c = array();
+      $list = $this->m_client->retrieve(
+            "Achievo_ID__c,Salutation,Title,LastName,FirstName,Phone,Fax,Email,
+            MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description",
+            "Contact",$c);
       
-      $c['id'] = $rez->fields->Achievo_ID__c;
-      $c['function'] = $rez->fields->Title;
-      $c['title'] = $rez->fields->Salutation;
-      $c['lastname'] = $rez->fields->LastName;
-      $c['firstname'] = $rez->fields->FirstName;
-      $c["phone"] = $rez->fields->Phone;
-      $c["fax"] = $rez->fields->Fax;
-      $c["email"] = $rez->fields->Email;
-      $c["address"] = $rez->fields->MailingStreet;
-      $c["city"] = $rez->fields->MailingCity;
-      $c["state"] = $rez->fields->MailingState;
-      $c["zipcode"] = $rez->fields->MailingPostalCode;
-      $c["country"] = $rez->fields->MailingCountry;
-      $c["cellular"] = $rez->fields->MobilePhone;
-      $c["remark"] = $rez->fields->Description;
-      $c["salesforce_id"] = $rez->Id;
-
-      //relations
-      $c['companyid'] = $rez->fields->AccountId;
-
-      //encode from UTF-8 to ATK CHARSET
-      $sfnode->strConvertSfToAtk($c);
-
-      $result[] = $c;	
+      $result = array();
+      
+      foreach ($list as $rez)
+      {
+        $c = array();
+        
+        $c['id'] = $rez->fields->Achievo_ID__c;
+        $c['function'] = $rez->fields->Title;
+        $c['title'] = $rez->fields->Salutation;
+        $c['lastname'] = $rez->fields->LastName;
+        $c['firstname'] = $rez->fields->FirstName;
+        $c["phone"] = $rez->fields->Phone;
+        $c["fax"] = $rez->fields->Fax;
+        $c["email"] = $rez->fields->Email;
+        $c["address"] = $rez->fields->MailingStreet;
+        $c["city"] = $rez->fields->MailingCity;
+        $c["state"] = $rez->fields->MailingState;
+        $c["zipcode"] = $rez->fields->MailingPostalCode;
+        $c["country"] = $rez->fields->MailingCountry;
+        $c["cellular"] = $rez->fields->MobilePhone;
+        $c["remark"] = $rez->fields->Description;
+        $c["salesforce_id"] = $rez->Id;
+  
+        //relations
+        $c['companyid'] = $rez->fields->AccountId;
+  
+        //encode from UTF-8 to ATK CHARSET
+        $sfnode->strConvertSfToAtk($c);
+  
+        $result[] = $c;	
+      }
     }
-
     $this->setData($result);
 
     return parent::findData($params);
