@@ -65,6 +65,9 @@ class sflinkcheckupdate extends basereport
       $result["sfside".$filterrecord['node']] = $content;
     }
     
+    
+    if(false)
+    {
     $object = &atkGetNode($objName);
      
     $selector = $object->getTable().".".$node->buildSelector($filterrecord);
@@ -111,7 +114,7 @@ class sflinkcheckupdate extends basereport
         $result["achievoside".$filterrecord['node']] = $content;
       }
     }
-    
+    }
     return $result;
   }
 
