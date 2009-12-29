@@ -65,44 +65,47 @@ class sfaccountnode extends atkDataNode
       }
     }
 
-    $list = $this->m_client->retrieve(
-      "Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
-      Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
-      ShippingCountry,OwnerId","Account",$ids);
-
+    $chunks = array_chunk($ids,2000);
     $result = array();
     
-    foreach ($list as $rez)
+    foreach ($chunks as $c)
     {
-      $r = array();
-
-      $r['id'] = $rez->fields->Achievo_ID__c;
-      $r['name'] = $rez->fields->Name;
-
-      $r['invoice_address'] = $rez->fields->BillingStreet;
-      $r['invoice_zipcode'] = $rez->fields->BillingPostalCode;
-      $r['invoice_city'] = $rez->fields->BillingCity;
-      $r['invoice_state'] = $rez->fields->BillingState;
-      $r['invoice_country'] = $rez->fields->BillingCountry;
-      $r['phone'] = $rez->fields->Phone;
-      $r['fax'] = $rez->fields->Fax;
-      $r['remark'] = $rez->fields->Description;
-      $r['website'] = $rez->fields->Website;
-      $r['type'] = $rez->fields->Type;
-      $r['visit_address'] = $rez->fields->ShippingStreet;
-      $r['visit_zipcode'] = $rez->fields->ShippingPostalCode;
-      $r['visit_city'] = $rez->fields->ShippingCity;
-      $r['visit_state'] = $rez->fields->ShippingState;
-      $r['visit_country'] = $rez->fields->ShippingCountry;
-      $r['salesforce_id'] = $rez->Id;
-      $r['revenue'] = $rez->fields->AnnualRevenue;
-      $r['employees'] = $rez->fields->NumberOfEmployees;
-
-      $sfnode->strConvertSfToAtk($r);
+      $list = $this->m_client->retrieve(
+        "Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
+        Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
+        ShippingCountry,OwnerId","Account",$c);
       
-      $result[] = $r;	
+      foreach ($list as $rez)
+      {
+        $r = array();
+  
+        $r['id'] = $rez->fields->Achievo_ID__c;
+        $r['name'] = $rez->fields->Name;
+  
+        $r['invoice_address'] = $rez->fields->BillingStreet;
+        $r['invoice_zipcode'] = $rez->fields->BillingPostalCode;
+        $r['invoice_city'] = $rez->fields->BillingCity;
+        $r['invoice_state'] = $rez->fields->BillingState;
+        $r['invoice_country'] = $rez->fields->BillingCountry;
+        $r['phone'] = $rez->fields->Phone;
+        $r['fax'] = $rez->fields->Fax;
+        $r['remark'] = $rez->fields->Description;
+        $r['website'] = $rez->fields->Website;
+        $r['type'] = $rez->fields->Type;
+        $r['visit_address'] = $rez->fields->ShippingStreet;
+        $r['visit_zipcode'] = $rez->fields->ShippingPostalCode;
+        $r['visit_city'] = $rez->fields->ShippingCity;
+        $r['visit_state'] = $rez->fields->ShippingState;
+        $r['visit_country'] = $rez->fields->ShippingCountry;
+        $r['salesforce_id'] = $rez->Id;
+        $r['revenue'] = $rez->fields->AnnualRevenue;
+        $r['employees'] = $rez->fields->NumberOfEmployees;
+  
+        $sfnode->strConvertSfToAtk($r);
+        
+        $result[] = $r;	
+      }
     }
-
     $this->setData($result);
 
     return parent::findData($params);
