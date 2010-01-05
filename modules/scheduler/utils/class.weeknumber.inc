@@ -122,7 +122,7 @@ class weeknumber
     elseif(date("Y-m-d",$timestamp)<date("Y-m-d",$startdate))
     {
       //last week of previous year
-      return array("weeknumber"=>weeknumber::getWeeknumber($startdate-(7*$day),atkconfig("startday",1),atkconfig("firstweekcontains",4),true),
+      return array("weeknumber"=>weeknumber::getWeeknumber($startdate-(7*$day),atkconfig("startday",1),atkconfig("firstweekcontains",4)),
                   "firstweekstart"=>($startdate-(7*$day)),
                   "firstweekend"=>($startdate-(1*$day)));
     }
