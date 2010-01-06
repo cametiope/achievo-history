@@ -673,7 +673,7 @@
       }
     }
 
-    private function strConvertSfToAtk(&$fields)
+    public function strConvertSfToAtk(&$fields)
     {
       foreach ($fields as $key => $value)
       {
