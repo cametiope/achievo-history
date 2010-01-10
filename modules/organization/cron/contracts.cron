@@ -43,13 +43,14 @@
   function mailmessage($contract, $projects, $newcontractstatus, $newprojectstatus, $mailto, $mailtocoordinator, $modus, $debug_mode)
 	{	  
 	  $body = "";             //mail body
-	  $subject = "";	        //mail subject
+	  $node = &atkGetNode("organization.contracts");
+	  $subject = "Contract: ".$node->descriptor($contract)." - " ; //mail subject
 	  
 	  atkimport("module.utils.dateutil");
     	  
 	  if($modus == "expired")
   	{
-  	  $subject = atktext("ending_contracts_subject", "organization");
+  	  $subject .= atktext("ending_contracts_subject", "organization");
   	  
   	  $body = atktext("ending_contracts_description", "organization");
   	  $body.= atktext("contract","organization").": ".$contract["subject"]." (".$contract["id"].")\n";
@@ -92,7 +93,7 @@
 	  }
 	  elseif($modus == "ended")
 	  {
-	    $subject = atktext("ended_contracts_subject", "organization");
+	    $subject .= atktext("ended_contracts_subject", "organization");
 	    
 	    $body = atktext("ended_contracts_description", "organization");
   	  $body.= atktext("contract","organization").": ".$contract["subject"]." (".$contract["id"].")\n";
