@@ -34,8 +34,14 @@
       $loginResult = $this->m_client->login(atkConfig::get("sflink","login"), atkConfig::get("sflink","password"));
       //$this->m_metaConnection = new SforceMetadataClient('./achievo_modules/pub/sflink/utils/soapclient/metadata.wsdl.xml', $loginResult, $this->m_client);
 
-      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","Accountimport","Contactimport","fix","fixcontact","employeelink","check"), ACTION_CANCELLED|ACTION_SUCCESS);
-      $this->m_securityImplied = array("clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport","Contactimport"=>"contactexport","fix"=>"contactexport","fixcontact"=>"contactexport","check"=>"contactexport","employeelink"=>"contactexport","checkupdated"=>"getupdated");
+      $this->setFeedback(array("accountexport","contactexport","clearsfid","clearcontactsfid","getupdated","getupdatedaccount",
+        "getupdatedcontact","Accountimport","Contactimport","fix","fixcontact","employeelink","check"), 
+         ACTION_CANCELLED|ACTION_SUCCESS);
+      $this->m_securityImplied = array(
+        "clearsfid"=>"accountexport","clearcontactsfid"=>"accountexport","Accountimport"=>"accountexport",
+        "Contactimport"=>"contactexport","fix"=>"contactexport","fixcontact"=>"contactexport","check"=>"contactexport",
+        "employeelink"=>"contactexport","checkupdated"=>"getupdated","getupdatedcontact"=>"getupdated",
+        "getupdatedaccount"=>"getupdated");
     }
 
     /**
@@ -242,6 +248,14 @@
       }
   	}
   	
+    /**
+     * Update Achievo_ID field on SalesForce side
+     *
+     * @param string $type object type (Account/Contact now)
+     * @param string $id achievo_id
+     * @param string $sfid salesforce_id
+     * @return string message for logger
+     */
     private function _updateAchievoId($type, $id, $sfid)
     {
       $this->m_message = '';
@@ -691,8 +705,10 @@
       return str_replace("'","\'",$string);
     }
 
-    public function getLastUpdateTime()
+    public function getLastUpdateTime($type=false)
     {
+      $message = $this->getUpdatedStartMessage($type);
+      
       $db = &$this->getDb();
       $rows = $db->getrows("
         SELECT
@@ -700,7 +716,7 @@
         FROM
           sf_dupe
         WHERE
-          message='Start update SF->achievo'
+          message='$message'
         ORDER BY created_at DESC LIMIT 1
       ");
 
@@ -734,7 +750,6 @@
           return '';
         }
       }
-
       return mktime(
         substr($lasttime, 11, 2),
         substr($lasttime, 14, 2),
@@ -744,15 +759,85 @@
         substr($lasttime, 0, 4));
     }
 
-    private function logStartUpdate()
+    private function logStartUpdate($type=false)
     {
-      $this->getDb()->query("INSERT INTO sf_dupe(message,created_at) VALUES ('Start update SF->achievo',NOW())");
+      $message = $this->getUpdatedStartMessage($type);
+      $this->getDb()->query("INSERT INTO sf_dupe(message,created_at) VALUES ('$message',NOW())");
     }
+    
+    private function getUpdatedStartMessage($type)
+    {
+      $message = 'Start update SF->achievo';
+      if($type)
+      {
+        $message .= "($type)"; 
+      }
+      return $message;
+    }      
 
     /**
      * Next method update Achievo records according to Sales Force records
      *
      */
+    public function action_getupdatedaccount()
+    {
+      $this->_doupdated("getupdatedaccount");
+    }
+
+    public function action_getupdatedcontact()
+    {
+      $this->_doupdated("getupdatedcontact");
+    }
+    
+    private function _doupdated($action)
+    {
+      if (!empty($this->m_postvars['confirm'])) $this->{'_do'.$action}();
+      elseif (empty($this->m_postvars['cancel']))
+      {
+        $page = &$this->getPage();
+        $page->addContent($this->confirmAction("1=0", $action, false, false, false) );
+      }
+      else
+      {
+        $location = $this->feedbackUrl($action, ACTION_CANCELLED);
+        $this->redirect($location);
+      }
+    }
+    
+    private function _dogetupdatedaccount()
+    {
+      //Set current time to get records from Salesforce
+      $endTime = mktime();
+      //get last update time from log
+      $startTime = $this->getLastUpdateTime("account");
+
+      $this->logStartUpdate("account");
+
+      //update organization
+      $this->updateAccount($startTime, $endTime);
+
+      $location = $this->feedbackUrl("getupdated", ACTION_SUCCESS,"",
+        "Accounts add/error/update/error:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateok."/".$this->m_accountupdateerror);
+      $this->redirect($location);
+    }
+
+    private function _dogetupdatedcontact()
+    {
+      //Set current time to get records from Salesforce
+      $endTime = mktime();
+      //get last update time from log
+      $startTime = $this->getLastUpdateTime("contact");
+
+      $this->logStartUpdate("contact");
+
+      //update organization
+      $this->updateContact($startTime, $endTime);
+
+      $location = $this->feedbackUrl("getupdated", ACTION_SUCCESS,"",
+        "Contacts add/error/update/error:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateok."/".$this->m_contactupdateerror);
+      $this->redirect($location);
+    }
+
     public function action_getupdated()
     {
       if (!empty($this->m_postvars['confirm'])) $this->_doGetUpdated();
@@ -803,50 +888,58 @@
           $ids = array($getUpdateddResponse->ids);
         }
       }
-
+      /*@var $account atkNode*/
       $account = &atkGetNode("organization.organization");
-      foreach ($ids as $id)
+      
+      $chunk = array_chunk($ids,500);
+      unset($ids);
+      
+      for ($i=0, $_i=count($chunk); $i<$_i;$i++)
       {
-        list($rez) = $this->m_client->retrieve(
+        ini_set('max_execution_time',30);
+        $rezs = $this->m_client->retrieve(
           "Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
           Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
-          ShippingCountry,OwnerId","Account",array($id));
+          ShippingCountry,OwnerId","Account",$chunk[$i]);
 
-        $r = $this->prepareAccountRecord($rez);
-        $r['salesforce_id'] = $id;
-
-        list($old) = $account->selectDb("organization.salesforce_id='".$id."'","","","",array("id"));
-        if(count($old))
+        foreach ($rezs as $rez)
         {
-          //organization already exists in Achievo
-          $r['id'] = $old['id'];
-          $r['atkprimkey'] = $old['atkprimkey'];
-          if($account->updateDb($r))
+          $r = $this->prepareAccountRecord($rez);
+          $r['salesforce_id'] = $rez->Id;
+  
+          list($old) = $account->selectDb("organization.salesforce_id='".$rez->Id."'","","","",array("id"));
+          if(count($old))
           {
-            $message = "Update OK";
-            $this->m_accountupdateok++;
+            //organization already exists in Achievo
+            $r['id'] = $old['id'];
+            $r['atkprimkey'] = $old['atkprimkey'];
+            if($account->updateDb($r))
+            {
+              $message = "Update OK";
+              $this->m_accountupdateok++;
+            }
+            else
+            {
+              $message = "Update Error";
+              $this->m_accountupdateerror++;
+            }
           }
           else
           {
-            $message = "Update Error";
-            $this->m_accountupdateerror++;
+            //new account - add it to Achievo
+            if($account->addDb($r))
+            {
+              $this->m_accountaddok++;
+              $message = "Add ok, update SF->Achievo_ID message:".$this->_updateAchievoId("Account",$r['id'],$rez->Id);
+            }
+            else
+            {
+              $message = "Add error";
+              $this->m_accountadderror++;
+            }
           }
+          $this->logImportAccount("account",$r, $message);
         }
-        else
-        {
-          //new account - add it to Achievo
-          if($account->addDb($r))
-          {
-            $message = "Add ok";
-            $this->m_accountaddok++;
-          }
-          else
-          {
-            $message = "Add error";
-            $this->m_accountadderror++;
-          }
-        }
-        $this->logImportAccount("account",$r, $message);
       }
     }
 
@@ -887,53 +980,63 @@
           $ids = array($getUpdateddResponse->ids);
         }
       }
+
+      $chunk = array_chunk($ids,500);
+      unset($ids);
+      
       /*@var $contact atkNode*/
       $contact = &atkGetNode("organization.contact");
-      foreach ($ids as $id)
+      
+      for ($i=0, $_i=count($chunk); $i<$_i;$i++)
       {
-        list($rez) = $this->m_client->retrieve(
+        ini_set('max_execution_time',30);
+        $rezs = $this->m_client->retrieve(
           "Achievo_ID__c,Salutation,Title,AccountId,LastName,FirstName,Phone,Fax,Email,
           MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description",
-          "Contact",array($id));
+          "Contact",$chunk[$i]);
 
-        $c = $this->prepareContactRecord($rez);
-
-        list($old) = $contact->selectDb("person.salesforce_id='".$id."'","","","",array("id"));
-
-        if(count($old))
+        foreach ($rezs as $rez)
         {
-          //contact already exists in Achievo
-          $c['id'] = $old['id'];
-          $c['atkprimkey'] = $old['atkprimkey'];
-          if($contact->updateDb($c))
+          $c = $this->prepareContactRecord($rez);
+          $c['salesforce_id'] = $rez->Id;
+
+          list($old) = $contact->selectDb("person.salesforce_id='".$rez->Id."'","","","",array("id"));
+
+          if(count($old))
           {
-            $message = "Update OK";
-            $this->m_contactupdateok++;
+            //contact already exists in Achievo
+            $c['id'] = $old['id'];
+            $c['atkprimkey'] = $old['atkprimkey'];
+            if($contact->updateDb($c))
+            {
+              $message = "Update OK";
+              $this->m_contactupdateok++;
+            }
+            else
+            {
+              $message = "Update Error";
+              $this->m_contactupdateerror++;
+            }
           }
           else
           {
-            $message = "Update Error";
-            $this->m_contactupdateerror++;
+            //new contact - add it to Achievo
+            if($contact->addDb($c))
+            {
+              $this->m_contactaddok++;
+              $message = "Add ok, update SF->Achievo_ID message:".$this->_updateAchievoId("Contact",$c['id'],$rez->Id);
+            }
+            else
+            {
+              $message = "Add error";
+              $this->m_contactadderror++;
+            }
           }
+          $this->logImportContact("contact",$c, $message);
         }
-        else
-        {
-          //new contact - add it to Achievo
-          if($contact->addDb($c))
-          {
-            $message = "Add ok";
-            $this->m_contactaddok++;
-          }
-          else
-          {
-            $message = "Add error";
-            $this->m_contactadderror++;
-          }
-        }
-        $this->logImportContact("contact",$c, $message);
       }
     }
-
+    
     private function getTitleId($title)
     {
       $id = "";
