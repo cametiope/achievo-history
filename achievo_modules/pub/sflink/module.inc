@@ -2,7 +2,7 @@
   $modifiers[] = "organization.organization";
   $modifiers[] = "employee.employee";
   $modifiers[] = "organization.contact";
-  
+
   //setNodeOverloader("organization.organization","sflink.sflorganization");
   //check, if project node is alredy overloaded
   /*$project = atkArrayNvl($g_overloaders,"organization.organization");
@@ -10,7 +10,7 @@
   {
     $overloaders[$project] = "sflink.sflorganization";
   }
-  else 
+  else
   {
     $overloaders["organization.organization"] = "sflink.sflorganization";
   }*/
@@ -28,7 +28,7 @@
     function getMenuItems()
     {
       $this->menuitem("sflink","","main",array("sflink.sflink", "accountexport"),750);
-      
+
       $this->menuitem("employeelink",dispatch_url("sflink.sflink", "employeelink"),"sflink",array("sflink.sflink", "contactexport"),755);
       $this->menuitem("accountexport",dispatch_url("sflink.sflink", "accountexport"),"sflink",array("sflink.sflink", "accountexport"),760);
       $this->menuitem("clearaccount",dispatch_url("sflink.sflink", "clearsfid"),"sflink",array("sflink.sflink", "accountexport"),770);
@@ -36,18 +36,20 @@
       $this->menuitem("clearcontact",dispatch_url("sflink.sflink", "clearcontactsfid"),"sflink",array("sflink.sflink", "accountexport"),790);
       $this->menuitem("accountimport",dispatch_url("sflink.sflink", "Accountimport"),"sflink",array("sflink.sflink", "accountexport"),800);
       $this->menuitem("contactimport",dispatch_url("sflink.sflink", "Contactimport"),"sflink",array("sflink.sflink", "contactexport"),810);
-      $this->menuitem("getUpdated",dispatch_url("sflink.sflink", "getupdated"),"sflink",array("sflink.sflink", "getupdated"),830);
-      $this->menuitem("checkUpdated",dispatch_url("sflink.sflinkcheckupdate", "report"),"sflink",array("sflink.sflinkcheckupdate", "report"),830);
-      $this->menuitem("sf_dupe",dispatch_url("sflink.sf_dupe", "admin"),"sflink",array("sflink.sf_dupe", "admin"),820);
-      $this->menuitem("check",dispatch_url("sflink.sflink", "check"),"sflink",array("sflink.sflink", "contactexport"),830);
-      $this->menuitem("fix",dispatch_url("sflink.sflink", "fix"),"sflink",array("sflink.sflink", "contactexport"),830);
-      $this->menuitem("fixcontact",dispatch_url("sflink.sflink", "fixcontact"),"sflink",array("sflink.sflink", "contactexport"),830);
+      $this->menuitem("getUpdated",dispatch_url("sflink.sflink", "getupdated"),"sflink",array("sflink.sflink", "getupdated"),820);
+      $this->menuitem("getAccount",dispatch_url("sflink.sflink", "getupdatedaccount"),"sflink",array("sflink.sflink", "getupdated"),830);
+      $this->menuitem("getContact",dispatch_url("sflink.sflink", "getupdatedcontact"),"sflink",array("sflink.sflink", "getupdated"),840);
+      $this->menuitem("checkUpdated",dispatch_url("sflink.sflinkcheckupdate", "report"),"sflink",array("sflink.sflinkcheckupdate", "report"),850);
+      $this->menuitem("sf_dupe",dispatch_url("sflink.sf_dupe", "admin"),"sflink",array("sflink.sf_dupe", "admin"),860);
+      $this->menuitem("check",dispatch_url("sflink.sflink", "check"),"sflink",array("sflink.sflink", "contactexport"),870);
+      $this->menuitem("fix",dispatch_url("sflink.sflink", "fix"),"sflink",array("sflink.sflink", "contactexport"),880);
+      $this->menuitem("fixcontact",dispatch_url("sflink.sflink", "fixcontact"),"sflink",array("sflink.sflink", "contactexport"),890);
     }
-    
+
     function organization_modifier(&$node)
     {
       $node->add(new atkAttribute("salesforce_id",AF_READONLY|AF_HIDE_LIST|AF_HIDE_SEARCH));
-      
+
       $list = array(
         "invoice_city","invoice_country","invoice_zipcode","invoice_state","invoice_address","invoice_address2",
         "visit_city","visit_country","visit_zipcode","visit_state","visit_address","visit_address2","remark",
@@ -64,7 +66,7 @@
     {
       $node->add(new atkAttribute("salesforce_id",AF_READONLY|AF_HIDE_LIST|AF_HIDE_SEARCH));
     }
-    
+
     function contact_modifier(&$node)
     {
       $node->add(new atkAttribute("salesforce_id",AF_READONLY|AF_HIDE_LIST|AF_HIDE_SEARCH));
@@ -78,5 +80,5 @@
         $node->getAttribute($l)->addFlag(AF_READONLY);
       }
     }
-    
+
   }
