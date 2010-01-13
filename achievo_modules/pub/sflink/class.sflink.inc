@@ -705,21 +705,23 @@
       return str_replace("'","\'",$string);
     }
 
-    public function getLastUpdateTime($type=false)
+    public function getLastUpdateTime($type='')
     {
-      $message = $this->getUpdatedStartMessage($type);
-      
       $db = &$this->getDb();
-      $rows = $db->getrows("
+      
+      $query = "
         SELECT
           created_at
         FROM
           sf_dupe
         WHERE
-          message='$message'
-        ORDER BY created_at DESC LIMIT 1
-      ");
-
+          direction='Start update SF->achievo'
+          AND type='$type'
+          ORDER BY created_at DESC LIMIT 1
+      ";
+      
+      
+      $rows = $db->getrows($query);
       if(count($rows))
       {
         $lasttime = $rows[0]['created_at'];
@@ -750,6 +752,7 @@
           return '';
         }
       }
+      //$lasttime = '2010-01-13 16:00:00';
       return mktime(
         substr($lasttime, 11, 2),
         substr($lasttime, 14, 2),
@@ -759,12 +762,16 @@
         substr($lasttime, 0, 4));
     }
 
-    private function logStartUpdate($type=false)
+    private function logStartUpdate($type='',$message = '')
     {
-      $message = $this->getUpdatedStartMessage($type);
-      $this->getDb()->query("INSERT INTO sf_dupe(message,created_at) VALUES ('$message',NOW())");
+      $this->getDb()->query("INSERT INTO sf_dupe(type,created_at,direction,message) VALUES ('$type',NOW(),'Start update SF->achievo','$message')");
     }
     
+    private function logEndUpdate($type='',$message = '')
+    {
+      $this->getDb()->query("INSERT INTO sf_dupe(type,created_at,direction,message) VALUES ('$type',NOW(),'End update SF->achievo','$message')");
+    }
+
     private function getUpdatedStartMessage($type)
     {
       $message = 'Start update SF->achievo';
@@ -811,8 +818,6 @@
       //get last update time from log
       $startTime = $this->getLastUpdateTime("account");
 
-      $this->logStartUpdate("account");
-
       //update organization
       $this->updateAccount($startTime, $endTime);
 
@@ -828,9 +833,7 @@
       //get last update time from log
       $startTime = $this->getLastUpdateTime("contact");
 
-      $this->logStartUpdate("contact");
-
-      //update organization
+      //update contact
       $this->updateContact($startTime, $endTime);
 
       $location = $this->feedbackUrl("getupdated", ACTION_SUCCESS,"",
@@ -888,6 +891,8 @@
           $ids = array($getUpdateddResponse->ids);
         }
       }
+      
+      $this->logStartUpdate('account','Start update, record count for update :'.count($ids));
       /*@var $account atkNode*/
       $account = &atkGetNode("organization.organization");
       
@@ -941,6 +946,7 @@
           $this->logImportAccount("account",$r, $message);
         }
       }
+      $this->logEndUpdate('account',"Accounts add/error/update/error:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateok."/".$this->m_accountupdateerror);
     }
 
     private function logImportContact($entity,$r,$message)
@@ -980,6 +986,8 @@
           $ids = array($getUpdateddResponse->ids);
         }
       }
+
+      $this->logStartUpdate('contact','Start update, record count for update :'.count($ids));
 
       $chunk = array_chunk($ids,500);
       unset($ids);
@@ -1035,6 +1043,7 @@
           $this->logImportContact("contact",$c, $message);
         }
       }
+      $this->logEndUpdate('contact',"Contacts add/error/update/error:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateok."/".$this->m_contactupdateerror);
     }
     
     private function getTitleId($title)
