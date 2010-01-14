@@ -762,7 +762,45 @@
         substr($lasttime, 0, 4));
     }
 
-    private function logStartUpdate($type='',$message = '')
+    public function getLastStartTime($type='')
+    {
+      return $this->getLastTime($type, 'Start update SF->achievo');
+    }
+
+    public function getLastEndTime($type='')
+    {
+      return $this->getLastTime($type, 'End update SF->achievo');
+    }
+    
+    private function getLastTime($type='',$message)
+    {
+      $lasttime = false;
+      
+      $rows = $this->getDb()->getrows("
+        SELECT
+          created_at
+        FROM
+          sf_dupe
+        WHERE
+          direction='$message'
+          AND type='$type'
+          ORDER BY created_at DESC LIMIT 1
+      ");
+      
+      if(count($rows))
+      {
+        $lasttime = $rows[0]['created_at'];
+      }
+      return mktime(
+        substr($lasttime, 11, 2),
+        substr($lasttime, 14, 2),
+        substr($lasttime, 17, 2),
+        substr($lasttime, 5, 2),
+        substr($lasttime, 8, 2),
+        substr($lasttime, 0, 4));
+    }
+    
+    public function logStartUpdate($type='',$message = '')
     {
       $this->getDb()->query("INSERT INTO sf_dupe(type,created_at,direction,message) VALUES ('$type',NOW(),'Start update SF->achievo','$message')");
     }
@@ -875,7 +913,7 @@
       $this->redirect($location);
     }
 
-    private function updateAccount($startTime, $endTime)
+    public function updateAccount($startTime, $endTime)
     {
       $getUpdateddResponse = $this->m_client->getUpdated('Account', $startTime, $endTime);
 
@@ -970,7 +1008,7 @@
         '".escapeSQL($message)."',NOW())");
     }
 
-    private function updateContact($startTime, $endTime)
+    public function updateContact($startTime, $endTime)
     {
       $getUpdateddResponse = $this->m_client->getUpdated('Contact', $startTime, $endTime);
 
