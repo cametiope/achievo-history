@@ -1,0 +1,32 @@
+<?php
+
+
+function main()
+{
+  $node = &atkGetNode("sflink.sflink");
+  //Set current time to get records from Salesforce
+  $endTime = mktime();
+  
+  //get last update time from log
+  $startTime = $node->getLastStartTime("account");
+  $endTime = $node->getLastEndTime("account");
+  
+  if($startTime<$endTime) //do last update finished well?
+  {
+    $node->logStartUpdate();
+
+    //first update organization
+    $node->updateAccount($startTime, mktime());
+    
+    //next update contact
+    $startTime = $node->getLastStartTime("contact");
+    $endTime = $node->getLastEndTime("contact");
+    
+    if($startTime<$endTime) //do last update finished well?
+    {
+      $node->updateContact($startTime, mktime());
+    }
+  }
+}
+
+main();
