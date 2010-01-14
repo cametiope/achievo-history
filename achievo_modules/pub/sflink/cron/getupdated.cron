@@ -15,6 +15,7 @@ function main()
   {
     $node->logStartUpdate();
 
+    echo("Account Startpoint:".date("Y-m-d H:i:s")."\n");
     //first update organization
     $node->updateAccount($startTime, mktime());
     
@@ -24,8 +25,17 @@ function main()
     
     if($startTime<$endTime) //do last update finished well?
     {
+      echo("Contact Startpoint:".date("Y-m-d H:i:s")."\n");
       $node->updateContact($startTime, mktime());
     }
+    else 
+    {
+      echo("Previous contact getUpdated didn't finish well\n");
+    }
+  }
+  else 
+  {
+    echo("Previous account getUpdated didn't finish well\n");
   }
 }
 
