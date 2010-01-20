@@ -4,39 +4,24 @@
 function main()
 {
   $node = &atkGetNode("sflink.sflink");
+  $node->logStartUpdate();
+
   //Set current time to get records from Salesforce
   $endTime = mktime();
   
-  //get last update time from log
-  $startTime = $node->getLastStartTime("account");
-  $endTime = $node->getLastEndTime("account");
-  
-  if($startTime<$endTime) //do last update finished well?
-  {
-    $node->logStartUpdate();
+  //get time of last updated records
+  $startTime = $node->getLastUpdateTime("account");
 
-    echo("Account Startpoint:".date("Y-m-d H:i:s")."\n");
-    //first update organization
-    $node->updateAccount($startTime, mktime());
-    
-    //next update contact
-    $startTime = $node->getLastStartTime("contact");
-    $endTime = $node->getLastEndTime("contact");
-    
-    if($startTime<$endTime) //do last update finished well?
-    {
-      echo("Contact Startpoint:".date("Y-m-d H:i:s")."\n");
-      $node->updateContact($startTime, mktime());
-    }
-    else 
-    {
-      echo("Previous contact getUpdated didn't finish well\n");
-    }
-  }
-  else 
-  {
-    echo("Previous account getUpdated didn't finish well\n");
-  }
+  echo("Account Startpoint:".date("Y-m-d H:i:s",$startTime)."\n");
+  //first update organization
+  $node->updateAccount($startTime, $endTime);
+  
+  //next update contact
+  $startTime = $node->getLastUpdateTime("contact");
+  
+  echo("Contact Startpoint:".date("Y-m-d H:i:s",$startTime)."\n");
+  $node->updateContact($startTime, $endTime);
 }
 
 main();
+?>
