@@ -15,6 +15,8 @@ class sfcontactnode extends atkDataNode
     $this->m_client = &atkGetNode("sflink.sflink")->m_client;
 
     $this->add(new atkAttribute('id'));
+    $this->add(new atkAttribute('lastmodifieddate'));
+    $this->add(new atkAttribute('systemmodstamp'));
     $this->add(new atkAttribute('function'));
     $this->add(new atkAttribute('title'));
     $this->add(new atkAttribute('lastname'));
@@ -68,7 +70,8 @@ class sfcontactnode extends atkDataNode
     {
       $list = $this->m_client->retrieve(
             "Achievo_ID__c,Salutation,Title,LastName,FirstName,Phone,Fax,Email,
-            MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description",
+            MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,
+            MobilePhone,Description,LastModifiedDate,SystemModstamp",
             "Contact",$c);
       
       $result = array();
@@ -93,7 +96,10 @@ class sfcontactnode extends atkDataNode
         $c["cellular"] = $rez->fields->MobilePhone;
         $c["remark"] = $rez->fields->Description;
         $c["salesforce_id"] = $rez->Id;
-  
+        $c['lastmodifieddate'] = $rez->fields->LastModifiedDate;
+        $c['systemmodstamp'] = $rez->fields->SystemModstamp;
+        $date = strptime($c['systemmodstamp'],'%Y-%m-%dT%H:%M:%S');
+        $datestr = date("Y-m-d H:i:s",$date);
         //relations
         $c['companyid'] = $rez->fields->AccountId;
   

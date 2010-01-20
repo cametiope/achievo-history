@@ -16,6 +16,8 @@ class sfaccountnode extends atkDataNode
 
     $this->add(new atkAttribute('id'));
     $this->add(new atkAttribute('name'));
+    $this->add(new atkAttribute('lastmodifieddate'));
+    $this->add(new atkAttribute('systemmodstamp'));
     $this->add(new atkAttribute('invoice_address'));
     $this->add(new atkAttribute('invoice_zipcode'));
     $this->add(new atkAttribute('invoice_city'));
@@ -73,7 +75,7 @@ class sfaccountnode extends atkDataNode
       $list = $this->m_client->retrieve(
         "Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
         Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
-        ShippingCountry,OwnerId","Account",$c);
+        ShippingCountry,OwnerId,LastModifiedDate,SystemModstamp","Account",$c);
       
       foreach ($list as $rez)
       {
@@ -100,6 +102,8 @@ class sfaccountnode extends atkDataNode
         $r['salesforce_id'] = $rez->Id;
         $r['revenue'] = $rez->fields->AnnualRevenue;
         $r['employees'] = $rez->fields->NumberOfEmployees;
+        $r['lastmodifieddate'] = $rez->fields->LastModifiedDate;
+        $r['systemmodstamp'] = $rez->fields->SystemModstamp;
   
         $sfnode->strConvertSfToAtk($r);
         
