@@ -36,7 +36,7 @@
       $this->menuitem("clearcontact",dispatch_url("sflink.sflink", "clearcontactsfid"),"sflink",array("sflink.sflink", "accountexport"),790);
       $this->menuitem("accountimport",dispatch_url("sflink.sflink", "Accountimport"),"sflink",array("sflink.sflink", "accountexport"),800);
       $this->menuitem("contactimport",dispatch_url("sflink.sflink", "Contactimport"),"sflink",array("sflink.sflink", "contactexport"),810);
-      $this->menuitem("getUpdated",dispatch_url("sflink.sflink", "getupdated"),"sflink",array("sflink.sflink", "getupdated"),820);
+      //$this->menuitem("getUpdated",dispatch_url("sflink.sflink", "getupdated"),"sflink",array("sflink.sflink", "getupdated"),820);
       $this->menuitem("getAccount",dispatch_url("sflink.sflink", "getupdatedaccount"),"sflink",array("sflink.sflink", "getupdated"),830);
       $this->menuitem("getContact",dispatch_url("sflink.sflink", "getupdatedcontact"),"sflink",array("sflink.sflink", "getupdated"),840);
       $this->menuitem("checkUpdated",dispatch_url("sflink.sflinkcheckupdate", "report"),"sflink",array("sflink.sflinkcheckupdate", "report"),850);
