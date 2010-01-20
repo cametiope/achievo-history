@@ -705,9 +705,21 @@
       return str_replace("'","\'",$string);
     }
 
-    public function getLastUpdateTime($type='')
+    public function getLastUpdateTime($type)
     {
-      $db = &$this->getDb();
+      $rows = $this->getDb()->getrows("SELECT syncdatetime FROM sflink_syncstatus WHERE type='$type'");      
+      $lasttime =$rows[0]['syncdatetime'];
+       
+      return mktime(
+        substr($lasttime[''], 11, 2),
+        substr($lasttime, 14, 2),
+        substr($lasttime, 17, 2),
+        substr($lasttime, 5, 2),
+        substr($lasttime, 8, 2),
+        substr($lasttime, 0, 4));
+    }
+      
+/*      $db = &$this->getDb();
       
       $query = "
         SELECT
@@ -760,7 +772,7 @@
         substr($lasttime, 5, 2),
         substr($lasttime, 8, 2),
         substr($lasttime, 0, 4));
-    }
+    }*/
 
     public function getLastStartTime($type='')
     {
@@ -943,7 +955,7 @@
         $rezs = $this->m_client->retrieve(
           "Name, Achievo_ID__c,BillingStreet,BillingPostalCode,BillingCity,BillingState,BillingCountry,Phone,
           Fax,Description,Website,Type,ShippingStreet,ShippingPostalCode,ShippingCity,ShippingState,
-          ShippingCountry,OwnerId","Account",$chunk[$i]);
+          ShippingCountry,OwnerId,SystemModstamp","Account",$chunk[$i]);
 
         foreach ($rezs as $rez)
         {
@@ -960,6 +972,7 @@
             {
               $message = "Update OK";
               $this->m_accountupdateok++;
+              $this->setSyncDate($rez->fields->SystemModstamp,'account');
             }
             else
             {
@@ -974,6 +987,7 @@
             {
               $this->m_accountaddok++;
               $message = "Add ok, update SF->Achievo_ID message:".$this->_updateAchievoId("Account",$r['id'],$rez->Id);
+              $this->setSyncDate($rez->fields->SystemModstamp,'account');
             }
             else
             {
@@ -987,6 +1001,14 @@
       $this->logEndUpdate('account',"Accounts add/error/update/error:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateok."/".$this->m_accountupdateerror);
     }
 
+    public function setSyncDate($sf_stamp,$type)
+    {
+      $s = strptime($sf_stamp,'%Y-%m-%dT%H:%M:%S');
+      $datestr = date("Y-m-d  H:i:s",mktime($s['tm_hour'],$s['tm_min'],$s['tm_sec'],$s['tm_mon']+1,$s['tm_mday'],$s['tm_year']+1900));
+
+      $this->getDb()->query("UPDATE sflink_syncstatus SET syncdatetime='".$datestr."' WHERE type='$type'");
+    }
+    
     private function logImportContact($entity,$r,$message)
     {
       $this->getDb()->query("
@@ -1037,7 +1059,7 @@
       {
         ini_set('max_execution_time',30);
         $rezs = $this->m_client->retrieve(
-          "Achievo_ID__c,Salutation,Title,AccountId,LastName,FirstName,Phone,Fax,Email,
+          "Achievo_ID__c,Salutation,Title,AccountId,LastName,FirstName,Phone,Fax,Email,SystemModstamp,
           MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MobilePhone,Description",
           "Contact",$chunk[$i]);
 
@@ -1057,6 +1079,7 @@
             {
               $message = "Update OK";
               $this->m_contactupdateok++;
+              $this->setSyncDate($rez->fields->SystemModstamp,"contact");
             }
             else
             {
@@ -1071,6 +1094,7 @@
             {
               $this->m_contactaddok++;
               $message = "Add ok, update SF->Achievo_ID message:".$this->_updateAchievoId("Contact",$c['id'],$rez->Id);
+              $this->setSyncDate($rez->fields->SystemModstamp,"contact");
             }
             else
             {
