@@ -25,7 +25,7 @@ class sflinkcheckupdate extends basereport
     //Set current time to get records from Salesforce
     $endTime = mktime();
     //get last update time from log
-    $startTime = $node->getLastUpdateTime();
+    $startTime = $node->getLastUpdateTime("account");
 
     return array("from"=>atkDateTimeAttribute::datetimeArray(date("YmdHis",$startTime)),"to"=>atkDateTimeAttribute::datetimeArray(date("YmdHis",$endTime)));
   }
