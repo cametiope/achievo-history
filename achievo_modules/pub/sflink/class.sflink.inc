@@ -709,14 +709,9 @@
     {
       $rows = $this->getDb()->getrows("SELECT syncdatetime FROM sflink_syncstatus WHERE type='$type'");      
       $lasttime =$rows[0]['syncdatetime'];
+
+      return strtotime($rows[0]['syncdatetime']);
        
-      return mktime(
-        substr($lasttime[''], 11, 2),
-        substr($lasttime, 14, 2),
-        substr($lasttime, 17, 2),
-        substr($lasttime, 5, 2),
-        substr($lasttime, 8, 2),
-        substr($lasttime, 0, 4));
     }
       
 /*      $db = &$this->getDb();
