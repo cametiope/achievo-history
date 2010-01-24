@@ -710,11 +710,19 @@
       $rows = $this->getDb()->getrows("SELECT syncdatetime FROM sflink_syncstatus WHERE type='$type'");      
       $lasttime =$rows[0]['syncdatetime'];
 
-      return strtotime($rows[0]['syncdatetime']);
-       
-    }
+      //We srote syncdatetime in UTC format (SF API retund date this way
+      //But when we run strtotime - timezone is local, and our time have been shift
       
-/*      $db = &$this->getDb();
+      return $this->asUTC($lasttime);
+    }
+    
+    public function asUTC($time)
+    {
+      $dateTime = new DateTime($time, new DateTimeZone('UTC'));
+      return $dateTime->format('U');      
+    }     
+
+    /*      $db = &$this->getDb();
       
       $query = "
         SELECT
