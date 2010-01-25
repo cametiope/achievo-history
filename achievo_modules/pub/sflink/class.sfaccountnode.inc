@@ -51,7 +51,7 @@ class sfaccountnode extends atkDataNode
 
     $getUpdateddResponse = $this->m_client->$method(
       'Account', 
-      atkDateTimeAttribute::arrayToDateTime($from),
+      $sfnode->asUTC($from),
       atkDateTimeAttribute::arrayToDateTime($to));
 
     $ids = array();
