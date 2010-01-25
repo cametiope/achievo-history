@@ -718,64 +718,13 @@
     
     public function asUTC($time)
     {
+      if(is_array($time))
+      {
+        $time = $time['year']."-". $time['month']."-".$time['day']." ".$time['hours'].":".$time['minutes'].":".$time['seconds'];
+      }
       $dateTime = new DateTime($time, new DateTimeZone('UTC'));
-      return $dateTime->format('U');      
+      return (int) $dateTime->format('U');      
     }     
-
-    /*      $db = &$this->getDb();
-      
-      $query = "
-        SELECT
-          created_at
-        FROM
-          sf_dupe
-        WHERE
-          direction='Start update SF->achievo'
-          AND type='$type'
-          ORDER BY created_at DESC LIMIT 1
-      ";
-      
-      
-      $rows = $db->getrows($query);
-      if(count($rows))
-      {
-        $lasttime = $rows[0]['created_at'];
-      }
-      else
-      {
-        //first time to get updated records from SF, so we have to see, when we finished export to SF
-        //we think, that we don't update records before export finished
-        $rows = $db->getrows("
-          SELECT
-            created_at
-          FROM
-            sf_dupe
-          WHERE
-            direction='Achievo->SF'
-          ORDER BY
-            created_at DESC
-          LIMIT 1
-        ");
-
-        if(count($rows))
-        {
-          $lasttime = $rows[0]['created_at'];
-        }
-        else
-        {
-          atkerror("Can't determine startdate for update");
-          return '';
-        }
-      }
-      //$lasttime = '2010-01-13 16:00:00';
-      return mktime(
-        substr($lasttime, 11, 2),
-        substr($lasttime, 14, 2),
-        substr($lasttime, 17, 2),
-        substr($lasttime, 5, 2),
-        substr($lasttime, 8, 2),
-        substr($lasttime, 0, 4));
-    }*/
 
     public function getLastStartTime($type='')
     {
