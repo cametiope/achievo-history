@@ -47,7 +47,7 @@ class sfcontactnode extends atkDataNode
 
     $getUpdateddResponse = $this->m_client->getUpdated(
       'Contact', 
-      atkDateTimeAttribute::arrayToDateTime($from),
+      $sfnode->asUTC($from),
       atkDateTimeAttribute::arrayToDateTime($to));
 
     $ids = array();
