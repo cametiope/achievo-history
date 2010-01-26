@@ -15,4 +15,12 @@ $setup->executeSQL("CREATE TABLE `sf_dupe` (
     `direction` varchar(50),
     PRIMARY KEY  (`id`))");
 
-$setup->setVersion(1);
+$setup->executeSQL("CREATE TABLE `sflink_syncstatus` (
+    `type` char(7) NOT NULL,
+    `syncdatetime` char(24),
+    PRIMARY KEY  (`type`))");
+
+$setup->executeSQL("INSERT INTO sflink_syncstatus (type) VALUES ('account')");
+$setup->executeSQL("INSERT INTO sflink_syncstatus (type) VALUES ('contact')");
+
+$setup->setVersion(3);
