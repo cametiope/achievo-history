@@ -12,14 +12,14 @@ function main()
   //get time of last updated records
   $startTime = $node->getLastUpdateTime("account");
 
-  echo("Account Startpoint:".date("Y-m-d H:i:s",$startTime)."\n");
+  echo("Account Startpoint:".date("Y-m-d H:i:s.Z.T",$startTime)."\n");
   //first update organization
   $node->updateAccount($startTime, $endTime);
   
   //next update contact
   $startTime = $node->getLastUpdateTime("contact");
   
-  echo("Contact Startpoint:".date("Y-m-d H:i:s",$startTime)."\n");
+  echo("Contact Startpoint:".date("Y-m-d H:i:s.Z.T",$startTime)."\n");
   $node->updateContact($startTime, $endTime);
 }
 
