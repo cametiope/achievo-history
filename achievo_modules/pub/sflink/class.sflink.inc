@@ -722,6 +722,7 @@
       {
         $time = $time['year']."-". $time['month']."-".$time['day']." ".$time['hours'].":".$time['minutes'].":".$time['seconds'];
       }
+      
       $dateTime = new DateTime($time, new DateTimeZone('UTC'));
       return (int) $dateTime->format('U');      
     }     
@@ -879,18 +880,18 @@
 
     public function updateAccount($startTime, $endTime)
     {
-      $getUpdateddResponse = $this->m_client->getUpdated('Account', $startTime, $endTime);
+      $getUpdatedResponse = $this->m_client->getUpdated('Account', $startTime, $endTime);
 
       $ids = array();
-      if(isset($getUpdateddResponse->ids))
+      if(isset($getUpdatedResponse->ids))
       {
-        if(is_array($getUpdateddResponse->ids))
+        if(is_array($getUpdatedResponse->ids))
         {
-          $ids = $getUpdateddResponse->ids;
+          $ids = $getUpdatedResponse->ids;
         }
         else
         {
-          $ids = array($getUpdateddResponse->ids);
+          $ids = array($getUpdatedResponse->ids);
         }
       }
       
@@ -950,15 +951,29 @@
           $this->logImportAccount("account",$r, $message);
         }
       }
+      /**
+       * We successfully finished getUpdated. In this case
+       * we have set $getUpdatedREsponse->latestDateCovered as
+       * last SyncDate:
+       * latestDateCovered - The timestamp (Coordinated Universal Time 
+       * (UTC)—not local— time zone) of the last date covered in the 
+       * getUpdated() call. If there is a value, it is less than or equal 
+       * to endDate. A value here indicates that, for safety, you should use 
+       * this value for the startDate of your next call to capture the 
+       * changes that started after this date but did not complete before the 
+       * endDate and were, therefore, not returned in the previous call.
+       */
+      
+      $this->setSyncDate($getUpdatedResponse->latestDateCovered,'account');
       $this->logEndUpdate('account',"Accounts add/error/update/error:".$this->m_accountaddok."/".$this->m_accountadderror."/".$this->m_accountupdateok."/".$this->m_accountupdateerror);
     }
 
     public function setSyncDate($sf_stamp,$type)
     {
-      $s = strptime($sf_stamp,'%Y-%m-%dT%H:%M:%S');
-      $datestr = date("Y-m-d  H:i:s",mktime($s['tm_hour'],$s['tm_min'],$s['tm_sec'],$s['tm_mon']+1,$s['tm_mday'],$s['tm_year']+1900));
+      //$s = strptime($sf_stamp,'%Y-%m-%dT%H:%M:%S');
+      //$datestr = date("Y-m-d  H:i:s",mktime($s['tm_hour'],$s['tm_min'],$s['tm_sec'],$s['tm_mon']+1,$s['tm_mday'],$s['tm_year']+1900));
 
-      $this->getDb()->query("UPDATE sflink_syncstatus SET syncdatetime='".$datestr."' WHERE type='$type'");
+      $this->getDb()->query("UPDATE sflink_syncstatus SET syncdatetime='$sf_stamp' WHERE type='$type'");
     }
     
     private function logImportContact($entity,$r,$message)
@@ -984,18 +999,18 @@
 
     public function updateContact($startTime, $endTime)
     {
-      $getUpdateddResponse = $this->m_client->getUpdated('Contact', $startTime, $endTime);
+      $getUpdatedResponse = $this->m_client->getUpdated('Contact', $startTime, $endTime);
 
       $ids = array();
-      if(isset($getUpdateddResponse->ids))
+      if(isset($getUpdatedResponse->ids))
       {
-        if(is_array($getUpdateddResponse->ids))
+        if(is_array($getUpdatedResponse->ids))
         {
-          $ids = $getUpdateddResponse->ids;
+          $ids = $getUpdatedResponse->ids;
         }
         else
         {
-          $ids = array($getUpdateddResponse->ids);
+          $ids = array($getUpdatedResponse->ids);
         }
       }
 
@@ -1057,6 +1072,13 @@
           $this->logImportContact("contact",$c, $message);
         }
       }
+      /**
+       * We successfully finished getUpdated. In this case
+       * we have set $getUpdatedREsponse->latestDateCovered as
+       * last SyncDate (see more detail in updateAccount method.
+       */
+      
+      $this->setSyncDate($getUpdatedResponse->latestDateCovered,'contact');
       $this->logEndUpdate('contact',"Contacts add/error/update/error:".$this->m_contactaddok."/".$this->m_contactadderror."/".$this->m_contactupdateok."/".$this->m_contactupdateerror);
     }
     
