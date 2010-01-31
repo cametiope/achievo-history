@@ -41,11 +41,20 @@ class sfcontactnode extends atkDataNode
     $sfnode = &atkGetNode("sflink.sflink");
     //$keyValueSet = decodeKeyValueSet($selector);
 
+    if($params['what'] == 'deleted_records')
+    {
+      $method = "getDeleted";
+    }
+    else 
+    {
+      $method = "getUpdated";
+    }
+
     $from = $selector['from'];
     $to = $selector['to'];
     
 
-    $getUpdateddResponse = $this->m_client->getUpdated(
+    $getUpdateddResponse = $this->m_client->$method(
       'Contact', 
       $sfnode->asUTC($from),
       atkDateTimeAttribute::arrayToDateTime($to));
@@ -98,8 +107,7 @@ class sfcontactnode extends atkDataNode
         $c["salesforce_id"] = $rez->Id;
         $c['lastmodifieddate'] = $rez->fields->LastModifiedDate;
         $c['systemmodstamp'] = $rez->fields->SystemModstamp;
-        $date = strptime($c['systemmodstamp'],'%Y-%m-%dT%H:%M:%S');
-        $datestr = date("Y-m-d H:i:s",$date);
+
         //relations
         $c['companyid'] = $rez->fields->AccountId;
   

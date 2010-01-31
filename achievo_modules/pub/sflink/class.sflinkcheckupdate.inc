@@ -13,7 +13,7 @@ class sflinkcheckupdate extends basereport
     parent::basereport("sflinkcheckupdate");
 
     $this->add(new atkListAttribute("node",array("Account","Contact"),"",AF_LIST_NO_NULL_ITEM));
-    //$this->add(new atkListAttribute("method",array("getUpdated","getDeleted"),"",AF_LIST_NO_NULL_ITEM));
+    $this->add(new atkListAttribute("what",array("updated_records","deleted_records"),"",AF_LIST_NO_NULL_ITEM));
     $this->add(new atkDateTimeAttribute("from"));
     $this->add(new atkDateTimeAttribute("to"));
   }

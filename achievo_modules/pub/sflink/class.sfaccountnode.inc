@@ -44,7 +44,15 @@ class sfaccountnode extends atkDataNode
     $sfnode = &atkGetNode("sflink.sflink");
     //$keyValueSet = decodeKeyValueSet($selector);
 
-    $method = "getUpdated";
+    if($selector['what'] == 'deleted_records')
+    {
+      $method = "getDeleted";
+    }
+    else 
+    {
+      $method = "getUpdated";
+    }
+    
     $from = $selector['from'];
     $to = $selector['to'];
     
