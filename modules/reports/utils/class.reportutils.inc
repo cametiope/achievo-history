@@ -102,6 +102,32 @@ class reportutils
     return atkGetDb()->getrows($sql);
   }
 
+  /**
+   * Get options for select all employee from single employer
+   *
+   */
+  function get_employers($employer_id)
+  {
+    $records = atkGetDB()->getrows("
+      SELECT 
+        o.id,o.name
+      FROM 
+        person p
+        INNER JOIN organization o ON p.employer_id = o.id
+      WHERE 
+        p.role='employee'
+      GROUP 
+        BY o.id");
+
+    $employerscode = "<OPTION VALUE='all'>".atktext('allemployers')."</OPTION>";
+    foreach ($records as $employer)
+    {
+      $sel = $employer['id'] == $employer_id ? " SELECTED" : "";
+      $employerscode .= "<OPTION VALUE='".$employer['id']."'$sel>".$employer['name']."</OPTION>";
+    }
+    return $employerscode;
+  }
+
   function getEmployeeCode($records, $selected_userid, $user)
   {
     // Nobody selected, select 'all users'
@@ -111,7 +137,7 @@ class reportutils
       $sel = '';
 
     $employee_code='<option value="all"'.$sel.'>'.atktext("allusers");
-
+    
     // Logged-in user selected, select this option
     if ($selected_userid == $user['id'])
       $sel = ' selected="selected"';
