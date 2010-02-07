@@ -206,7 +206,7 @@ class weekreport extends atkNode
    * @param type name description
    * @return type description
    */
-  function collectData($nameswitch, $userid, $startdate, $enddate, $functionlevel_condition)
+  function collectData($nameswitch, $userid, $startdate, $enddate, $functionlevel_condition,$employer_id)
   {
     /* @var $db atkDb */
     $db = &atkGetDb();
@@ -228,11 +228,17 @@ class weekreport extends atkNode
     {
       if($userid!="all")  $query->addCondition("person.supervisor='$userid'");
     }
-    else
+    elseif($userid!="all")
     {
-      if($userid!="all")  $query->addCondition("hours.userid='$userid'");
+      $query->addCondition("hours.userid='$userid'");
     }
-
+    
+    //employer filter handling
+    if($employer_id != 'all')
+    {
+      $query->addCondition("person.employer_id='$employer_id'");
+    }
+    
     $query->addCondition("person.role='employee' AND person.status='active'");
     $query->addCondition("hours.activitydate >= '$startdate'");
     $query->addCondition("hours.activitydate <= '$enddate'");
@@ -268,9 +274,10 @@ class weekreport extends atkNode
    * @param string $lowerlevels checkbox 'on' or 'off'
    * @return array $hourrecords
    */
-  function getHourRecords($nameswitch, $user_id, $startdate, $enddate, $functionlevelswitch, $lowerlevels)
+  function getHourRecords($nameswitch, $user_id, $startdate, $enddate, $functionlevelswitch, $lowerlevels, $employer_id)
   {
     require_once(moduleDir('report').'utils/class.reportutils.inc');
+    /*@var $repUtils reportutils*/
     $repUtils = &atknew('report.utils.reportutils');
 
     $functionlevel_condition = $repUtils->getFunctionLevelCondition($functionlevelswitch, $lowerlevels);
@@ -284,7 +291,7 @@ class weekreport extends atkNode
 
       foreach ($employees as $employee)
       {
-        $records = $this->collectData($nameswitch, $employee['id'], $startdate, $enddate, $functionlevel_condition);
+        $records = $this->collectData($nameswitch, $employee['id'], $startdate, $enddate, $functionlevel_condition,$employer_id);
 
         if (is_array($records) && count($records) > 0)
         {
@@ -295,7 +302,7 @@ class weekreport extends atkNode
     else
     {
       // not supervisor, get record for the selected user only
-      $hourrecords = $this->collectData($nameswitch, $user_id, $startdate, $enddate, $functionlevel_condition);
+      $hourrecords = $this->collectData($nameswitch, $user_id, $startdate, $enddate, $functionlevel_condition,$employer_id);
     }
 
     return $hourrecords;
@@ -320,18 +327,20 @@ class weekreport extends atkNode
     else
     {
       // Collect locks..
-      $query = "SELECT
-                  period, userid, approved
-                FROM
-                  hours_lock
-                WHERE
-                  period between '$report_start_week' and '$report_end_week' ";
-      if ($nameswitch=="name"&&$userid!="all")
+      /*@var $query atkQuery*/
+      $query = &$db->createQuery();
+      $query->addField("period","","hours_lock");
+      $query->addField("userid","","hours_lock");
+      $query->addField("approved","","hours_lock");
+      $query->addTable("hours_lock");
+      $query->addCondition("period between '$report_start_week' and '$report_end_week'");
+      
+      if ($nameswitch=="name" && $userid != "all")
       {
-        $query.="AND (userid = '$userid' OR userid IS NULL OR userid = '')";
+        $query->addCondition("userid = '$userid' OR userid IS NULL OR userid = ''");
       }
     }
-    return $db->getrows($query);
+    return $db->getrows($query->buildSelect());
   }
 
   function getStartdate()
@@ -358,24 +367,27 @@ class weekreport extends atkNode
 
   function action_report(&$handler)
 	{
-    global $g_user, $g_sessionManager;
+    $user = &atkGetUser();
+    $sessionManager = &atkGetSessionManager();
 
     require_once(moduleDir('report').'utils/class.reportutils.inc');
 
+    /*@var $repUtils reportutils*/
     $repUtils = &atknew('report.utils.reportutils');
 
     $ui = &$this->getUi();
     $page = &$this->getPage();
     $this->addStyle("style.css");
 
-    $atkorderby = $g_sessionManager->pageVar("atkorderby");
-    $userid = $g_sessionManager->pageVar("userid");
-    $employeeswitch = $g_sessionManager->pageVar("nameswitch");
+    $atkorderby = $sessionManager->pageVar("atkorderby");
+    $userid = $sessionManager->pageVar("userid");
+    $employeeswitch = $sessionManager->pageVar("nameswitch");
+    $employer_id = $sessionManager->pageVar('employer_id');
 
-    $showdetails = $g_sessionManager->pageVar("showdetails");
-    $showstatus = $g_sessionManager->pageVar("showstatus");
+    $showdetails = $sessionManager->pageVar("showdetails");
+    $showstatus = $sessionManager->pageVar("showstatus");
 
-    $functionlevelswitch = $g_sessionManager->pageVar("functionlevelswitch");
+    $functionlevelswitch = $sessionManager->pageVar("functionlevelswitch");
     if (moduleExists('advancedsecurity'))
       $lowerlevels = atkArrayNvl($this->m_postvars, "lowerlevels", 'off');
     else
@@ -388,14 +400,13 @@ class weekreport extends atkNode
     *             [was $printable]
     *        2 export ( to a file on local computer ex. achievo.csv)
     */
-    $outputType = $g_sessionManager->pageVar("outputType");
+    $outputType = $sessionManager->pageVar("outputType");
     if (!isset($outputType)||$outputType=="") $outputType=0;
 
     if (!isset($atkorderby)||$atkorderby=="") $atkorderby = "period";
 
     $contentblocks = array();
 
-//    $view_all = $g_securityManager->allowed('reports.weekreport','view_all');
     $view_all = $this->allowed('view_all');
     $view_managed = $this->allowed('view_managed');
 
@@ -406,7 +417,7 @@ class weekreport extends atkNode
 
     $startdate = $this->getStartdate();
     $enddate = $this->getEnddate();
-    if (!isset($userid)||$userid=="")   			$userid=$g_user["id"];
+    if (!isset($userid)||$userid=="")   			$userid=$user["id"];
     if (!isset($employeeswitch)||$employeeswitch=="")	$employeeswitch="name";
     if (!isset($showstatus)||$showstatus=="") $showstatus = "both";
 
@@ -446,10 +457,12 @@ class weekreport extends atkNode
       }
       else
       {
-        $userid = $g_user["id"];
-        $users = $g_user["name"].'<input type="hidden" name="userid" value="'.$g_user["id"].'">';
+        $userid = $user["id"];
+        $users = $user["name"].'<input type="hidden" name="userid" value="'.$user["id"].'">';
       }
       $data[] = array($nameswitch,$users);
+
+      $data[] = array(atktext("employer_id","employee").':','<SELECT name="employer_id">'.$repUtils->get_employers($employer_id).'</SELECT>');
 
       $data[] = array(atktext('functionlevel','project').':',$repUtils->get_functionlevels($functionlevelswitch, $lowerlevels));
 
@@ -498,7 +511,7 @@ class weekreport extends atkNode
 
       $tbl = &atknew("atk.utils.atktablerenderer");
       $tbl->setColSpan(0,0,2);
-      $tbl->setColSpan(6,0,2);
+      $tbl->setColSpan(7,0,2);
       $output.=$tbl->render($data);
       $output.='<input type="submit" value="'.atktext("refresh").'"></form><br>';
 
@@ -566,7 +579,11 @@ class weekreport extends atkNode
       {
         $query.= "AND id = '".$userid."'";
       }
-
+      if($employer_id != 'all' )
+      {
+        $query .= "AND employer_id='$employer_id'";
+      }
+      
       $functionlevel_condition = $repUtils->getFunctionLevelCondition($functionlevelswitch, $lowerlevels);
       
       if($functionlevel_condition)
@@ -604,7 +621,7 @@ class weekreport extends atkNode
       $strdow       = array("sun","mon","tue","wed","thu","fri","sat");
 
       // collect data..
-      $raw = $this->getHourRecords($employeeswitch, $userid, $startdate, $enddate, $functionlevelswitch, $lowerlevels);
+      $raw = $this->getHourRecords($employeeswitch, $userid, $startdate, $enddate, $functionlevelswitch, $lowerlevels,$employer_id);
       $this->getHarvestedModuleObjects();
       $users_array = array();
       for ($i=0,$_i=count($raw);$i<$_i;$i++)
