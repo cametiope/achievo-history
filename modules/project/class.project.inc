@@ -39,14 +39,14 @@
 
       $this->add(new atkManyToOneRelation("project_category","project.project_category",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
 
-      $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employeeselector",AF_SEARCHABLE|AF_HIDE_ADD|AF_RELATION_AUTOLINK));
+      $attr = &$this->add(new atkManyToOneRelation("coordinator","employee.employeeselector",AF_SEARCHABLE|AF_HIDE_ADD));
       $attr->setDestinationFilter("person.status='active'");
       $attr->setAutoLinkDestination('employee.employee');
 
       $p_attr = &$this->add(new atkManyToOneRelation("master_project","project.projectselector",AF_RELATION_AUTOCOMPLETE|AF_HIDE_LIST|AF_HIDE_ADD));
       $p_attr->addDestinationFilter("project.id<>[id] AND (project.master_project=0 OR project.master_project IS NULL)");
 
-      $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_HIDE_ADD|AF_HIDE_LIST));
+      $this->add(new atkManyToOneRelation("contract_id","organization.contracts",AF_HIDE_ADD|AF_HIDE_LIST|AF_RELATION_AUTOCOMPLETE));
       $this->add(new atkTextAttribute("description",TEXT_LARGE, AF_HIDE_LIST|AF_HIDE_ADD));
       $this->add(new atkAttribute("quotation_number", AF_HIDE_LIST|AF_HIDE_ADD));
       $this->add(new atkCurrencyAttribute("fixed_price",AF_HIDE_LIST|AF_HIDE_ADD, 13,"", 2), "finance");
@@ -79,7 +79,7 @@
       }
 
       // Add the organization relation
-      $this->add(new atkManyToOneRelation("customer", "organization.organizationselector", AF_HIDE_LIST|AF_RELATION_AUTOLINK|AF_HIDE_ADD|AF_SEARCHABLE|AF_FORCE_LOAD), "", 500)
+      $this->add(new atkManyToOneRelation("customer", "organization.organizationselector", AF_HIDE_LIST|AF_RELATION_AUTOCOMPLETE|AF_HIDE_ADD|AF_SEARCHABLE|AF_FORCE_LOAD), "", 500)
                  ->setAutoLinkDestination('organization.organization');
 
       $this->add(new atkOneToManyRelation("contacts","project.project_personcontact", "projectid", AF_HIDE_LIST|AF_CASCADE_DELETE|AF_HIDE_ADD|$flags));
@@ -841,7 +841,8 @@
       $filter = "(contract.status='active'";
       if ($fromdate!="NULL")
       {
-        $filter.= " AND '$fromdate' BETWEEN contract.startdate AND contract.enddate";
+        $filter.= " AND (('$fromdate' BETWEEN contract.startdate AND contract.enddate)
+	                 OR (contract.enddate IS NULL AND '$fromdate' > contract.startdate))";
       }
       $filter.=") ";
       if ($record["contract_id"]["id"]!="")

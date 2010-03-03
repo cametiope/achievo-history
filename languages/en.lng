@@ -713,6 +713,7 @@
   "virtual_only" => "Virtual only",
   "non-virtual_only" => "Non-virtual only",
   "hourstype" => "Type of hours displayed",
+  "link_select_organizationselector" => "Select organization",
   );
 
 ?>
