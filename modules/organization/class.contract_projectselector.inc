@@ -10,7 +10,7 @@
       
       //only show projects that are not linked to a contract yet
       $this->addFilter("(project.contract_id IS NULL OR project.contract_id = '')");            
-      $this->setSecurityAlias("organization.contracts");
+      $this->setSecurityAlias("project.project");
     }
   }
 ?>
