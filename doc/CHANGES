@@ -4,6 +4,12 @@
 Bug numbers are references to bugs in http://www.achievo.org/bugzilla
 [names] are references to people in the AUTHORS file.
 
+Changes in Achievo 1.5
+----------------------
++ Added New and Edit links to the contract field in projects. [Guido]
+
+
+
 Changes in Achievo 1.4
 ----------------------
 + Fixed ticket #17916 - move 'holidays' column after 'total' and add 
