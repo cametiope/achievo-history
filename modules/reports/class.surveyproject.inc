@@ -16,12 +16,15 @@ class hrFirstAttribute extends atkDateAttribute
     $query->addField("last_hr","","s");
     $query->addField("initial_planning","","ss");
     $query->addField("current_planning","","ss");
+    $query->addField("startdate","","ss");
+    $query->addField("enddate","","ss");
     $query->addField("spend_hours","","sss");
     
     $filter = $this->getOwnerInstance()->m_filterrecord;
     
     $where = $where1 = array();
     $flag = $flag1 = true;    
+    
     //filter for hours only
     if(!empty($filter['from']))
     {
@@ -61,40 +64,47 @@ class hrFirstAttribute extends atkDateAttribute
     if($wherestr1) $wherestr1 = "WHERE ".$wherestr1;
     
     //always left join, because we don't add this subquery for adding some limits, we simply add columns 
-    $query->addJoin("
+    /*$query->addJoin("
           (SELECT DISTINCT
             t.projectid, 
-            t.id
+            t.id phaseid
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
-          GROUP BY t.projectid)","s1","s1.projectid=project.id AND s1.id=phase.id",$flag);
-
+          )","s1","s1.projectid=project.id AND s1.phaseid=phase.id",false);
+*/
     $query->addJoin("
           (SELECT
             MIN(h.activitydate) first_hr, 
             MAX(h.activitydate) last_hr, 
-            t.projectid
+            t.projectid,
+            t.id phaseid
           FROM
              hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
-          GROUP BY t.projectid)","s","s.projectid=project.id",$flag);
+          GROUP BY t.projectid)","s","s.projectid=project.id AND s.phaseid=phase.id",false);
 
     $query->addJoin("
           (SELECT 
             SUM(h.time) spend_hours, 
-            t.projectid
+            t.projectid,
+            t.id phaseid
           FROM
-             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1
-          GROUP BY t.projectid)","sss","sss.projectid=project.id",true);
+             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr1 AND t.id IN 
+             (SELECT 
+              h.phaseid
+              FROM hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr)
+          GROUP BY t.projectid)","sss","sss.projectid=project.id AND sss.phaseid=phase.id",false);
     
     $query->addJoin("
           (SELECT 
             SUM(t.initial_planning) `initial_planning`, 
             SUM(t.current_planning) `current_planning`, 
-            t.projectid
+            MIN(t.startdate) startdate,
+            MAX(t.enddate) enddate,
+            t.projectid,
+            t.id phaseid
           FROM 
-            phase t
-            $wherestr1
-          GROUP BY t.projectid)","ss","ss.projectid=project.id",$flag1);
+            hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
+          GROUP BY t.projectid)","ss","ss.projectid=project.id AND ss.phaseid=phase.id",false);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
@@ -182,19 +192,51 @@ class surveyproject extends atkNode
     $this->add(new atkAttribute("abbreviation", AF_HIDE_LIST));
     $this->add(new atkAttribute("name"));
     $this->add(new atkManyToOneRelation("coordinator","employee.employeeselector"));
-    $this->add(new atkDateAttribute("startdate"));
-    $this->add(new atkDateAttribute("enddate"));
-
+    
+    /**
+     * If we display only the project, it's the first and last hour booked on the
+     * project. If we show all phases, then it's the first and last hour on the phase.
+     * Same for the dates.
+     */
+    
+    $this->add(new hrLastAttribute("startdate"));
+    $this->add(new hrLastAttribute("enddate"));
+    
+    /**
+     * First hr/last hr are the dates of the first and last registration
+     */
     $this->add(new hrFirstAttribute("first_hr"));
     $this->add(new hrLastAttribute("last_hr"));
     
+    /**
+     * Initial, current and actual are the value columns that need to have a total at
+     * the bottom of the report.
+     */
     $this->add(new planningAttribute("initial_planning","","",AF_TOTAL));
     $this->add(new planningAttribute("current_planning","","",AF_TOTAL));
+    
+    /**
+     * Similar to project admin phase list, the 'actual' should be a link 
+     * to the hoursurvey to view details.
+     * If we set filter for period (from/to dates) - anyway we have to see
+     * total number there - I want to select projects that have been worked on last week for
+     * example, but then I still want to see their total numbers so I can know if it's
+     * on track.
+     */
     $this->add(new spendAttribute("spend_hours","","",AF_TOTAL));
 
     $this->setTable("project");   
   }
 
+  /**
+   * Project should be a link to project edit (take security into account, 
+   * not everyone is allowed to edit projects; if not, use view, but also with
+   * security)
+   *
+   * @param unknown_type $record
+   * @param unknown_type $mode
+   * @return unknown
+   */
   public function name_display($record, $mode)
   {
     $value = $record["name"];
@@ -221,6 +263,12 @@ class surveyproject extends atkNode
     return $org;
   }
 
+  /**
+   * Row should be colored the same as in the project admin phase list
+   *
+   * @param array $record for coloring
+   * @return string with color code
+   */
   public function rowColor($record)
   {
     if($record["current_planning"]>0)
