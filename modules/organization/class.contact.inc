@@ -38,6 +38,8 @@ class contact extends person
     $this->add(new atkDocumentAttribute("document",AF_HIDE_LIST));
     $this->addSecurityMap("document", "view");
     $this->setDescriptorTemplate("[title_id.title] [lastname], [firstname]");
+    
+    $this->addListener(new atkRecycleBin(array("table"=>"bin_person")));
   }
 
   function assignDocumentVars(&$documentWriter, $selector)
