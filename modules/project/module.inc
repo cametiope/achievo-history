@@ -78,6 +78,59 @@
       $node->addListener(new hoursListener());
     }
     
+    public function checkMerge($params)
+    {
+      $ret = SF_NOCONFLICT;
+      list($sflink,$node,$id,$masterId,$master,$slave) = $params; 
+      
+      if($node->getType() == 'organization')
+      {
+        $p_attr = &$node->getAttribute("projects");
+        if (!$p_attr->isEmpty($slave) && !$p_attr->isEmpty($master))
+        {
+          $sflink->logConflict($node->getType(),$master,$slave,$p_attr);
+          $ret = SF_CONFLICT;
+        }
+      }
+      else 
+      {
+        $db = &atkGetDb();
+        list($mcount) = $db->getrows("SELECT count(projectid) qty FROM project_person WHERE personid='$masterId'");  
+        list($scount) = $db->getrows("SELECT count(projectid) qty FROM project_person WHERE personid='$id'");  
+        
+        if($scount['qty'] && $mcount['qty'])
+        {
+          $p_attr = &$node->getAttribute("projects");
+          $sflink->logConflict($node->getType(),$master,$slave,$p_attr);
+          $ret = SF_CONFLICT;
+        }
+      }
+
+      return $ret;
+    }
+    
+    public function doMerge($params)
+    {
+      list($sflink,$node,$id,$masterId,$master,$slave) = $params; 
+      if($node->getType() == 'organization')
+      {
+        $this->mergeOrganization($id,$masterId,$slave,$master);
+      }
+      else 
+      {
+        $this->mergeContact($id,$masterId,$slave,$master);
+      }
+    }    
+    
+    public function mergeOrganization($id, $masterid, &$slave, &$master)
+    {
+      atkGetDb()->query("UPDATE project SET customer='$masterid' WHERE customer='$id'");
+    }
+    
+    public function mergeContact($id, $masterid, &$slave, &$master)
+    {
+      atkGetDb()->query("UPDATE project_person SET personid='$masterid' WHERE personid='$id'");
+    }
   }
 
 ?>
