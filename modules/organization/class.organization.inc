@@ -27,11 +27,13 @@ useattrib("atkupdatedbyattribute");
 useattrib("atkupdatestampattribute");
 useattrib("atktabbedpane");
 
+atkimport("atk.listeners.atkrecyclebin");
+
 class organization extends atkNode
 {
-  function organization()
+  function organization($node="organization", $flags=0)
   {
-    $this->atkNode("organization", NF_EDITAFTERADD|NF_EXPORT);
+    $this->atkNode($node, $flags|NF_EDITAFTERADD|NF_EXPORT);
     $listener = &atknew("modules.crm.listeners.eventlistener");
     $this->addListener($listener);
 
@@ -116,7 +118,7 @@ class organization extends atkNode
     $this->add(new atkUpdatedByAttribute("last_modified_by",AF_HIDE_LIST),"history");
     $this->add(new atkUpdateStampAttribute("last_modified_on",AF_HIDE_LIST),"history");
 
-
+    
     $this->m_securityMap["vcard"] = "view";
     $this->m_securityMap["export"] = "view";
 
@@ -124,6 +126,8 @@ class organization extends atkNode
     $this->setOrder("organization.name");
     $this->setIndex("name");
     $this->setDescriptorTemplate('[name] [visit_city] ([organizationcode])');
+    
+    $this->addListener(new atkRecycleBin(array("table"=>"bin_organization")));
   }
 
   function descriptor($rec="")
