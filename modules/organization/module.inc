@@ -43,11 +43,47 @@
       $contractnode = &atkGetNode("organization.contracts");
       if($mode == "active")
       {
-        $contractnode->addFilter("contract.status='active'");;
+        $contractnode->addFilter("contract.status='active'");
       }
       $res["contracts"] = $this->recLinks($contractnode->searchDb($expression), "organization.contracts");
 
       return $res;
     }
+    
+    public function checkMerge($params)
+    {
+      $ret = SF_NOCONFLICT;
+      list($sflink,$node,$id,$masterId,$master,$slave) = $params; 
+      
+      if($node->getType() == 'organization')
+      {
+        $db = &atkGetDb();
+        list($mcount) = $db->getrows("SELECT count(id) qty FROM contract WHERE customer='$masterId'");  
+        list($scount) = $db->getrows("SELECT count(id) qty FROM contract WHERE customer='$id'");  
+        
+        if($scount['qty'] && $mcount['qty'])
+        {
+          $p_attr = &$node->getAttribute("projects");
+          $sflink->logConflict($node->getType(),$master,$slave,$p_attr);
+          $ret = SF_CONFLICT;
+        }
+      }
+      return $ret;
+    }
+    
+    public function doMerge($params)
+    {
+      list($sflink,$node,$id,$masterId,$master,$slave) = $params; 
+      if($node->getType() == 'organization')
+      {
+        $this->mergeOrganization($id,$masterId,$slave,$master);
+      }
+    }    
+    
+    private function mergeOrganization($id, $masterid, &$slave, &$master)
+    {
+      atkGetDb()->query("UPDATE contract SET customer='$masterid' WHERE customer='$id'");
+    }
+    
   }
 ?>
