@@ -298,7 +298,11 @@ class hours extends atkNode
 
   public function message_display($record, $mode)
   {
-    return sprintf($this->text("time_left_message"),time_format($record['time_left'],true));  
+    $value = $record['time_left'];
+    if ($value === null)
+      return '';
+    else
+      return sprintf($this->text('time_left_message'), time_format($value, true));
   }
   
   public function message_edit($record, $mode)
