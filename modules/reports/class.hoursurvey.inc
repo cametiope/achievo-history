@@ -784,9 +784,6 @@ class hoursurvey extends atkNode
 
     /** Create filter array **/
     $filterarray = array();
-    $filterarray[] = $this->_addFilterArrayItem("status", "='active'", "projectid");
-    $filterarray[] = $this->_addFilterArrayItem("status", "='active'", "phaseid");
-    
     $filterarray[] = $this->_addFilterArrayItem("activitydate", ">='$startdate'", $this->getTable());
     $filterarray[] = $this->_addFilterArrayItem("activitydate", "<='$enddate'", $this->getTable());
 
