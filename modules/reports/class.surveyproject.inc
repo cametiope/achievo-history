@@ -10,15 +10,14 @@ class hrFirstAttribute extends atkDateAttribute
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
     /*@var $query atkQuery*/
-//    $query->addJoin("phase","","phase.projectid=project.id");
-
+    //$query->addJoin("phase","","phase.projectid=project.id");
     $query->addField("spend_hours","","s");
     $query->addField("first_hr","","s");
     $query->addField("last_hr","","s");
-    $query->addField("initial_planning","","s");
-    $query->addField("current_planning","","s");
-    $query->addField("startdate","","s");
-    $query->addField("enddate","","s");
+    $query->addField("initial_planning","","ss");
+    $query->addField("current_planning","","ss");
+    $query->addField("startdate","","ss");
+    $query->addField("enddate","","ss");
 
     $filter = $this->getOwnerInstance()->m_filterrecord;
 
@@ -27,10 +26,6 @@ class hrFirstAttribute extends atkDateAttribute
             SUM(h.time) spend_hours,
             MIN(h.activitydate) first_hr,
             MAX(h.activitydate) last_hr,
-            SUM(t.initial_planning) `initial_planning`,
-            SUM(t.current_planning) `current_planning`,
-            p.startdate,
-            p.enddate,
             t.projectid
           FROM
              hoursbase h
@@ -38,6 +33,19 @@ class hrFirstAttribute extends atkDateAttribute
              JOIN project p ON p.id=t.projectid
              $filter
           GROUP BY t.projectid)","s","s.projectid=project.id",false);
+
+    $query->addJoin("
+          (SELECT
+            SUM(t.initial_planning) `initial_planning`,
+            SUM(t.current_planning) `current_planning`,
+            p.startdate,
+            p.enddate,
+            t.projectid
+          FROM
+             phase t
+             JOIN project p ON p.id=t.projectid
+             $filter
+          GROUP BY t.projectid)","ss","ss.projectid=project.id",false);
 
   }
 

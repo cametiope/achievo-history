@@ -26,7 +26,7 @@ class hrFirstAttributes extends atkDateAttribute
              JOIN phase t ON h.phaseid=t.id
              JOIN project p ON p.id=t.projectid
              $filter
-             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",false);
+             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",true);
 
   }
 
