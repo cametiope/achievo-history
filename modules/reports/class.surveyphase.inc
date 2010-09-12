@@ -22,11 +22,11 @@ class hrFirstAttributes extends atkDateAttribute
             h.userid,
             t.id phaseid
            FROM
-             hoursbase h
-             JOIN phase t ON h.phaseid=t.id
-             JOIN project p ON p.id=t.projectid
+             project p
+             JOIN phase t ON p.id=t.projectid
+             LEFT JOIN hoursbase h ON h.phaseid=t.id
              $filter
-             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",true);
+             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",false);
 
   }
 
