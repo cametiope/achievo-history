@@ -85,7 +85,7 @@ class planningAttribute extends atkDurationAttribute
 
     $filter = $this->getOwnerInstance()->m_filterrecord;
 
-    if ($value>0)
+    if ($value>0 && $mode == 'list')
     {
       $params["phaseid"] = "phase.id='".$record['id']."'";
       $params["startdate"] = "2000-01-01";

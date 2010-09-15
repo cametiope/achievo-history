@@ -245,6 +245,11 @@ class projectsurvey extends basereport
     }
 
     $data = $node->selectDb("",$orderby);
+    if($filterrecord['report_output_type'] == RT_EXPORT)
+    {
+      $rl = &atknew("atk.recordlist.atkcsvrecordlist");
+      $rl->render($node, $data, "", $suppress);
+    }
 
     /*@var $rl atkrecordlist*/
     $rl = &atknew("atk.recordlist.atkrecordlist");

@@ -28,11 +28,14 @@ class hrFirstAttribute extends atkDateAttribute
             MAX(h.activitydate) last_hr,
             t.projectid
           FROM
-             hoursbase h
-             JOIN phase t ON h.phaseid=t.id
-             JOIN project p ON p.id=t.projectid
+             project p
+             JOIN phase t ON p.id=t.projectid
+             LEFT JOIN hoursbase h ON h.phaseid=t.id
              $filter
           GROUP BY t.projectid)","s","s.projectid=project.id",false);
+//          hoursbase h
+//             JOIN phase t ON h.phaseid=t.id
+//             JOIN project p ON p.id=t.projectid
 
     $query->addJoin("
           (SELECT
@@ -42,8 +45,8 @@ class hrFirstAttribute extends atkDateAttribute
             p.enddate,
             t.projectid
           FROM
-             phase t
-             JOIN project p ON p.id=t.projectid
+             project p
+             JOIN phase t ON p.id=t.projectid
              $filter
           GROUP BY t.projectid)","ss","ss.projectid=project.id",false);
 
@@ -102,7 +105,7 @@ class spendAttribute extends atkDurationAttribute
 
     $filter = $this->getOwnerInstance()->m_filterrecord;
 
-    if ($value>0)
+    if ($value>0 && $mode == 'list')
     {
       $params["projectid"] = "project.id='".$record['id']."'";
       $params["startdate"] = "2000-01-01";
