@@ -162,6 +162,7 @@ class projectsurvey extends basereport
     }
 
     $where = implode(" AND ",$projectfilter);
+    if(!empty($where)) $where = "WHERE ".$where;
 
     $projectid_list = array();
     $phaseid_list = array();
@@ -173,7 +174,7 @@ class projectsurvey extends basereport
         phase.id phaseid
       FROM
         project JOIN phase ON project.id=phase.projectid
-      WHERE $where");
+      $where");
 
     foreach ($rows as $row)
     {
