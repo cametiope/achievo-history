@@ -714,6 +714,8 @@
   "non-virtual_only" => "Non-virtual only",
   "hourstype" => "Type of hours displayed",
   "link_select_organizationselector" => "Select organization",
+  "overtime_changing_message" => "Your overtime balance has been changed by %s at period %s. Old balance - %s hours, new balance - %s hours, message - '%s'",
+  "overtime_changing_message_subject" => "Your overtime balance has been changed",
   );
 
 ?>

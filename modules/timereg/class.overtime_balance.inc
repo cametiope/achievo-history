@@ -36,7 +36,7 @@
   	 */
     function overtime_balance()
     {
-      $this->atkNode("overtime_balance");
+      $this->atkNode("overtime_balance", NF_TRACK_CHANGES);
       $this->add(new atkNumberAttribute("id",AF_AUTOKEY));
       $this->add(new atkManyToOneRelation("userid", "employee.employeeselector", AF_OBLIGATORY|AF_SEARCHABLE|AF_READONLY));
       $this->add(new atkDateAttribute("day","","", 0, date("Y-m-d"), AF_SEARCHABLE|AF_OBLIGATORY));
@@ -58,6 +58,40 @@
     function postUpdate($rec)
     {
       $this->deleteBalance($rec["userid"]["id"], date("Y-m-d", adodb_mktime(0,0,0,$rec["day"]["month"],$rec["day"]["day"],$rec["day"]["year"])));
+
+      $changed_by = atkGetUser();
+
+      // has balance been changed by one employee for other employee?
+      if(($rec['atkorgrec']['balance']<>$rec['balance']) &&
+          ($rec['userid']['id'] <> $changed_by['id']))
+      {
+        $node = &atkGetNode("employee.employee");
+        list($userrec) = $node->selectDb($rec['user']['atkprimkey'],"","","",array("email"));
+
+        if(!empty($userrec['email']))
+        {
+          /*@var $mailer atkmailer*/
+          $mailer = &atknew('atk.utils.atkmailer');
+          $mailer->From = atkconfig("mail_sender","achievo");
+          $mailer->AddAddress($userrec['email']);
+          $mailer->Subject = $this->text("overtime_changing_message_subject");
+          $mailer->Body = sprintf($this->text("overtime_changing_message"),
+            $changed_by['lastname']." ".$changed_by['firstname'],
+            $rec['day']['day']."-".$rec['day']['month']."-".$rec['day']['year'],
+            $rec['atkorgrec']['balance'],
+            $rec['balance'],
+            $rec['remark']
+          );
+          if(!$mailer->Send())
+          {
+            atkerror("Message don't send");
+          }
+        }
+        else
+        {
+          atkwarning("user don't have email address");
+        }
+      }
       return true;
     }
 
