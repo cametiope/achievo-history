@@ -714,8 +714,8 @@
   "virtual_only" => "Virtual only",
   "non-virtual_only" => "Non-virtual only",
   "hourstype" => "Type of hours displayed",
-  "overtime_changing_message" => "Your overtime balance has been changed by %s at period %s. Old balance - %s hours, new balance - %s hours, message - '%s'",
-  "overtime_changing_message_subject" => "Your overtime balance has been changed",
+  "overtime_changing_message" => "Je overuren saldo is gewijzigd door %s in periode %s. Oud saldo - %s hours, nieuw saldo - %s uur, opmerking - '%s'",
+  "overtime_changing_message_subject" => "Je overuren saldo is gewijzigd",
 );
 
 ?>

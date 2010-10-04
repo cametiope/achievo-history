@@ -66,7 +66,7 @@
           ($rec['userid']['id'] <> $changed_by['id']))
       {
         $node = &atkGetNode("employee.employee");
-        list($userrec) = $node->selectDb($rec['user']['atkprimkey'],"","","",array("email"));
+        list($userrec) = $node->selectDb($rec['userid']['atkprimkey'],"","","",array("email"));
 
         if(!empty($userrec['email']))
         {
