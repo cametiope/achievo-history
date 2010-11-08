@@ -143,13 +143,13 @@
     }
     else
     {
-      if ($cc=="")
+      if ($supervisormail=="")
       {
         echo "would've sent mail to $user, but he doesn't have an email address\n";
       }
       else
       {     
-        usermail($cc,atktext("timeguard_mail_subject","","",$userInfo[$user]["lng"]),$body);
+        usermail($supervisormail,atktext("timeguard_mail_subject","","",$userInfo[$user]["lng"]),$body);
         echo "would've sent mail to $user, but he doesn't have an email address. Sending only to supervisor\n";
       }
     }
