@@ -2,7 +2,7 @@
 
 atkimport("module.project.phase");
 
-class hrFirstAttributes extends atkDateAttribute
+class hrFirstAttributes extends atkDateAttribute 
 {
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
@@ -10,24 +10,44 @@ class hrFirstAttributes extends atkDateAttribute
     $query->addField("first_hr","","s");
     $query->addField("last_hr","","s");
     $query->addField("spend_hours","","s");
-
+    
     $filter = $this->getOwnerInstance()->m_filterrecord;
-
+    
+    $where = array();
+    $flag = true;
+        
+    if(!empty($filter['from']))
+    {
+      $from = dateutil::arr2str($filter["from"],"Y-m-d");
+      $where[] = "h.activitydate >= '$from'";
+      $flag = false;
+    }
+    if(!empty($filter['to']))
+    {
+      $to = dateutil::arr2str($filter["to"],"Y-m-d");
+      $where[] = "h.activitydate <= '$to'";
+      $flag = false;
+    }
+    if(isset($filter['worked_on_by']['id']))
+    {
+      $where[] = "h.userid='".$filter['worked_on_by']['id']."'";
+      $flag = false;
+    }
+    
+    $wherestr = implode(" AND ",$where);
+    if($wherestr) $wherestr = "WHERE ".$wherestr;
+    
     $query->addJoin("
-          (SELECT
+          (SELECT 
             MIN(h.activitydate) first_hr,
             MAX(h.activitydate) last_hr,
-            SUM(h.time) spend_hours,
+            SUM(h.time) spend_hours, 
             t.projectid,
             h.userid,
             t.id phaseid
-           FROM
-             project p
-             JOIN phase t ON p.id=t.projectid
-             LEFT JOIN hoursbase h ON h.phaseid=t.id
-             $filter
-             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",false);
-
+           FROM 
+             hoursbase h JOIN phase t ON h.phaseid=t.id $wherestr
+             GROUP BY t.id)","s","s.projectid=projectid.id AND phase.id=s.phaseid",$flag);
   }
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
@@ -36,7 +56,7 @@ class hrFirstAttributes extends atkDateAttribute
   }
 }
 
-class hrLastAttributes extends atkDateAttribute
+class hrLastAttributes extends atkDateAttribute 
 {
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
@@ -48,7 +68,7 @@ class hrLastAttributes extends atkDateAttribute
   }
 }
 
-class coordinator extends atkManyToOneRelation
+class coordinator extends atkManyToOneRelation 
 {
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
@@ -61,7 +81,7 @@ class coordinator extends atkManyToOneRelation
   }
 }
 
-class planningAttribute extends atkDurationAttribute
+class planningAttribute extends atkDurationAttribute 
 {
   public function addToQuery(&$query, $tablename="", $fieldaliasprefix="", $rec="", $level, $mode)
   {
@@ -69,7 +89,9 @@ class planningAttribute extends atkDurationAttribute
 
   function getOrderByStatement($extra='', $table='', $direction='ASC')
   {
-    return "s.".$this->fieldName().($direction ? " {$direction}" : "");
+    if($this->fieldName() == 'spend_hours') $table = 's';
+    else $table = 'ss';
+    return $table.".".$this->fieldName().($direction ? " {$direction}" : "");
   }
 
   /**
@@ -84,13 +106,28 @@ class planningAttribute extends atkDurationAttribute
     $org = parent::display($record, $mode);
 
     $filter = $this->getOwnerInstance()->m_filterrecord;
-
-    if ($value>0 && $mode == 'list')
+    
+    if ($value>0)
     {
       $params["phaseid"] = "phase.id='".$record['id']."'";
-      $params["startdate"] = "2000-01-01";
-      $params["enddate"] = date("Y-m-d");
-
+      if(!empty($filter['from']))
+      {
+        $params["startdate"] = dateutil::arr2str($filter["from"],"Y-m-d");
+      }
+      else
+      {
+        $params["startdate"] = "2000-01-01";
+      }
+      
+      if(!empty($filter['to']))
+      {
+        $params["enddate"] = dateutil::arr2str($filter["to"],"Y-m-d");
+      }
+      else
+      {
+        $params["enddate"] = date("Y-m-d");
+      }
+      
       if(isset($filter['worked_on_by']['id']))
       {
         $params["userid"] = $filter['worked_on_by']['id'];
@@ -104,32 +141,34 @@ class planningAttribute extends atkDurationAttribute
     }
     return $org;
   }
+  
+  
 }
 
-class surveyphase extends phase
+class surveyphase extends phase 
 {
   public $m_filterrecord;
-
-  function __construct($name='surveyphase')
+    
+  function __construct($name='surveyproject')
   {
     parent::phase($name,NF_NO_SEARCH);
-
+    
     $this->add(new hrFirstAttributes("first_hr"));
     $this->add(new hrLastAttributes("last_hr"));
-
+     
     $this->getAttribute("projectid")->removeFlag(AF_HIDE_LIST)->addFlag(AF_RELATION_AUTOLINK);
     $this->add(new coordinator("coordinator","employee.employee"));
-    $this->getAttribute("virtual_time")->addFlag(AF_HIDE_LIST);
-    $this->getAttribute("status")->addFlag(AF_HIDE_LIST);
-    $this->getAttribute("duration")->addFlag(AF_HIDE_LIST);
-    $this->getAttribute("dependsondeliverable")->addFlag(AF_HIDE_LIST);
-    $this->getAttribute("name")->setLabel($this->text("phase"));
-
+    $this->getAttribute("virtual_time")->addFlag(AF_HIDE_LIST);  
+    $this->getAttribute("status")->addFlag(AF_HIDE_LIST);  
+    $this->getAttribute("duration")->addFlag(AF_HIDE_LIST);  
+    $this->getAttribute("dependsondeliverable")->addFlag(AF_HIDE_LIST);  
+    $this->getAttribute("name")->setLabel($this->text("phase"));  
+    
     $this->remove("spend_hours");
     $this->add(new planningAttribute("spend_hours","","",AF_TOTAL));
-
+    
     $this->setAttributesOrder("projectid","name","coordinator","startdate","enddate","first_hr","last_hr");
-
+      
     $this->setSecurityAlias('project.phase');
   }
 
@@ -158,7 +197,7 @@ class surveyphase extends phase
       $this->setAttributeOrder($name, $this->getAttributeOrder($name)+($order+5));
     }
   }
-
+  
   function rowColor($record)
   {
     if($record["current_planning"]>0)
@@ -173,4 +212,7 @@ class surveyphase extends phase
       }
     }
   }
+  
+
+  
 }

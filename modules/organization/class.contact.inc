@@ -12,9 +12,9 @@ useattrib('atkboolattribute');
 
 class contact extends person
 {
-  function contact($name="contact", $flags=0)
+  function contact($name="contact")
   {
-    $this->person($name,$flags|NF_IMPORT);
+    $this->person($name,NF_IMPORT);
     $listener = &atknew("modules.crm.listeners.eventlistener");
     $this->addListener($listener);
     $this->remove("userid");
@@ -38,8 +38,6 @@ class contact extends person
     $this->add(new atkDocumentAttribute("document",AF_HIDE_LIST));
     $this->addSecurityMap("document", "view");
     $this->setDescriptorTemplate("[title_id.title] [lastname], [firstname]");
-    
-    $this->addListener(new atkRecycleBin(array("table"=>"bin_person")));
   }
 
   function assignDocumentVars(&$documentWriter, $selector)
