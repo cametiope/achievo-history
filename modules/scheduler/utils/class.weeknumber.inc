@@ -112,21 +112,13 @@ class weeknumber
     $day = 86400;
     $week = 7*$day;
     $startdate_nextyear = ($enddate_nextyear-(6*$day));
-    $startdate = ($enddate-(6*$day));
     if(date("Y-m-d",$timestamp)>=date("Y-m-d",$startdate_nextyear) && date("Y-m-d",$timestamp)<=date("Y-m-d",$enddate_nextyear))
     {
       return array("weeknumber"=>1,
                   "firstweekstart"=>$startdate_nextyear,
                   "firstweekend"=>$enddate_nextyear);
     }
-    elseif(date("Y-m-d",$timestamp)<date("Y-m-d",$startdate))
-    {
-      //last week of previous year
-      return array("weeknumber"=>weeknumber::getWeeknumber($startdate-(7*$day),atkconfig("startday",1),atkconfig("firstweekcontains",4)),
-                  "firstweekstart"=>($startdate-(7*$day)),
-                  "firstweekend"=>($startdate-(1*$day)));
-    }
-    
+
 		$endyear = date("Y",$enddate_nextyear);
     $found=false;
     for($i=$enddate;date("Y",$i)<=$endyear&&!$found;$i+=$week)
