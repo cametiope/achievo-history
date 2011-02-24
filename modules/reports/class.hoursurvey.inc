@@ -268,6 +268,18 @@ class hoursurvey extends atkNode
       }
     }
 
+    foreach ($externalHourSurveyColumns as $attrlist)
+    {
+      if (is_array($attrlist))
+      {
+        foreach($attrlist as $attr)
+        {
+          $var = "external$attr";
+          $$var = $criteria[$var];
+        }
+      }
+    }
+
     //The orderby postvar is only filled when clicking on the refresh button.
     //Atk uses the postvar atkorderby when a user clicks on a column to sort on it. Powers combined
     if(!isset($orderby) && isset($this->m_postvars["atkorderby"])) $orderby[] = $this->m_postvars["atkorderby"];
