@@ -4,6 +4,13 @@
 Bug numbers are references to bugs in http://www.achievo.org/bugzilla
 [names] are references to people in the AUTHORS file.
 
+Changes in Achievo 1.4.6
+------------------------
+* Fixed security issue in searchbox [Sandy]
+* Fixed warning for default setting in documentfileattribute [Sandy]
+* Fixed SQLInjection in hoursurvey [Sandy]
+
+
 Changes in Achievo 1.4.5
 ------------------------
 * Fixed delete bug in Time registrations [Sandy]
